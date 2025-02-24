@@ -29,7 +29,7 @@
 #include "ndpi_encryption.h"
 #include "ndpi_private.h"
 
-//#define JA4R_DECIMAL 1 
+//#define JA4R_DECIMAL 1
 
 static void ndpi_search_tls_wrapper(struct ndpi_detection_module_struct *ndpi_struct,
 				    struct ndpi_flow_struct *flow);
@@ -104,6 +104,19 @@ union ja_info {
 
 static void ndpi_int_tls_add_connection(struct ndpi_detection_module_struct *ndpi_struct,
 					struct ndpi_flow_struct *flow);
+
+/* **************************************** */
+
+static bool str_contains_digit(char *str) {
+  u_int i = 0;
+
+  for(i=0; (str[i] != '.') && (str[i] != '\0'); i++) {
+    if(isdigit(str[i]))
+      return(true);
+  }
+
+  return(false);
+}
 
 /* **************************************** */
 
@@ -1934,12 +1947,12 @@ static void ndpi_int_tls_add_connection(struct ndpi_detection_module_struct *ndp
 			       NDPI_PROTOCOL_RDP, NDPI_PROTOCOL_TLS, NDPI_CONFIDENCE_DPI);
     return;
   }
-  
+
   if((flow->detected_protocol_stack[0] != NDPI_PROTOCOL_UNKNOWN) ||
      (flow->detected_protocol_stack[1] != NDPI_PROTOCOL_UNKNOWN)) {
     if(!flow->extra_packets_func)
       tlsInitExtraPacketProcessing(ndpi_struct, flow);
-    
+
     return;
   }
 
@@ -2821,7 +2834,7 @@ int processClientServerHello(struct ndpi_detection_module_struct *ndpi_struct,
 		      if((sni_len >= 4)
 		         /* Check if it ends in .com or .net */
 		         && ((strcmp(&sni[sni_len-4], ".com") == 0) || (strcmp(&sni[sni_len-4], ".net") == 0))
-		         && (strncmp(sni, "www.", 4) == 0)) /* Not starting with www.... */
+		         && (strncmp(sni, "www.", 4) == 0)) /* Starting with www.... */
 		        ndpi_set_detected_protocol(ndpi_struct, flow, NDPI_PROTOCOL_TOR, __get_master(ndpi_struct, flow), NDPI_CONFIDENCE_DPI);
 		    } else {
 #ifdef DEBUG_TLS
@@ -3225,6 +3238,22 @@ int processClientServerHello(struct ndpi_detection_module_struct *ndpi_struct,
 		  printf("Padding length: %d\n", extension_len);
 #endif
 		  ndpi_set_risk(ndpi_struct, flow, NDPI_OBFUSCATED_TRAFFIC, "Abnormal Client Hello/Padding length");
+		}
+	      } else if(extension_id == 22) { /* Encrypt-then-MAC */
+		if(extension_len == 0) {
+		  char *sni     = flow->host_server_name;
+
+		  if(sni != NULL) {
+		    u_int sni_len = strlen(sni);
+		    
+		    if((flow->protos.tls_quic.advertised_alpns == NULL) /* No ALPN */
+		       && (sni_len > 8)
+		       && ((strcmp(&sni[sni_len-4], ".com") == 0) || (strcmp(&sni[sni_len-4], ".net") == 0))
+		       && (strncmp(sni, "www.", 4) == 0) /* Starting with www.... */
+		       && str_contains_digit(&sni[4])) {
+		      ndpi_set_detected_protocol(ndpi_struct, flow, NDPI_PROTOCOL_TOR, __get_master(ndpi_struct, flow), NDPI_CONFIDENCE_DPI);
+		    }
+		  }
 		}
 	      }
 
