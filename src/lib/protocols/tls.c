@@ -1994,7 +1994,9 @@ static void checkExtensions(struct ndpi_detection_module_struct *ndpi_struct,
       /* Ciphers */
       102, 129, 52243, 52244, 57363, 65279, 65413,
       /* ECH */
-      65037
+      65037,
+      /* ExtensionType value from draft-vvv-tls-alps. This is not an IANA defined extension number. */
+      17513, 17613
   };
   size_t const allowed_non_iana_extensions_size = sizeof(allowed_non_iana_extensions) /
     sizeof(allowed_non_iana_extensions[0]);
