@@ -1160,11 +1160,8 @@ void ndpi_serialize_proto(struct ndpi_detection_module_struct *ndpi_struct,
     ndpi_get_proto_breed(ndpi_struct,
                          (l7_protocol.proto.app_protocol != NDPI_PROTOCOL_UNKNOWN ? l7_protocol.proto.app_protocol : l7_protocol.proto.master_protocol));
   ndpi_serialize_string_string(serializer, "breed", ndpi_get_proto_breed_name(breed));
-  if(l7_protocol.category != NDPI_PROTOCOL_CATEGORY_UNSPECIFIED)
-  {
-    ndpi_serialize_string_uint32(serializer, "category_id", l7_protocol.category);
-    ndpi_serialize_string_string(serializer, "category", ndpi_category_get_name(ndpi_struct, l7_protocol.category));
-  }
+  ndpi_serialize_string_uint32(serializer, "category_id", l7_protocol.category);
+  ndpi_serialize_string_string(serializer, "category", ndpi_category_get_name(ndpi_struct, l7_protocol.category));
 }
 
 /* ********************************** */
