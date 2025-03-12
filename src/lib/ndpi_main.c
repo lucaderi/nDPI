@@ -8219,9 +8219,14 @@ void ndpi_process_extra_packet(struct ndpi_detection_module_struct *ndpi_str,
 
   /* call the extra packet function (which may add more data/info to flow) */
   if(flow->extra_packets_func) {
-    if((flow->extra_packets_func(ndpi_str, flow) == 0) ||
-       (!flow->monitoring && ++flow->num_extra_packets_checked == flow->max_extra_packets_to_check)) {
-      flow->extra_packets_func = NULL; /* Done */
+    struct ndpi_packet_struct *packet = &ndpi_str->packet;
+
+    /* Safety check to skip non TCP/UDP packets sent to extra dissectors */
+    if((packet != NULL) && ((packet->udp != NULL) || (packet->tcp != NULL))) {
+      if((flow->extra_packets_func(ndpi_str, flow) == 0) ||
+	 (!flow->monitoring && ++flow->num_extra_packets_checked == flow->max_extra_packets_to_check)) {
+	flow->extra_packets_func = NULL; /* Done */
+      }
     }
   }
 }
