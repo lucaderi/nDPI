@@ -3413,7 +3413,9 @@ static const char *categories[NDPI_PROTOCOL_NUM_CATEGORIES] = {
   "Antimalware",
   "Crypto_Currency",
   "Gambling",
-  "Health"
+  "Health",
+  "ArtifIntelligence"
+  
 };
 
 #if !defined(NDPI_CFFI_PREPROCESSING) && defined(__linux__)
