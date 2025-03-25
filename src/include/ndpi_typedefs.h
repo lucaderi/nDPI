@@ -1384,7 +1384,7 @@ struct ndpi_flow_struct {
 
   struct {
     char *fingerprint;
-    u_int8_t os_hint;
+    enum operating_system_hint os_hint;
   } tcp;
 
   /*
