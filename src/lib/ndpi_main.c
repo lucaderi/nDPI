@@ -870,7 +870,7 @@ int ndpi_init_app_protocol(struct ndpi_detection_module_struct *ndpi_str,
 
     if(!ndpi_str->proto_defaults[match->protocol_id].protoName)
       return 1;
-    
+
     ndpi_str->proto_defaults[match->protocol_id].isAppProtocol = 1;
     ndpi_str->proto_defaults[match->protocol_id].protoId = match->protocol_id;
     ndpi_str->proto_defaults[match->protocol_id].protoCategory = match->protocol_category;
@@ -888,23 +888,23 @@ int ndpi_init_app_protocol(struct ndpi_detection_module_struct *ndpi_str,
     case NDPI_PROTOCOL_CATEGORY_VOIP:
       ndpi_str->proto_defaults[match->protocol_id].qoeCategory = NDPI_PROTOCOL_QOE_CATEGORY_VOIP_CALLS;
       break;
-      
+
     case NDPI_PROTOCOL_CATEGORY_REMOTE_ACCESS:
       ndpi_str->proto_defaults[match->protocol_id].qoeCategory = NDPI_PROTOCOL_QOE_CATEGORY_REMOTE_ACCESS;
       break;
-      
+
     case NDPI_PROTOCOL_CATEGORY_MEDIA:
     case NDPI_PROTOCOL_CATEGORY_STREAMING:
     case NDPI_PROTOCOL_CATEGORY_MUSIC:
     case NDPI_PROTOCOL_CATEGORY_VIDEO:
       ndpi_str->proto_defaults[match->protocol_id].qoeCategory = NDPI_PROTOCOL_QOE_CATEGORY_BUFFERED_STREAMING;
       break;
-      
+
     default:
       ndpi_str->proto_defaults[match->protocol_id].qoeCategory = NDPI_PROTOCOL_QOE_CATEGORY_UNSPECIFIED;
       break;
     }
-    
+
     ndpi_set_proto_defaults(ndpi_str,
 			    ndpi_str->proto_defaults[match->protocol_id].isClearTextProto,
 			    ndpi_str->proto_defaults[match->protocol_id].isAppProtocol,
@@ -1293,7 +1293,7 @@ static void ndpi_init_protocol_defaults(struct ndpi_detection_module_struct *ndp
 			  ndpi_build_default_ports(ports_a, 0, 0, 0, 0, 0) /* TCP */,
 			  ndpi_build_default_ports(ports_b, 0, 0, 0, 0, 0) /* UDP */);
   ndpi_set_proto_defaults(ndpi_str, 0 /* encrypted */, 1 /* app proto */, NDPI_PROTOCOL_ACCEPTABLE, NDPI_PROTOCOL_DOH_DOT,
-			  "DoH_DoT", NDPI_PROTOCOL_CATEGORY_NETWORK /* dummy */, NDPI_PROTOCOL_QOE_CATEGORY_UNSPECIFIED, 
+			  "DoH_DoT", NDPI_PROTOCOL_CATEGORY_NETWORK /* dummy */, NDPI_PROTOCOL_QOE_CATEGORY_UNSPECIFIED,
 			  ndpi_build_default_ports(ports_a, 853, 0, 0, 0, 0) /* TCP */,
 			  ndpi_build_default_ports(ports_b, 784, 853, 0, 0, 0) /* UDP */);
   ndpi_set_proto_defaults(ndpi_str, 0 /* encrypted */, 1 /* app proto */, NDPI_PROTOCOL_FUN, NDPI_PROTOCOL_REDDIT,
@@ -3415,7 +3415,7 @@ static const char *categories[NDPI_PROTOCOL_NUM_CATEGORIES] = {
   "Gambling",
   "Health",
   "ArtifIntelligence"
-  
+
 };
 
 #if !defined(NDPI_CFFI_PREPROCESSING) && defined(__linux__)
@@ -3562,26 +3562,12 @@ struct ndpi_detection_module_struct *ndpi_init_detection_module(struct ndpi_glob
 
   ndpi_str->malicious_ja4_hashmap = NULL;   /* Initialized on demand */
   ndpi_str->malicious_sha1_hashmap = NULL;  /* Initialized on demand */
- 
-  if(ndpi_hash_init(&ndpi_str->tcp_fingerprint_hashmap) == 0) {
-#ifdef NDPI_ENABLE_DEBUG_MESSAGES
-    u_int num = 0;
-#endif
-    
-    for(i=0; tcp_fps[i].fingerprint != NULL; i++) {
-      if(ndpi_add_tcp_fingerprint(ndpi_str, (char*)tcp_fps[i].fingerprint, tcp_fps[i].os) == 0)
-#ifdef NDPI_ENABLE_DEBUG_MESSAGES
-	num++;
-#else
-      ;
-#endif
-    }
 
-#ifdef NDPI_ENABLE_DEBUG_MESSAGES
-    NDPI_LOG_DBG2(ndpi_str, "[NDPI] Loaded %u TCP fingeprints", num);
-#endif
+  if(ndpi_hash_init(&ndpi_str->tcp_fingerprint_hashmap) == 0) {
+    for(i=0; tcp_fps[i].fingerprint != NULL; i++)
+      ndpi_add_tcp_fingerprint(ndpi_str, (char*)tcp_fps[i].fingerprint, tcp_fps[i].os);
   }
-  
+
   ndpi_str->risky_domain_automa.ac_automa = NULL; /* Initialized on demand */
   ndpi_str->trusted_issuer_dn = NULL;
 
@@ -5489,9 +5475,9 @@ int ndpi_add_tcp_fingerprint(struct ndpi_detection_module_struct *ndpi_str,
 			     char *fingerprint, enum operating_system_hint os) {
   u_int len;
   u_int16_t ret;
-  
+
   len = strlen(fingerprint);
-      
+
   if((ndpi_str->tcp_fingerprint_hashmap != NULL)
      && (ndpi_hash_find_entry(ndpi_str->tcp_fingerprint_hashmap, fingerprint, len, &ret) == 0)) {
     /* Duplicate fingerprint found */
@@ -5547,10 +5533,10 @@ int load_tcp_fingerprint_file_fd(struct ndpi_detection_module_struct *ndpi_str, 
   if(ndpi_str->tcp_fingerprint_hashmap == NULL
      && ndpi_hash_init(&ndpi_str->tcp_fingerprint_hashmap) != 0)
     return(-1);
-  
+
   while (fgets(buffer, sizeof(buffer), fd) != NULL) {
     char *fingerprint, *os, *tmp;
-    enum operating_system_hint os_num;    
+    enum operating_system_hint os_num;
     size_t len = strlen(buffer);
 
     if(len <= 1 || buffer[0] == '#')
@@ -5561,9 +5547,9 @@ int load_tcp_fingerprint_file_fd(struct ndpi_detection_module_struct *ndpi_str, 
 
     os = strtok_r(NULL, "\t", &tmp);
     if(!os) continue; else os_num = (enum operating_system_hint)atoi(os);
-    
+
     if(os_num >= os_hint_MAX_OS) continue;
-    
+
     if(ndpi_add_tcp_fingerprint(ndpi_str, fingerprint, os_num) == 0)
       num++;
   }
@@ -6937,25 +6923,25 @@ void ndpi_free_flow_data(struct ndpi_flow_struct* flow) {
     if (flow_is_proto(flow, NDPI_PROTOCOL_SSDP)) {
       if(flow->protos.ssdp.bootid)
       ndpi_free(flow->protos.ssdp.bootid);
-    
+
       if(flow->protos.ssdp.usn)
         ndpi_free(flow->protos.ssdp.usn);
-      
+
       if(flow->protos.ssdp.cache_controle)
         ndpi_free(flow->protos.ssdp.cache_controle);
 
       if(flow->protos.ssdp.location)
         ndpi_free(flow->protos.ssdp.location);
-      
+
       if(flow->protos.ssdp.household_smart_speaker_audio)
         ndpi_free(flow->protos.ssdp.household_smart_speaker_audio);
-      
+
       if(flow->protos.ssdp.rincon_household)
         ndpi_free(flow->protos.ssdp.rincon_household);
 
       if(flow->protos.ssdp.rincon_bootseq)
         ndpi_free(flow->protos.ssdp.rincon_bootseq);
-      
+
       if(flow->protos.ssdp.rincon_wifimode)
         ndpi_free(flow->protos.ssdp.rincon_wifimode);
 
@@ -6967,11 +6953,11 @@ void ndpi_free_flow_data(struct ndpi_flow_struct* flow) {
 
       if(flow->protos.ssdp.securelocation_upnp)
         ndpi_free(flow->protos.ssdp.securelocation_upnp);
-      
+
       if(flow->protos.ssdp.location_smart_speaker_audio)
         ndpi_free(flow->protos.ssdp.location_smart_speaker_audio);
 
-      if(flow->protos.ssdp.nt)  
+      if(flow->protos.ssdp.nt)
         ndpi_free(flow->protos.ssdp.nt);
 
       if(flow->protos.ssdp.nts)
@@ -6979,10 +6965,10 @@ void ndpi_free_flow_data(struct ndpi_flow_struct* flow) {
 
       if(flow->protos.ssdp.server)
         ndpi_free(flow->protos.ssdp.server);
-      
+
       if(flow->protos.ssdp.method)
         ndpi_free(flow->protos.ssdp.method);
-      
+
       if(flow->protos.ssdp.man)
         ndpi_free(flow->protos.ssdp.man);
 
@@ -6991,7 +6977,7 @@ void ndpi_free_flow_data(struct ndpi_flow_struct* flow) {
 
       if(flow->protos.ssdp.st)
         ndpi_free(flow->protos.ssdp.st);
-      
+
       if(flow->protos.ssdp.user_agent)
         ndpi_free(flow->protos.ssdp.user_agent);
     }
@@ -7214,15 +7200,15 @@ static int ndpi_init_packet(struct ndpi_detection_module_struct *ndpi_str,
 
 	    if(ndpi_str->tcp_fingerprint_hashmap != NULL) {
 	      u_int16_t ret;
-	      
+
 	      if(ndpi_hash_find_entry(ndpi_str->tcp_fingerprint_hashmap,
 				      fingerprint, strlen(fingerprint), &ret) == 0)
 		flow->tcp.os_hint = ret;
-	    }	    
+	    }
 	  }
 	}
       }
-      
+
       packet->payload_packet_len = l4_packet_len - tcp_header_len;
       packet->payload = ((u_int8_t *) packet->tcp) + tcp_header_len;
     } else {
@@ -8022,11 +8008,11 @@ static void ndpi_reconcile_protocols(struct ndpi_detection_module_struct *ndpi_s
 	    skip_risk = 1;
 	}
       }
-      
+
       if(!skip_risk)
 	ndpi_set_risk(ndpi_str, flow, NDPI_UNSAFE_PROTOCOL, NULL);
       break;
-      
+
     default:
       /* Nothing to do */
       break;
@@ -9207,10 +9193,10 @@ static ndpi_protocol ndpi_internal_detection_process_packet(struct ndpi_detectio
 	      default_ports = ndpi_str->proto_defaults[ret.proto.master_protocol ? ret.proto.master_protocol : ret.proto.app_protocol].tcp_default_ports;
 	    else
 	      default_ports = NULL;
-	    
+
 	    if(default_ports && (default_ports[0] != 0)) {
 	      char str[64];
-	      
+
 	      ndpi_set_risk(ndpi_str, flow, NDPI_KNOWN_PROTOCOL_ON_NON_STANDARD_PORT,
 			    ndpi_expected_ports_str(default_ports, str, sizeof(str)));
 	    }
@@ -11937,7 +11923,7 @@ static const struct cfg_param {
 
   { "rtp",           "search_for_stun",                         "disable", NULL, NULL, CFG_PARAM_ENABLE_DISABLE, __OFF(rtp_search_for_stun), NULL },
   { "rtp",           "max_packets_extra_dissection",            "32", "0", "255", CFG_PARAM_INT, __OFF(rtp_max_packets_extra_dissection), NULL },
-  
+
   { "openvpn",       "dpi.heuristics",                          "0x00", "0", "0x01", CFG_PARAM_INT, __OFF(openvpn_heuristics), NULL },
   { "openvpn",       "dpi.heuristics.num_messages",             "10", "0", "255", CFG_PARAM_INT, __OFF(openvpn_heuristics_num_msgs), NULL },
   { "openvpn",       "subclassification_by_ip",                 "enable", NULL, NULL, CFG_PARAM_ENABLE_DISABLE, __OFF(openvpn_subclassification_by_ip), NULL },
@@ -12159,7 +12145,7 @@ char *ndpi_dump_config(struct ndpi_detection_module_struct *ndpi_str, FILE *fd) 
       break;
     }
   }
-  
+
   return NULL;
 }
 
