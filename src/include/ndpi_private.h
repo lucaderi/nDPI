@@ -388,7 +388,7 @@ struct ndpi_detection_module_struct {
    * update automa_type above
    */
 
-  ndpi_str_hash *malicious_ja4_hashmap, *malicious_sha1_hashmap;
+  ndpi_str_hash *malicious_ja4_hashmap, *malicious_sha1_hashmap, *tcp_fingerprint_hashmap;
 
   ndpi_list *trusted_issuer_dn;
 

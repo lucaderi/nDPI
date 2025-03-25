@@ -3560,8 +3560,28 @@ struct ndpi_detection_module_struct *ndpi_init_detection_module(struct ndpi_glob
     return(NULL);
   }
 
-  ndpi_str->malicious_ja4_hashmap = NULL; /* Initialized on demand */
-  ndpi_str->malicious_sha1_hashmap = NULL; /* Initialized on demand */
+  ndpi_str->malicious_ja4_hashmap = NULL;   /* Initialized on demand */
+  ndpi_str->malicious_sha1_hashmap = NULL;  /* Initialized on demand */
+ 
+  if(ndpi_hash_init(&ndpi_str->tcp_fingerprint_hashmap) == 0) {
+#ifdef NDPI_ENABLE_DEBUG_MESSAGES
+    u_int num = 0;
+#endif
+    
+    for(i=0; tcp_fps[i].fingerprint != NULL; i++) {
+      if(ndpi_add_tcp_fingerprint(ndpi_str, (char*)tcp_fps[i].fingerprint, tcp_fps[i].os) == 0)
+#ifdef NDPI_ENABLE_DEBUG_MESSAGES
+	num++;
+#else
+      ;
+#endif
+    }
+
+#ifdef NDPI_ENABLE_DEBUG_MESSAGES
+    NDPI_LOG_DBG2(ndpi_str, "[NDPI] Loaded %u TCP fingeprints", num);
+#endif
+  }
+  
   ndpi_str->risky_domain_automa.ac_automa = NULL; /* Initialized on demand */
   ndpi_str->trusted_issuer_dn = NULL;
 
@@ -4425,6 +4445,9 @@ void ndpi_exit_detection_module(struct ndpi_detection_module_struct *ndpi_str) {
 
     if(ndpi_str->malicious_sha1_hashmap != NULL)
       ndpi_hash_free(&ndpi_str->malicious_sha1_hashmap);
+
+    if(ndpi_str->tcp_fingerprint_hashmap != NULL)
+      ndpi_hash_free(&ndpi_str->tcp_fingerprint_hashmap);
 
     ndpi_domain_classify_free(ndpi_str->custom_categories.sc_hostnames_shadow);
     ndpi_domain_classify_free(ndpi_str->custom_categories.sc_hostnames);
@@ -5446,6 +5469,102 @@ int load_malicious_sha1_file_fd(struct ndpi_detection_module_struct *ndpi_str, F
 
     if(ndpi_hash_add_entry(&ndpi_str->malicious_sha1_hashmap, first_comma,
 			   second_comma - first_comma, 0) == 0)
+      num++;
+  }
+
+  return num;
+}
+
+/* ************************************************************** */
+
+/*
+  Add a new TCP fingerprint
+
+  Return code:
+  0   OK
+  -1  Duplicated fingerprint
+  -2  Unable to add a new entry
+ */
+int ndpi_add_tcp_fingerprint(struct ndpi_detection_module_struct *ndpi_str,
+			     char *fingerprint, enum operating_system_hint os) {
+  u_int len;
+  u_int16_t ret;
+  
+  len = strlen(fingerprint);
+      
+  if((ndpi_str->tcp_fingerprint_hashmap != NULL)
+     && (ndpi_hash_find_entry(ndpi_str->tcp_fingerprint_hashmap, fingerprint, len, &ret) == 0)) {
+    /* Duplicate fingerprint found */
+    return(-1);
+  } else {
+    if(ndpi_hash_add_entry(&ndpi_str->tcp_fingerprint_hashmap, fingerprint, len,
+			   (u_int16_t)os) == 0) {
+      return(0);
+    } else
+      return(-2);
+  }
+}
+
+/* ******************************************************************** */
+
+/*
+ * Format:
+ *
+ * <TCP fingerprint>,<numeric OS>
+ * Example: 2_64_14600_8c07a80cc645,3
+ *
+ */
+int ndpi_load_tcp_fingerprint_file(struct ndpi_detection_module_struct *ndpi_str, const char *path)
+{
+  int rc;
+  FILE *fd;
+
+  if(!ndpi_str || !path)
+    return(-1);
+
+  fd = fopen(path, "r");
+  if(fd == NULL) {
+    NDPI_LOG_ERR(ndpi_str, "Unable to open file %s [%s]\n", path, strerror(errno));
+    return -1;
+  }
+
+  rc = load_tcp_fingerprint_file_fd(ndpi_str, fd);
+
+  fclose(fd);
+
+  return rc;
+}
+
+/* ******************************************************************** */
+
+int load_tcp_fingerprint_file_fd(struct ndpi_detection_module_struct *ndpi_str, FILE *fd) {
+  char buffer[128];
+  int num = 0;
+
+  if(!ndpi_str || !fd)
+    return(-1);
+
+  if(ndpi_str->tcp_fingerprint_hashmap == NULL
+     && ndpi_hash_init(&ndpi_str->tcp_fingerprint_hashmap) != 0)
+    return(-1);
+  
+  while (fgets(buffer, sizeof(buffer), fd) != NULL) {
+    char *fingerprint, *os, *tmp;
+    enum operating_system_hint os_num;    
+    size_t len = strlen(buffer);
+
+    if(len <= 1 || buffer[0] == '#')
+      continue;
+
+    fingerprint = strtok_r(buffer, "\t", &tmp);
+    if(!fingerprint) continue;
+
+    os = strtok_r(NULL, "\t", &tmp);
+    if(!os) continue; else os_num = (enum operating_system_hint)atoi(os);
+    
+    if(os_num >= os_hint_MAX_OS) continue;
+    
+    if(ndpi_add_tcp_fingerprint(ndpi_str, fingerprint, os_num) == 0)
       num++;
   }
 
@@ -7093,16 +7212,17 @@ static int ndpi_init_packet(struct ndpi_detection_module_struct *ndpi_str,
 
 	    flow->tcp.fingerprint = ndpi_strdup(fingerprint), flow->tcp.os_hint = os_hint_unknown;
 
-	    for(i=0; tcp_fps[i].fingerprint != NULL; i++) {
-	      if(strcmp(tcp_fps[i].fingerprint, fingerprint) == 0) {
-		flow->tcp.os_hint = tcp_fps[i].os;
-		break;
-	      }
-	    }
+	    if(ndpi_str->tcp_fingerprint_hashmap != NULL) {
+	      u_int16_t ret;
+	      
+	      if(ndpi_hash_find_entry(ndpi_str->tcp_fingerprint_hashmap,
+				      fingerprint, strlen(fingerprint), &ret) == 0)
+		flow->tcp.os_hint = ret;
+	    }	    
 	  }
 	}
       }
-
+      
       packet->payload_packet_len = l4_packet_len - tcp_header_len;
       packet->payload = ((u_int8_t *) packet->tcp) + tcp_header_len;
     } else {

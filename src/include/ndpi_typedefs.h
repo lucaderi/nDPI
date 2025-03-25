@@ -1291,7 +1291,7 @@ enum operating_system_hint {
   os_hint_android     = 4,
   os_hint_linux       = 5,
   os_hint_freebsd     = 6,
-  os_hint_unused2     = 7
+  os_hint_MAX_OS      = 7 /* Keep it as last */
 };
 
 struct os_fingerprint {
