@@ -114,8 +114,8 @@ int LLVMFuzzerTestOneInput(const uint8_t *Data, size_t Size) {
 #ifndef ENABLE_CONFIG2
     ndpi_set_config(workflow->ndpi_struct, "stun", "max_packets_extra_dissection", "40");
     ndpi_set_config(workflow->ndpi_struct, "zoom", "max_packets_extra_dissection", "255");
-#endif
     ndpi_set_config(workflow->ndpi_struct, "rtp", "search_for_stun", "1");
+#endif
     ndpi_set_config(workflow->ndpi_struct, "openvpn", "dpi.heuristics", "0x01");
     ndpi_set_config(workflow->ndpi_struct, "openvpn", "dpi.heuristics.num_messages", "20");
     ndpi_set_config(workflow->ndpi_struct, "tls", "metadata.ja4r_fingerprint", "1");
