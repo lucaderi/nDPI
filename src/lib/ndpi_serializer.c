@@ -99,8 +99,8 @@ int ndpi_json_string_escape(const char *src, int src_len, char *dst, int dst_max
 
     if (c < 0x20 /* ' ' */ || c == 0x7F) {
       ; // Non-printable ASCII character (skip)
-    } else if (c < 0x7F) {
-      /* Valid ASCII character (escape if required) */
+    } else if (c >= 0x20 && c <= 0x7E) {
+      // Valid ASCII character (escape if required by JSON)
       switch (c) {
       case '\\':
       case '"':
@@ -132,19 +132,19 @@ int ndpi_json_string_escape(const char *src, int src_len, char *dst, int dst_max
   	dst[j++] = c;
       }
 
-    } else if ((c >= 0xC2 && c <= 0xDF) && 
+    } else if ((c >= 0xC2 && c <= 0xDF) && (src_len - i) >= 2 && 
                ((u_char) src[i+1] >= 0x80 && (u_char) src[i+1] <= 0xBF)) {
       // 2-byte sequence (U+0080 to U+07FF)
       dst[j++] = c;
       dst[j++] = src[++i];
-    } else if ((c >= 0xE0 && c <= 0xEF) &&
+    } else if ((c >= 0xE0 && c <= 0xEF) && (src_len - i) >= 3 &&
                ((u_char) src[i+1] >= 0x80 && (u_char) src[i+1] <= 0xBF) &&
                ((u_char) src[i+2] >= 0x80 && (u_char) src[i+2] <= 0xBF)) {
       // 3-byte sequence (U+0800 to U+FFFF)
       dst[j++] = c;
       dst[j++] = src[++i];
       dst[j++] = src[++i];
-    } else if ((c >= 0xF0 && c <= 0xF4) &&
+    } else if ((c >= 0xF0 && c <= 0xF4) && (src_len - i) >= 4 &&
                ((u_char) src[i+1] >= 0x80 && (u_char) src[i+1] <= 0xBF) &&
                ((u_char) src[i+2] >= 0x80 && (u_char) src[i+2] <= 0xBF) &&
                ((u_char) src[i+3] >= 0x80 && (u_char) src[i+3] <= 0xBF)) {
