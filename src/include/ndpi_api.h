@@ -2455,7 +2455,20 @@ extern "C" {
    * @return Length of src string
    */
   size_t ndpi_strlcpy(char* dst, const char* src, size_t dst_len, size_t src_len);
-
+  
+  /**
+   * @brief Converts a string from ISO 8859 to UTF-8
+   *
+   * @param in String to convert
+   * @param in_len Source string lenght
+   * @param out Destination string buffer (UTF-8)
+   * @param out_len Length of destination string buffer. It must be at least (2*in_len)+1
+   *
+   * @return The destination string buffer
+   */
+  u_char* ndpi_str_to_utf8(u_char *in, u_int in_len, u_char *out, u_int out_len);
+  
+    
 #ifdef __cplusplus
 }
 #endif

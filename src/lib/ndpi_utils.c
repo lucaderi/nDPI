@@ -4266,7 +4266,7 @@ ndpi_protocol_qoe_category_t ndpi_find_protocol_qoe(struct ndpi_detection_module
   else
     return(ndpi_str->proto_defaults[protoId].qoeCategory);
 }
-			     
+
 /* ************************************************************** */
 
 /* https://gitlab.com/wireshark/wireshark/-/blob/master/epan/dissectors/packet-rtp.c */
@@ -4316,7 +4316,7 @@ const char* ndpi_rtp_payload_type2str(u_int8_t payload_type, u_int32_t evs_paylo
       case 0x7: return("AMR-WB IO 23.05 kbps");
       case 0x8: return("AMR-WB IO 23.85 kbps");
       case 0x9: return("AMR-WB IO 2.0 kbps SID");
-	
+
 	/* ** */
 	/* Dummy SWB 30 offset */
       case 0x3+30: return("SWB 9.6 kbps");
@@ -4328,7 +4328,7 @@ const char* ndpi_rtp_payload_type2str(u_int8_t payload_type, u_int32_t evs_paylo
       case 0x9+30: return("SWB 64 kbps");
       case 0xa+30: return("SWB 96 kbps");
       case 0xb+30: return("SWB 128 kbps");
-	
+
 
       case    48: return("EVS Primary SID 2.4");
       case   136: return("EVS AMR-WB IO 6.6");
@@ -4359,4 +4359,28 @@ const char* ndpi_rtp_payload_type2str(u_int8_t payload_type, u_int32_t evs_paylo
   }
 }
 
-			     
+/* ************************************************************** */
+
+u_char* ndpi_str_to_utf8(u_char *in, u_int in_len, u_char *out, u_int out_len) {
+  if(out_len < ((in_len*2)+1)) {
+    out[0] = '\0';
+  } else {
+    u_int i = 0, j = 0;
+
+    while((i < in_len) && (in[i] != '\0')) {
+      if(in[i] < 0x80) {
+	out[j] = in[i];
+	i++, j++;
+      } else {
+	out[j] = 0xC0 +(in[i] >> 6);
+	j++;
+	out[j] = 0x80 | (in[i] & 0x3F);
+	i++, j++;
+      }
+    }
+
+    out[j] = '\0';
+  }
+
+  return(out);
+}
