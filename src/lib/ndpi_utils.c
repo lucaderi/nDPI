@@ -4209,14 +4209,16 @@ char* ndpi_quick_decrypt(const char *encrypted_msg,
 
 /* ************************************************************** */
 
-const char* ndpi_print_os_hint(u_int8_t os_hint) {
+const char* ndpi_print_os_hint(ndpi_os os_hint) {
   switch(os_hint) {
-  case os_hint_windows:          return("Windows");
-  case os_hint_macos:            return("macOS");
-  case os_hint_ios_ipad_os:      return("iOS/iPad");
-  case os_hint_android:          return("Android");
-  case os_hint_linux:            return("Linux");
-  case os_hint_freebsd:          return("FreeBSD");
+  case ndpi_os_windows:          return("Windows");
+  case ndpi_os_macos:            return("macOS");
+  case ndpi_os_ios_ipad_os:      return("iOS/iPad");
+  case ndpi_os_android:          return("Android");
+  case ndpi_os_linux:            return("Linux");
+  case ndpi_os_freebsd:          return("FreeBSD");
+  default:
+    break;
   }
 
   return("Unknown");

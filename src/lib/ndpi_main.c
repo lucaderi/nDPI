@@ -5472,7 +5472,7 @@ int load_malicious_sha1_file_fd(struct ndpi_detection_module_struct *ndpi_str, F
   -2  Unable to add a new entry
  */
 int ndpi_add_tcp_fingerprint(struct ndpi_detection_module_struct *ndpi_str,
-			     char *fingerprint, enum operating_system_hint os) {
+			     char *fingerprint, ndpi_os os) {
   u_int len;
   u_int16_t ret;
 
@@ -5536,7 +5536,7 @@ int load_tcp_fingerprint_file_fd(struct ndpi_detection_module_struct *ndpi_str, 
 
   while (fgets(buffer, sizeof(buffer), fd) != NULL) {
     char *fingerprint, *os, *tmp;
-    enum operating_system_hint os_num;
+    ndpi_os os_num;
     size_t len = strlen(buffer);
 
     if(len <= 1 || buffer[0] == '#')
@@ -5546,9 +5546,9 @@ int load_tcp_fingerprint_file_fd(struct ndpi_detection_module_struct *ndpi_str, 
     if(!fingerprint) continue;
 
     os = strtok_r(NULL, "\t", &tmp);
-    if(!os) continue; else os_num = (enum operating_system_hint)atoi(os);
+    if(!os) continue; else os_num = (ndpi_os)atoi(os);
 
-    if(os_num >= os_hint_MAX_OS) continue;
+    if(os_num >= ndpi_os_MAX_OS) continue;
 
     if(ndpi_add_tcp_fingerprint(ndpi_str, fingerprint, os_num) == 0)
       num++;
@@ -7191,7 +7191,7 @@ static int ndpi_init_packet(struct ndpi_detection_module_struct *ndpi_str,
 		     sha_hash[0], sha_hash[1], sha_hash[2],
 		     sha_hash[3], sha_hash[4], sha_hash[5]);
 
-	    flow->tcp.fingerprint = ndpi_strdup(fingerprint), flow->tcp.os_hint = os_hint_unknown;
+	    flow->tcp.fingerprint = ndpi_strdup(fingerprint), flow->tcp.os_hint = ndpi_os_unknown;
 
 	    if(ndpi_str->tcp_fingerprint_hashmap != NULL) {
 	      u_int16_t ret;

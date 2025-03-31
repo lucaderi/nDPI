@@ -1280,20 +1280,20 @@ struct ndpi_metadata_monitoring {
   } protos;
 };
 
-enum operating_system_hint {
-  os_hint_unknown     = 0,
-  os_hint_windows     = 1,
-  os_hint_macos       = 2,
-  os_hint_ios_ipad_os = 3,
-  os_hint_android     = 4,
-  os_hint_linux       = 5,
-  os_hint_freebsd     = 6,
-  os_hint_MAX_OS      = 7 /* Keep it as last */
-};
+typedef enum {
+  ndpi_os_unknown     = 0,
+  ndpi_os_windows     = 1,
+  ndpi_os_macos       = 2,
+  ndpi_os_ios_ipad_os = 3,
+  ndpi_os_android     = 4,
+  ndpi_os_linux       = 5,
+  ndpi_os_freebsd     = 6,
+  ndpi_os_MAX_OS      = 7 /* Keep it as last */
+} ndpi_os;
 
 struct os_fingerprint {
   const char *fingerprint;
-  enum operating_system_hint os;
+  ndpi_os os;
 };
 
 struct rtp_info {
@@ -1377,7 +1377,7 @@ struct ndpi_flow_struct {
 
   struct {
     char *fingerprint;
-    enum operating_system_hint os_hint;
+    ndpi_os os_hint;
   } tcp;
 
   /*
