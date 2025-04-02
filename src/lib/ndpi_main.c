@@ -3481,6 +3481,8 @@ void ndpi_global_deinit(struct ndpi_global_context *g_ctx) {
       ndpi_lru_free_cache(g_ctx->msteams_global_cache);
     if(g_ctx->fpc_dns_global_cache)
       ndpi_lru_free_cache(g_ctx->fpc_dns_global_cache);
+    if(g_ctx->signal_global_cache)
+      ndpi_lru_free_cache(g_ctx->signal_global_cache);
 
     ndpi_free(g_ctx);
   }
@@ -3976,6 +3978,24 @@ int ndpi_finalize_initialization(struct ndpi_detection_module_struct *ndpi_str) 
                    ndpi_str->cfg.ookla_cache_num_entries);
     }
   }
+
+  if(ndpi_str->cfg.signal_cache_num_entries > 0) {
+    if(ndpi_str->cfg.signal_cache_scope == NDPI_LRUCACHE_SCOPE_GLOBAL) {
+      if(!ndpi_str->g_ctx->signal_global_cache) {
+        ndpi_str->g_ctx->signal_global_cache = ndpi_lru_cache_init(ndpi_str->cfg.signal_cache_num_entries,
+                                                                  ndpi_str->cfg.signal_cache_ttl, 1);
+      }
+      ndpi_str->signal_cache = ndpi_str->g_ctx->signal_global_cache;
+    } else {
+      ndpi_str->signal_cache = ndpi_lru_cache_init(ndpi_str->cfg.signal_cache_num_entries,
+                                                  ndpi_str->cfg.signal_cache_ttl, 0);
+    }
+    if(!ndpi_str->signal_cache) {
+      NDPI_LOG_ERR(ndpi_str, "Error allocating lru cache (num_entries %u)\n",
+                   ndpi_str->cfg.signal_cache_num_entries);
+    }
+  }
+    
   if(ndpi_str->cfg.bittorrent_cache_num_entries > 0) {
     if(ndpi_str->cfg.bittorrent_cache_scope == NDPI_LRUCACHE_SCOPE_GLOBAL) {
       if(!ndpi_str->g_ctx->bittorrent_global_cache) {
@@ -4383,6 +4403,10 @@ void ndpi_exit_detection_module(struct ndpi_detection_module_struct *ndpi_str) {
     if(!ndpi_str->cfg.ookla_cache_scope &&
        ndpi_str->ookla_cache)
       ndpi_lru_free_cache(ndpi_str->ookla_cache);
+
+    if(!ndpi_str->cfg.signal_cache_scope &&
+       ndpi_str->signal_cache)
+      ndpi_lru_free_cache(ndpi_str->signal_cache);
 
     if(!ndpi_str->cfg.bittorrent_cache_scope &&
        ndpi_str->bittorrent_cache)
@@ -11997,6 +12021,10 @@ static const struct cfg_param {
   { NULL,            "lru.fpc_dns.size",                        "1024", "0", "16777215", CFG_PARAM_INT, __OFF(fpc_dns_cache_num_entries), NULL },
   { NULL,            "lru.fpc_dns.ttl",                         "60", "0", "16777215", CFG_PARAM_INT, __OFF(fpc_dns_cache_ttl), NULL },
   { NULL,            "lru.fpc_dns.scope",                       "0", "0", "1", CFG_PARAM_INT, __OFF(fpc_dns_cache_scope), clbk_only_with_global_ctx },
+
+  { NULL,            "lru.signal.size",                         "32768", "0", "16777215", CFG_PARAM_INT, __OFF(signal_cache_num_entries), NULL },
+  { NULL,            "lru.signal.ttl",                          "0", "0", "16777215", CFG_PARAM_INT, __OFF(signal_cache_ttl), NULL },
+  { NULL,            "lru.signal.scope",                        "0", "0", "1", CFG_PARAM_INT, __OFF(signal_cache_scope), clbk_only_with_global_ctx },
 
   { NULL, NULL, NULL, NULL, NULL, 0, -1, NULL },
 };

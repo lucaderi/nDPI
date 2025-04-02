@@ -190,6 +190,9 @@ struct ndpi_global_context {
   
   /* FPC DNS cache */
   struct ndpi_lru_cache *fpc_dns_global_cache;
+
+  /* Signal STUN cache */
+  struct ndpi_lru_cache *signal_global_cache;
 };
 
 #define CFG_MAX_LEN	256
@@ -251,7 +254,10 @@ struct ndpi_detection_module_config_struct {
   int fpc_dns_cache_num_entries;
   int fpc_dns_cache_ttl;
   int fpc_dns_cache_scope;
-  
+  int signal_cache_num_entries;
+  int signal_cache_ttl;
+  int signal_cache_scope;
+
   /* Protocols */
 
   int http_request_content_type_enabled;
@@ -414,6 +420,9 @@ struct ndpi_detection_module_struct {
 
   /* NDPI_PROTOCOL_OOKLA */
   struct ndpi_lru_cache *ookla_cache;
+
+  /* NDPI_PROTOCOL_SIGNAL */
+  struct ndpi_lru_cache *signal_cache;
 
   /* NDPI_PROTOCOL_BITTORRENT */
   struct ndpi_lru_cache *bittorrent_cache;
@@ -702,6 +711,12 @@ void switch_extra_dissection_to_tls_obfuscated_heur(struct ndpi_detection_module
 int ookla_search_into_cache(struct ndpi_detection_module_struct* ndpi_struct,
                             struct ndpi_flow_struct* flow);
 void ookla_add_to_cache(struct ndpi_detection_module_struct *ndpi_struct,
+                        struct ndpi_flow_struct *flow);
+
+/* SIGNAL */
+int signal_search_into_cache(struct ndpi_detection_module_struct* ndpi_struct,
+                            struct ndpi_flow_struct* flow);
+void signal_add_to_cache(struct ndpi_detection_module_struct *ndpi_struct,
                         struct ndpi_flow_struct *flow);
 
 /* QUIC */
