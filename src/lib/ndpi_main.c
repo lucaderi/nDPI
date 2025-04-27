@@ -3414,8 +3414,21 @@ static const char *categories[NDPI_PROTOCOL_NUM_CATEGORIES] = {
   "Crypto_Currency",
   "Gambling",
   "Health",
-  "ArtifIntelligence"
-
+  "ArtifIntelligence",
+  "Finance",
+  "News",
+  "Sport",
+  "Business",
+  "Internet",
+  "BlockChain/Cypto",
+  "Blog/Forum",
+  "Government",
+  "Education",
+  "CNR/Proxy",
+  "Hw/Sw",
+  "Dating",
+  "Travel",
+  "Food"
 };
 
 #if !defined(NDPI_CFFI_PREPROCESSING) && defined(__linux__)

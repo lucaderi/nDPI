@@ -1060,7 +1060,12 @@ typedef enum {
 
 #define NUM_BREEDS (NDPI_PROTOCOL_UNRATED+1)
 
-/* Abstract categories to group the protocols. */
+/*
+  Abstract categories to group the protocols.
+
+  IMPORTANT
+  Keep in sync with categories[] on ndpi_main.c
+*/
 typedef enum {
   NDPI_PROTOCOL_CATEGORY_UNSPECIFIED = 0,   /* For general services and unknown protocols */
   NDPI_PROTOCOL_CATEGORY_MEDIA,             /* Multimedia and streaming */
@@ -1144,6 +1149,7 @@ typedef enum {
   NDPI_PROTOCOL_CATEGORY_HARDWARE_SOFTWARE,
   NDPI_PROTOCOL_CATEGORY_DATING,
   NDPI_PROTOCOL_CATEGORY_TRAVEL,
+  NDPI_PROTOCOL_CATEGORY_FOOD,
 
   /*
     IMPORTANT
