@@ -140,6 +140,7 @@ Further information available aathttps://github.com/ntop/nDPI/blob/dev/doc/confi
  - Remove `NDPI_TLS_SUSPICIOUS_ESNI_USAGE` flow risk (#2778)
  - Rename ndpi_search_tls_udp to ndpi_search_dtls
  - Rename ips_match to ndpi_ips_match
+ - Added 14 new categories
 
 **Full Changelog**: https://github.com/ntop/nDPI/compare/4.12...4.14
 
