@@ -146,7 +146,7 @@ echo "(3) RiotGames IPs are available in $DEST"
 
 echo "(1) Downloading Threema..."
 DEST=../src/lib/inc_generated/ndpi_asn_threema.c.inc
-create_list NDPI_PROTOCOL_THREEMA $DEST "" "AS29691"
+create_list NDPI_PROTOCOL_THREEMA $DEST "" "AS29691" "AS15576"
 echo "(3) Threema IPs are available in $DEST"
 
 echo "(1) Downloading AliBaba..."
@@ -172,7 +172,7 @@ echo "(3) Line IPs are available in $DEST"
 echo "(1) Downloading VK..."
 DEST=../src/lib/inc_generated/ndpi_asn_vk.c.inc
 # https://bgpview.io/search/vkontakte
-create_list NDPI_PROTOCOL_VK $DEST "" "AS47541" "AS207581" "AS28709" "AS47542" "AS62243"
+create_list NDPI_PROTOCOL_VK $DEST "" "AS47541" "AS207581" "AS28709" "AS47542" "AS62243" "AS47764"
 echo "(3) VK IPs are available in $DEST"
 
 echo "(1) Downloading Yandex..."
