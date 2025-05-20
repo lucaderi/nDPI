@@ -5794,7 +5794,6 @@ void ndpi_set_bitmask_protocol_detection(char *label, struct ndpi_detection_modu
     if(b_add_detection_bitmask)
       NDPI_ADD_PROTOCOL_TO_BITMASK(ndpi_str->callback_buffer[idx].detection_bitmask, ndpi_protocol_id);
 
-    NDPI_SAVE_AS_BITMASK(ndpi_str->callback_buffer[idx].excluded_protocol_bitmask, ndpi_protocol_id);
   } else {
     NDPI_LOG_DBG(ndpi_str, "[NDPI] Protocol %s/%u disabled\n", label, ndpi_protocol_id);
   }
