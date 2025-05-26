@@ -7241,7 +7241,7 @@ static int ndpi_init_packet(struct ndpi_detection_module_struct *ndpi_str,
 		} else if(ndpi_str->cfg.tcp_fingerprint_format == NDPI_MUONFP_TCP_FINGERPRINT) {
 		  rc = snprintf(&fingerprint[fp_idx], sizeof(fingerprint)-fp_idx, "%s%u", (i > 0) ? "-" : "", kind);
 
-		  if((rc < 0) || ((int)(fp_idx + rc) == sizeof(options_fp)))
+		  if((rc < 0) || ((int)(fp_idx + rc) == sizeof(fingerprint)))
 		    break;
 
 		  fp_idx += rc;
@@ -7305,7 +7305,8 @@ static int ndpi_init_packet(struct ndpi_detection_module_struct *ndpi_str,
 		  }
 
 		  i += len;
-		}
+		} else
+		  break;
 	      } /* for */
 	    }
 
