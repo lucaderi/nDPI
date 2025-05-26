@@ -7324,21 +7324,25 @@ static int ndpi_init_packet(struct ndpi_detection_module_struct *ndpi_str,
 	      break;
 
 	    case NDPI_MUONFP_TCP_FINGERPRINT:
-	      if(tcp_mss > 0)
-		rc = snprintf(&fingerprint[fp_idx], sizeof(fingerprint)-fp_idx, ":%u", tcp_mss);
-	      else
-		rc = snprintf(&fingerprint[fp_idx], sizeof(fingerprint)-fp_idx, ":");
-
-	      if(rc > 0) {
-		fp_idx += rc;
-
-		if(tcp_wscale > 0)
-		  rc = snprintf(&fingerprint[fp_idx], sizeof(fingerprint)-fp_idx, ":%u", tcp_wscale);
+	      if(fp_idx < sizeof(fingerprint)) {
+		if(tcp_mss > 0)
+		  rc = snprintf(&fingerprint[fp_idx], sizeof(fingerprint)-fp_idx, ":%u", tcp_mss);
 		else
 		  rc = snprintf(&fingerprint[fp_idx], sizeof(fingerprint)-fp_idx, ":");
 
-		if(rc > 0)
+		if(rc > 0) {
 		  fp_idx += rc;
+
+		  if(fp_idx < sizeof(fingerprint)) {
+		    if(tcp_wscale > 0)
+		      rc = snprintf(&fingerprint[fp_idx], sizeof(fingerprint)-fp_idx, ":%u", tcp_wscale);
+		    else
+		      rc = snprintf(&fingerprint[fp_idx], sizeof(fingerprint)-fp_idx, ":");
+
+		    if(rc > 0)
+		      fp_idx += rc;
+		  }
+		}
 	      }
 	      break;
 	    }
