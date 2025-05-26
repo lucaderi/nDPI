@@ -145,7 +145,6 @@ static void (*_ndpi_flow_free)(void *ptr);
 
 /* ****************************************** */
 
-#include "ndpi_os_fingerprint.c.inc"
 
 static ndpi_risk_info ndpi_known_risks[] = {
   { NDPI_NO_RISK,                               NDPI_RISK_LOW,    CLIENT_FAIR_RISK_PERCENTAGE, NDPI_NO_ACCOUNTABILITY  },
@@ -3580,11 +3579,7 @@ struct ndpi_detection_module_struct *ndpi_init_detection_module(struct ndpi_glob
   ndpi_str->malicious_ja4_hashmap = NULL;   /* Initialized on demand */
   ndpi_str->malicious_sha1_hashmap = NULL;  /* Initialized on demand */
 
-  if(ndpi_hash_init(&ndpi_str->tcp_fingerprint_hashmap) == 0) {
-    for(i=0; tcp_fps[i].fingerprint != NULL; i++)
-      ndpi_add_tcp_fingerprint(ndpi_str, (char*)tcp_fps[i].fingerprint, tcp_fps[i].os);
-  }
-
+  ndpi_load_tcp_fingerprints(ndpi_str);
   ndpi_str->risky_domain_automa.ac_automa = NULL; /* Initialized on demand */
   ndpi_str->trusted_issuer_dn = NULL;
 
@@ -5520,102 +5515,6 @@ int load_malicious_sha1_file_fd(struct ndpi_detection_module_struct *ndpi_str, F
   return num;
 }
 
-/* ************************************************************** */
-
-/*
-  Add a new TCP fingerprint
-
-  Return code:
-  0   OK
-  -1  Duplicated fingerprint
-  -2  Unable to add a new entry
- */
-int ndpi_add_tcp_fingerprint(struct ndpi_detection_module_struct *ndpi_str,
-			     char *fingerprint, ndpi_os os) {
-  u_int len;
-  u_int16_t ret;
-
-  len = strlen(fingerprint);
-
-  if((ndpi_str->tcp_fingerprint_hashmap != NULL)
-     && (ndpi_hash_find_entry(ndpi_str->tcp_fingerprint_hashmap, fingerprint, len, &ret) == 0)) {
-    /* Duplicate fingerprint found */
-    return(-1);
-  } else {
-    if(ndpi_hash_add_entry(&ndpi_str->tcp_fingerprint_hashmap, fingerprint, len,
-			   (u_int16_t)os) == 0) {
-      return(0);
-    } else
-      return(-2);
-  }
-}
-
-/* ******************************************************************** */
-
-/*
- * Format:
- *
- * <TCP fingerprint>,<numeric OS>
- * Example: 2_64_14600_8c07a80cc645,3
- *
- */
-int ndpi_load_tcp_fingerprint_file(struct ndpi_detection_module_struct *ndpi_str, const char *path)
-{
-  int rc;
-  FILE *fd;
-
-  if(!ndpi_str || !path)
-    return(-1);
-
-  fd = fopen(path, "r");
-  if(fd == NULL) {
-    NDPI_LOG_ERR(ndpi_str, "Unable to open file %s [%s]\n", path, strerror(errno));
-    return -1;
-  }
-
-  rc = load_tcp_fingerprint_file_fd(ndpi_str, fd);
-
-  fclose(fd);
-
-  return rc;
-}
-
-/* ******************************************************************** */
-
-int load_tcp_fingerprint_file_fd(struct ndpi_detection_module_struct *ndpi_str, FILE *fd) {
-  char buffer[128];
-  int num = 0;
-
-  if(!ndpi_str || !fd)
-    return(-1);
-
-  if(ndpi_str->tcp_fingerprint_hashmap == NULL
-     && ndpi_hash_init(&ndpi_str->tcp_fingerprint_hashmap) != 0)
-    return(-1);
-
-  while (fgets(buffer, sizeof(buffer), fd) != NULL) {
-    char *fingerprint, *os, *tmp;
-    ndpi_os os_num;
-    size_t len = strlen(buffer);
-
-    if(len <= 1 || buffer[0] == '#')
-      continue;
-
-    fingerprint = strtok_r(buffer, "\t", &tmp);
-    if(!fingerprint) continue;
-
-    os = strtok_r(NULL, "\t", &tmp);
-    if(!os) continue; else os_num = (ndpi_os)atoi(os);
-
-    if(os_num >= ndpi_os_MAX_OS) continue;
-
-    if(ndpi_add_tcp_fingerprint(ndpi_str, fingerprint, os_num) == 0)
-      num++;
-  }
-
-  return num;
-}
-
 /* ******************************************************************** */
 
 /*
@@ -7346,18 +7245,12 @@ static int ndpi_init_packet(struct ndpi_detection_module_struct *ndpi_str,
 	      break;
 	    }
 
-	    flow->tcp.fingerprint = ndpi_strdup(fingerprint), flow->tcp.os_hint = ndpi_os_unknown;
+	    flow->tcp.fingerprint = ndpi_strdup(fingerprint);
 
 	    if(ndpi_str->cfg.tcp_fingerprint_raw_enabled)
 	      flow->tcp.fingerprint_raw = ndpi_strdup(options_fp);
 
-	    if(ndpi_str->tcp_fingerprint_hashmap != NULL) {
-	      u_int16_t ret;
-
-	      if(ndpi_hash_find_entry(ndpi_str->tcp_fingerprint_hashmap,
-				      fingerprint, strlen(fingerprint), &ret) == 0)
-		flow->tcp.os_hint = ret;
-	    }
+	    flow->tcp.os_hint = ndpi_get_os_from_tcp_fingerprint(ndpi_str, flow->tcp.fingerprint);
 	  }
 	}
       }
