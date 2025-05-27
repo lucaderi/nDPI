@@ -7114,7 +7114,7 @@ static int ndpi_init_packet(struct ndpi_detection_module_struct *ndpi_str,
 	      */
 
 	      if(tcp_win == 1024)
-		msg = "Massive scanner detected (probably massscan)";
+		msg = "Massive scanner detected (probably masscan)";
 	      else if(tcp_win == 65535)
 		msg = "Massive scanner detected (probably zmap)";
 	      else
