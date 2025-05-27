@@ -175,7 +175,7 @@ static ndpi_risk_info ndpi_known_risks[] = {
   { NDPI_HTTP_SUSPICIOUS_CONTENT,               NDPI_RISK_HIGH,   CLIENT_HIGH_RISK_PERCENTAGE, NDPI_SERVER_ACCOUNTABLE },
   { NDPI_RISKY_ASN,                             NDPI_RISK_MEDIUM, CLIENT_FAIR_RISK_PERCENTAGE, NDPI_SERVER_ACCOUNTABLE },
   { NDPI_RISKY_DOMAIN,                          NDPI_RISK_MEDIUM, CLIENT_FAIR_RISK_PERCENTAGE, NDPI_SERVER_ACCOUNTABLE },
-  { NDPI_MALICIOUS_FINGERPRINT,                 NDPI_RISK_MEDIUM, CLIENT_FAIR_RISK_PERCENTAGE, NDPI_CLIENT_ACCOUNTABLE },
+  { NDPI_MALICIOUS_FINGERPRINT,                 NDPI_RISK_HIGH,   CLIENT_HIGH_RISK_PERCENTAGE, NDPI_CLIENT_ACCOUNTABLE },
   { NDPI_MALICIOUS_SHA1_CERTIFICATE,            NDPI_RISK_MEDIUM, CLIENT_FAIR_RISK_PERCENTAGE, NDPI_SERVER_ACCOUNTABLE },
   { NDPI_DESKTOP_OR_FILE_SHARING_SESSION,       NDPI_RISK_LOW,    CLIENT_FAIR_RISK_PERCENTAGE, NDPI_BOTH_ACCOUNTABLE   },
   { NDPI_TLS_UNCOMMON_ALPN,                     NDPI_RISK_MEDIUM, CLIENT_FAIR_RISK_PERCENTAGE, NDPI_CLIENT_ACCOUNTABLE },
@@ -7143,7 +7143,7 @@ static int ndpi_init_packet(struct ndpi_detection_module_struct *ndpi_str,
 
 	      ndpi_set_risk(ndpi_str, flow, NDPI_MALICIOUS_FINGERPRINT, (char*)msg);
 	    } else {
-	      for(i=0; i<options_len; ) {
+	      for(i=0; i<options_len; /* don't increase here */) {
 		u_int8_t kind = options[i];
 
 #ifdef DEBUG_TCP_OPTIONS
@@ -7194,25 +7194,25 @@ static int ndpi_init_packet(struct ndpi_detection_module_struct *ndpi_str,
 		    int j = i+2;
 		    u_int8_t opt_len = len - 2;
 
-		    if(ndpi_str->cfg.tcp_fingerprint_format == NDPI_MUONFP_TCP_FINGERPRINT) {
-		      if((kind == 2 /* Maximum segment size */) || (kind == 3 /* TCP window scale */)) {
-			u_int32_t val = 0;
+		    if((kind == 2 /* Maximum segment size */) || (kind == 3 /* TCP window scale */)) {
+		      u_int32_t val = 0;
 
-			if(opt_len == 1)
-			  val = options[j];
-			else if(opt_len == 2)
-			  val = (options[j] << 8) + options[j+1];
-			else if(opt_len == 3)
-			  val = (options[j] << 16) + (options[j+1] << 8) + options[j+2];
-			else if(opt_len == 4)
-			  val = (options[j] << 24) + (options[j+1] << 16) + (options[j+2] << 8) + options[j+3];
+		      if(opt_len == 1)
+			val = options[j];
+		      else if(opt_len == 2)
+			val = (options[j] << 8) + options[j+1];
+		      else if(opt_len == 3)
+			val = (options[j] << 16) + (options[j+1] << 8) + options[j+2];
+		      else if(opt_len == 4)
+			val = (options[j] << 24) + (options[j+1] << 16) + (options[j+2] << 8) + options[j+3];
 
-			if(kind == 2)
-			  tcp_mss = val;
-			else if(kind == 3)
-			  tcp_wscale = val;
-		      }
-		    } else if(ndpi_str->cfg.tcp_fingerprint_format == NDPI_NATIVE_TCP_FINGERPRINT) {
+		      if(kind == 2)
+			tcp_mss = val;
+		      else if(kind == 3)
+			tcp_wscale = val;
+		    }
+
+		    if(ndpi_str->cfg.tcp_fingerprint_format == NDPI_NATIVE_TCP_FINGERPRINT) {
 		      while((opt_len > 0) && (j < options_len)) {
 			rc = snprintf(&options_fp[options_fp_len], sizeof(options_fp)-options_fp_len, "%02x", options[j]);
 			if((rc < 0) || ((int)(options_fp_len + rc) == sizeof(options_fp))) break;
@@ -7227,6 +7227,22 @@ static int ndpi_init_packet(struct ndpi_detection_module_struct *ndpi_str,
 		} else
 		  break;
 	      } /* for */
+
+	      if((options_len == 4) && (tcp_mss > 0)) {
+		/*
+		  Not inherently malicious, but unusual for modern general-purpose OSes.
+		  More suspicious if coming from a device that should support full TCP options (e.g., a Windows/Linux server).
+		  Less suspicious if from an embedded device or legacy system.
+
+		  For this reason we ignore packets originating from private IP
+		  that might be originated by outdated systems.
+		*/
+		if(packet->iphv6 /* Modern IP stack */
+		   || (packet->iph
+		       && ndpi_is_public_ipv4(ntohl(packet->iph->saddr))))
+		  ndpi_set_risk(ndpi_str, flow, NDPI_MALICIOUS_FINGERPRINT,
+				"Unusual TCP fingerprint (scanner detected?)");
+	      }
 	    }
 
 #ifdef DEBUG_TCP_OPTIONS
