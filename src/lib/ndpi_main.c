@@ -5224,19 +5224,23 @@ int load_category_file_fd(struct ndpi_detection_module_struct *ndpi_str,
         line[i] = '\0';
         break;
       }
-      if (line[i] != '-' && line[i] != '.' && ndpi_isalnum(line[i]) == 0
+      
+      if (line[i] != '-'
+	  && line[i] != '.'
+	  && line[i] != ':'
+	  && line[i] != '/'
+	  && ndpi_isalnum(line[i]) == 0
           /* non standard checks for the sake of compatibility */
           && line[i] != '_')
         break;
     }
 
-    if (i != len - 2 && i != len - 1)
-      {
-	NDPI_LOG_ERR(ndpi_str, "[NDPI] Failed to read file line #%u, invalid characters found\n",
-		     lines_read);
-	failed_lines++;
-	continue;
-      }
+    if ((i != len - 2) && (i != len - 1) && (line[i] != '\0')) {
+      NDPI_LOG_ERR(ndpi_str, "[NDPI] Failed to read file line #%u [%s], invalid characters [%c] found [pos: %u]\n",
+		   lines_read, line, line[i], i);
+      failed_lines++;
+      continue;
+    }
 
     if(ndpi_load_category(ndpi_str, line, category_id, NULL) >= 0)
       num_loaded++;
@@ -5244,6 +5248,7 @@ int load_category_file_fd(struct ndpi_detection_module_struct *ndpi_str,
 
   if(failed_lines)
     return(-1 * failed_lines);
+  
   return(num_loaded);
 }
 
@@ -8602,6 +8607,7 @@ int ndpi_load_ip_category(struct ndpi_detection_module_struct *ndpi_str,
       NDPI_LOG_DBG2(ndpi_str, "Invalid ip4/ip4+netmask: %s\n", ip_address_and_mask);
       return(-1);
     }
+
     node = add_to_ptree(ndpi_str->custom_categories.ipAddresses_shadow, AF_INET, &pin, bits);
   } else if(is_ipv6 && ndpi_str->custom_categories.ipAddresses6_shadow) {
     struct in6_addr pin6;
