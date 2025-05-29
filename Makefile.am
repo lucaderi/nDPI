@@ -31,6 +31,7 @@ EXTRA_DIST = README.md README.fuzzer.md CHANGELOG.md CONTRIBUTING.md \
 		lists/protocols/266_salesforce.list \
 		lists/public_suffix_list.dat \
 		lists/README.md \
+		lists/protocols/README.md \
 	sonar-project.properties .github .ci-ignore
 
 doc:
