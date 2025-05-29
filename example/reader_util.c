@@ -85,7 +85,7 @@ u_int8_t enable_doh_dot_detection = 0;
 extern bool do_load_lists;
 extern int malloc_size_stats;
 extern int monitoring_enabled;
-extern char *_protocolsDirPath;
+extern char *protocolsDirPath;
 
 /* ****************************************************** */
 
@@ -444,8 +444,8 @@ struct ndpi_workflow* ndpi_workflow_init(const struct ndpi_workflow_prefs * pref
     return NULL;
   }
 
-  if(_protocolsDirPath != NULL)
-    ndpi_load_protocols_dir(module, _protocolsDirPath);
+  if(protocolsDirPath != NULL)
+    ndpi_load_protocols_dir(module, protocolsDirPath);
   
   workflow = ndpi_calloc(1, sizeof(struct ndpi_workflow));
   if(workflow == NULL) {
