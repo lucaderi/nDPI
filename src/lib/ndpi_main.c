@@ -5416,7 +5416,7 @@ int ndpi_load_categories_dir(struct ndpi_detection_module_struct *ndpi_str,
 */
 int ndpi_load_protocols_dir(struct ndpi_detection_module_struct *ndpi_str,
 			    char *dir_path) {
-!  DIR *dirp;
+  DIR *dirp;
   struct dirent *dp;
   int failed_files = 0;
   int num_loaded = 0;
