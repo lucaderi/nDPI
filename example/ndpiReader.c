@@ -95,7 +95,7 @@ static ndpi_serialization_format serialization_format = ndpi_serialization_forma
 static char* domain_to_check = NULL;
 static char* ip_port_to_check = NULL;
 static u_int8_t ignore_vlanid = 0;
-char *protocolsDirPath       = NULL; /**< Directory containing protocol files */
+extern char *protocolsDirPath; /**< Directory containing protocol files */
 FILE *fingerprint_fp         = NULL; /**< for flow fingerprint export */
 #ifdef __linux__
 static char *bind_mask = NULL;
