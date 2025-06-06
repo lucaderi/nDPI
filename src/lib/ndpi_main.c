@@ -10986,6 +10986,8 @@ char *ndpi_get_proto_breed_name(ndpi_protocol_breed_t breed_id) {
 }
 
 ndpi_protocol_breed_t ndpi_get_breed_by_name(const char *name) {
+  int i;
+  
   if(!name)
     return(NDPI_PROTOCOL_UNRATED);
 
@@ -10994,9 +10996,10 @@ ndpi_protocol_breed_t ndpi_get_breed_by_name(const char *name) {
 
   /* Cache the lowercased first character of 'name' */
   const unsigned char fc = tolower((unsigned char)*name);
-
-  for(int i = NDPI_PROTOCOL_SAFE; i <= NDPI_PROTOCOL_UNRATED; i++) {
+  
+  for(i = NDPI_PROTOCOL_SAFE; i <= NDPI_PROTOCOL_UNRATED; i++) {
     char *breed_name = ndpi_get_proto_breed_name((ndpi_protocol_breed_t)i);
+    
     if(breed_name && tolower((unsigned char)*breed_name) == fc) {
       if(strcasecmp(breed_name + 1, name + 1) == 0)
         return((ndpi_protocol_breed_t)i);
