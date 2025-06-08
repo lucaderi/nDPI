@@ -424,15 +424,15 @@ AS_IF([test "${with_local_libgcrypt+set}" = set],[
 ])
 
 dnl> PCRE2
-PCRE2_ENABLED=0
-AC_ARG_WITH(pcre2, AS_HELP_STRING([--with-pcre2], [Enable nDPI build with libpcre2]))
-if test "${with_pcre2+set}" = set; then :
-  AC_CHECK_LIB(pcre2-8, pcre2_compile_8, AC_DEFINE_UNQUOTED(HAVE_PCRE2, 1, [libpcre2(-dev) is present]))
-  if test "x$ac_cv_lib_pcre2_8_pcre2_compile_8" = xyes; then :
-    ADDITIONAL_LIBS="${ADDITIONAL_LIBS} -lpcre2-8"
-    PCRE2_ENABLED=1
-  fi
+dnl> PCRE2_ENABLED=0
+dnl> AC_ARG_WITH(pcre2, AS_HELP_STRING([--with-pcre2], [Enable nDPI build with libpcre2]))
+dnl> if test "${with_pcre2+set}" = set; then :
+AC_CHECK_LIB(pcre2-8, pcre2_compile_8, AC_DEFINE_UNQUOTED(HAVE_PCRE2, 1, [libpcre2(-dev) is present]))
+if test "x$ac_cv_lib_pcre2_8_pcre2_compile_8" = xyes; then :
+  ADDITIONAL_LIBS="${ADDITIONAL_LIBS} -lpcre2-8"
+  PCRE2_ENABLED=1
 fi
+dnl> fi
 
 dnl> GeoIP
 AC_ARG_WITH(maxminddb, AS_HELP_STRING([--with-maxminddb], [Enable nDPI build with libmaxminddb]))
