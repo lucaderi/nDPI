@@ -4868,14 +4868,14 @@ void ndpi_exit_detection_module(struct ndpi_detection_module_struct *ndpi_str) {
   if(ndpi_str != NULL) {
     unsigned int i;
 
-    ndpi_bitmask_dealloc(ndpi_str->detection_bitmask);
+    ndpi_bitmask_free(ndpi_str->detection_bitmask);
     ndpi_free(ndpi_str->detection_bitmask);
 
-    ndpi_bitmask_dealloc(&ndpi_str->cfg.debug_bitmask);
-    ndpi_bitmask_dealloc(&ndpi_str->cfg.ip_list_bitmask);
-    ndpi_bitmask_dealloc(&ndpi_str->cfg.monitoring);
-    ndpi_bitmask_dealloc(&ndpi_str->cfg.flowrisk_bitmask);
-    ndpi_bitmask_dealloc(&ndpi_str->cfg.flowrisk_info_bitmask);
+    ndpi_bitmask_free(&ndpi_str->cfg.debug_bitmask);
+    ndpi_bitmask_free(&ndpi_str->cfg.ip_list_bitmask);
+    ndpi_bitmask_free(&ndpi_str->cfg.monitoring);
+    ndpi_bitmask_free(&ndpi_str->cfg.flowrisk_bitmask);
+    ndpi_bitmask_free(&ndpi_str->cfg.flowrisk_info_bitmask);
 
     for (i = 0; i < ndpi_str->proto_defaults_num_allocated; i++) {
       if(ndpi_str->proto_defaults[i].protoName)
