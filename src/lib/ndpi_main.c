@@ -7902,7 +7902,7 @@ static int ndpi_init_packet(struct ndpi_detection_module_struct *ndpi_str,
 		      else if(opt_len == 3)
 			val = (options[j] << 16) + (options[j+1] << 8) + options[j+2];
 		      else if(opt_len == 4)
-			val = (options[j] << 24) + (options[j+1] << 16) + (options[j+2] << 8) + options[j+3];
+			val = ((u_int32_t)options[j] << 24) + (options[j+1] << 16) + (options[j+2] << 8) + options[j+3];
 
 		      if(kind == 2)
 			tcp_mss = val;
