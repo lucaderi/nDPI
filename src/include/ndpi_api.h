@@ -453,11 +453,21 @@ extern "C" {
    * Find out if a given category is custom/user-defined
    *
    * @par     category      = the category associated to the protocol
-   * @return  1 if this is a custom user category, 0 otherwise
+   * @return  True if this is a custom user category, false otherwise
    *
    */
-  int ndpi_is_custom_category(ndpi_protocol_category_t category);
+  bool ndpi_is_custom_category(ndpi_protocol_category_t category);
 
+  /**
+   * Find out if a given protocol is custom/user-defined
+   *
+   * @par     ndpi_str      = the detection module
+   * @par     proto_id      = the proto_id to check
+   * @return  True if this is a custom user protocol, false otherwise (nDPI protocol already supported in the engine)
+   *
+   */
+  bool ndpi_is_custom_protocol(struct ndpi_detection_module_struct *ndpi_str, u_int16_t proto_id);
+  
   /**
    * Overwrite a protocol category defined by nDPI with the custom category
    *

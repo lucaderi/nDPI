@@ -247,8 +247,6 @@ static int addDefaultPort(struct ndpi_detection_module_struct *ndpi_str,
                           const char *_func,
                           int _line);
 
-int ndpi_is_custom_protocol(struct ndpi_detection_module_struct *ndpi_str, u_int16_t proto_id);
-
 /* ****************************************** */
 
 ndpi_custom_dga_predict_fctn ndpi_dga_function = NULL;
@@ -5130,11 +5128,12 @@ u_int ndpi_get_num_internal_protocols(void) {
 
 /* ******************************************************************** */
 
-int ndpi_is_custom_protocol(struct ndpi_detection_module_struct *ndpi_str, u_int16_t proto_id)
+bool ndpi_is_custom_protocol(struct ndpi_detection_module_struct *ndpi_str, u_int16_t proto_id)
 {
   if(!ndpi_str || proto_id >= ndpi_str->proto_defaults_num_allocated)
-    return 0;
-  return ndpi_str->proto_defaults[proto_id].isCustomProto;
+    return false;
+
+  return(ndpi_str->proto_defaults[proto_id].isCustomProto ? true : false);
 }
 
 /* ******************************************************************** */
@@ -10785,17 +10784,17 @@ char *ndpi_protocol2name(struct ndpi_detection_module_struct *ndpi_str,
 
 /* ****************************************************** */
 
-int ndpi_is_custom_category(ndpi_protocol_category_t category) {
+bool ndpi_is_custom_category(ndpi_protocol_category_t category) {
   switch(category) {
   case NDPI_PROTOCOL_CATEGORY_CUSTOM_1:
   case NDPI_PROTOCOL_CATEGORY_CUSTOM_2:
   case NDPI_PROTOCOL_CATEGORY_CUSTOM_3:
   case NDPI_PROTOCOL_CATEGORY_CUSTOM_4:
   case NDPI_PROTOCOL_CATEGORY_CUSTOM_5:
-    return(1);
+    return(true);
 
   default:
-    return(0);
+    return(false);
   }
 }
 
