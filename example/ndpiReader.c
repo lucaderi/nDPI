@@ -3056,6 +3056,9 @@ static void setupDetection(u_int16_t thread_id, pcap_t * pcap_handle,
     }
   }
 
+  if(ndpi_thread_info[thread_id].workflow == NULL)
+    exit(-1); /* Some initialiation functions failed */
+  
   ndpi_thread_info[thread_id].workflow->g_ctx = g_ctx;
 
   ndpi_workflow_set_flow_callback(ndpi_thread_info[thread_id].workflow,

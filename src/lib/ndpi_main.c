@@ -2900,6 +2900,18 @@ static void ndpi_init_protocol_defaults(struct ndpi_detection_module_struct *ndp
 			  ndpi_build_default_ports(ports_b, 3222, 0, 0, 0, 0) /* UDP */,
 			  0);
 
+  /* Remove */
+  ndpi_set_proto_defaults(ndpi_str, 1 /* cleartext */, 0 /* nw proto */, NDPI_PROTOCOL_ACCEPTABLE, NDPI_PROTOCOL_FREE,
+			  "FREE", NDPI_PROTOCOL_CATEGORY_NETWORK, NDPI_PROTOCOL_QOE_CATEGORY_UNSPECIFIED,
+			  ndpi_build_default_ports(ports_a, 0, 0, 0, 0, 0) /* TCP */,
+			  ndpi_build_default_ports(ports_b, 0, 0, 0, 0, 0) /* UDP */,
+			  0);
+  ndpi_set_proto_defaults(ndpi_str, 1 /* cleartext */, 0 /* nw proto */, NDPI_PROTOCOL_ACCEPTABLE, NDPI_PROTOCOL_FREE_1,
+			  "FREE_1", NDPI_PROTOCOL_CATEGORY_NETWORK, NDPI_PROTOCOL_QOE_CATEGORY_UNSPECIFIED,
+			  ndpi_build_default_ports(ports_a, 0, 0, 0, 0, 0) /* TCP */,
+			  ndpi_build_default_ports(ports_b, 0, 0, 0, 0, 0) /* UDP */,
+			  0);
+  
 #ifdef CUSTOM_NDPI_PROTOCOLS
 #include "../../../nDPI-custom/custom_ndpi_main.c"
 #endif
@@ -4047,7 +4059,7 @@ struct ndpi_detection_module_struct *ndpi_init_detection_module_ext(struct ndpi_
      the custom protocols!
      Only the first **consecutive** `ndpi_str->num_supported_protocols` entries in the
      array `ndpi_str->proto_defaults[]` MUST have been initialized!
-     In other words, all the other functions can safely access to  `ndpi_str->num_supported_protocols` and
+     In other words, all the other functions can safely access to `ndpi_str->num_supported_protocols` and
      `ndpi_str->num_internal_protocols`
 
      Sanity checks
