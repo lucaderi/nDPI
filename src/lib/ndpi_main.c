@@ -1376,7 +1376,7 @@ static void ndpi_init_protocol_defaults(struct ndpi_detection_module_struct *ndp
 			  ndpi_build_default_ports(ports_b, 0, 0, 0, 0, 0) /* UDP */,
 			  0);
   ndpi_set_proto_defaults(ndpi_str, 1 /* cleartext */, 1 /* app proto */, NDPI_PROTOCOL_UNSAFE, NDPI_PROTOCOL_MINING,
-			  "Mining", CUSTOM_CATEGORY_MINING, NDPI_PROTOCOL_QOE_CATEGORY_UNSPECIFIED,
+			  "Mining", NDPI_PROTOCOL_CATEGORY_MINING, NDPI_PROTOCOL_QOE_CATEGORY_UNSPECIFIED,
 			  ndpi_build_default_ports(ports_a, 0, 0, 0, 0, 0) /* TCP */,
 			  ndpi_build_default_ports(ports_b, 0, 0, 0, 0, 0) /* UDP */,
 			  0);
@@ -9275,7 +9275,7 @@ int ndpi_fill_ip_protocol_category(struct ndpi_detection_module_struct *ndpi_str
       ret->category = (ndpi_protocol_category_t) node->value.u.uv32.user_value;
       ret->custom_category_userdata = node->custom_user_data;
 
-      if((ret->category == CUSTOM_CATEGORY_MALWARE) && (match_client == false)) {
+      if((ret->category == NDPI_PROTOCOL_CATEGORY_MALWARE) && (match_client == false)) {
 	ndpi_set_risk(ndpi_str, flow, NDPI_MALWARE_HOST_CONTACTED, "Client contacted malware host");
       }
 
@@ -9321,7 +9321,7 @@ int ndpi_fill_ipv6_protocol_category(struct ndpi_detection_module_struct *ndpi_s
       ret->category = (ndpi_protocol_category_t) node->value.u.uv32.user_value;
       ret->custom_category_userdata = node->custom_user_data;
 
-      if((ret->category == CUSTOM_CATEGORY_MALWARE) && (match_client == false)) {
+      if((ret->category == NDPI_PROTOCOL_CATEGORY_MALWARE) && (match_client == false)) {
 	ndpi_set_risk(ndpi_str, flow, NDPI_MALWARE_HOST_CONTACTED, "Client contacted malware host");
       }
 

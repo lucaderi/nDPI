@@ -6442,7 +6442,7 @@ void loadStressTest() {
 
     for(i=1; i<100000; i++) {
       char name[32];
-      ndpi_protocol_category_t id = CUSTOM_CATEGORY_MALWARE;
+      ndpi_protocol_category_t id = NDPI_PROTOCOL_CATEGORY_MALWARE;
       u_int8_t value = (u_int8_t)i;
 
       snprintf(name, sizeof(name), "%d.com", i);
