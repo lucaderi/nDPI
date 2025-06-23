@@ -1716,7 +1716,7 @@ static ndpi_category_match category_match[] = {
 
    /* Artificial Intelligence / LLM */
    { "deepseek.com",                     NDPI_PROTOCOL_CATEGORY_ARTIFICIAL_INTELLIGENCE },
-   { "openapi.com",                      NDPI_PROTOCOL_CATEGORY_ARTIFICIAL_INTELLIGENCE },
+   { "openai.com",                       NDPI_PROTOCOL_CATEGORY_ARTIFICIAL_INTELLIGENCE },
    { "chatgpt.com",                      NDPI_PROTOCOL_CATEGORY_ARTIFICIAL_INTELLIGENCE },
    { "gemini.google.com",                NDPI_PROTOCOL_CATEGORY_ARTIFICIAL_INTELLIGENCE },
    { "notebooklm.google.com",            NDPI_PROTOCOL_CATEGORY_ARTIFICIAL_INTELLIGENCE },
