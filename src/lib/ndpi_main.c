@@ -3856,7 +3856,7 @@ static const char *categories[NDPI_PROTOCOL_NUM_CATEGORIES] = {
   "Blog_Forum",
   "Government",
   "Education",
-  "CNR_Proxy",
+  "CDN_Proxy",
   "Hw_Sw",
   "Dating",
   "Travel",
