@@ -2030,7 +2030,7 @@ static void init_protocol_defaults(struct ndpi_detection_module_struct *ndpi_str
 			  ndpi_build_default_ports(ports_b, 10001, 0, 0, 0, 0),  /* UDP */
 			  0);
   ndpi_set_proto_defaults(ndpi_str, 0 /* encrypted */, 1 /* app proto */, NDPI_PROTOCOL_FUN, NDPI_PROTOCOL_VIBER,
-			  "Viber", NDPI_PROTOCOL_CATEGORY_VOIP, NDPI_PROTOCOL_QOE_CATEGORY_VOIP_CALLS,
+			  "Viber", NDPI_PROTOCOL_CATEGORY_CHAT, NDPI_PROTOCOL_QOE_CATEGORY_UNSPECIFIED,
 			  ndpi_build_default_ports(ports_a, 7985, 5242, 5243, 4244, 0),     /* TCP */
 			  ndpi_build_default_ports(ports_b, 7985, 7987, 5242, 5243, 4244),  /* UDP */
 			  0);
