@@ -5672,8 +5672,8 @@ int load_categories_file_fd(struct ndpi_detection_module_struct *ndpi_str,
       if(category) {
         const char *errstrp;
         cat_id = ndpi_strtonum(category, 1, NDPI_PROTOCOL_NUM_CATEGORIES - 1, &errstrp, 10);
-        if(errstrp == NULL) {
 
+        if(errstrp == NULL) {
           int rc = ndpi_load_category(ndpi_str, name,
 				      (ndpi_protocol_category_t)cat_id,
 				      user_data);
