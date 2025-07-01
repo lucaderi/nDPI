@@ -3852,7 +3852,7 @@ static const char *categories[NDPI_PROTOCOL_NUM_CATEGORIES] = {
   "Sport",
   "Business",
   "Internet",
-  "BlockChain_Cypto",
+  "Blockchain_Crypto",
   "Blog_Forum",
   "Government",
   "Education",
