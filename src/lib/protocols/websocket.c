@@ -133,6 +133,7 @@ static void ndpi_search_websocket(struct ndpi_detection_module_struct *ndpi_stru
           ndpi_set_risk(ndpi_struct, flow, NDPI_OBFUSCATED_TRAFFIC,
                         "Obfuscated SSH-in-HTTP-WebSocket traffic");
         }
+        found = 1;
       }
     }
     if (i == packet->parsed_lines)
