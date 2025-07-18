@@ -1789,7 +1789,7 @@ static int ndpi_search_dtls(struct ndpi_detection_module_struct *ndpi_struct,
       }
     } else {
 #ifdef DEBUG_TLS
-      printf("[TLS] Appllication Data\n");
+      printf("[TLS] Application Data\n");
 #endif
       processed += block_len + 13;
       /* DTLS mid session: no need to further inspect the flow */
