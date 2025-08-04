@@ -2294,6 +2294,13 @@ extern "C" {
   u_int32_t ndpi_cache_address_restore(struct ndpi_detection_module_struct *ndpi_struct, char *path, u_int32_t epoch_now);
   u_int32_t ndpi_cache_address_flush_expired(struct ndpi_detection_module_struct *ndpi_struct, u_int32_t epoch_now);
 
+  /* Scaffolding code for triggering risk NDPI_UNRESOLVED_HOSTNAME */
+  bool ndpi_cache_hostname_ip(struct ndpi_detection_module_struct *ndpi_struct,
+			      ndpi_ip_addr_t *ip_addr, char *hostname);
+  bool ndpi_cache_find_hostname_ip(struct ndpi_detection_module_struct *ndpi_struct,
+				   ndpi_ip_addr_t *ip_addr, char *hostname);
+  void ndpi_cache_hostname_ip_swap(struct ndpi_detection_module_struct *ndpi_struct);
+    
   /* Protocol normalization functions */
   /**
    * Checks if the specified protocol identifier can be placed only on the master_protocol field of ndpi_master_app_protocol

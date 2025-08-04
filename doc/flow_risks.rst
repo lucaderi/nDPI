@@ -313,9 +313,9 @@ Relevant TCP connection issues such as connection refused, scan, or probe attemp
 
 .. _Risk 051
 
-NDPI_FREE_51
+NDPI_UNRESOLVED_HOSTNAME
 ============
-Placeholder; not really used.
+Risk set when talking (TLS, QUIC, HTTP) with a symbolic hostname not previously observed on a DNS resolution. Unless the resolution was not observed as it was performed before nDPI started, it can indicate fake hosts contacted.
 
 .. _Risk 052
 

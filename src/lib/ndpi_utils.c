@@ -2303,8 +2303,8 @@ const char* ndpi_risk2str(ndpi_risk_enum risk) {
   case NDPI_TCP_ISSUES:
     return("TCP Connection Issues");
 
-  case NDPI_FREE_51:
-    return("FREE51");
+  case NDPI_UNRESOLVED_HOSTNAME:
+    return("Unresolved hostname");
 
   case NDPI_TLS_ALPN_SNI_MISMATCH:
     return("ALPN/SNI Mismatch");
@@ -2435,8 +2435,8 @@ const char* ndpi_risk2code(ndpi_risk_enum risk) {
     return STRINGIFY(NDPI_MINOR_ISSUES);
   case NDPI_TCP_ISSUES:
     return STRINGIFY(NDPI_MINOR_ISSUES);
-  case NDPI_FREE_51:
-    return STRINGIFY(NDPI_FREE_51);
+  case NDPI_UNRESOLVED_HOSTNAME:
+    return STRINGIFY(NDPI_UNRESOLVED_HOSTNAME);
   case NDPI_TLS_ALPN_SNI_MISMATCH:
     return STRINGIFY(NDPI_TLS_ALPN_SNI_MISMATCH);
   case NDPI_MALWARE_HOST_CONTACTED:
@@ -2558,8 +2558,8 @@ ndpi_risk_enum ndpi_code2risk(const char* risk) {
     return(NDPI_MINOR_ISSUES);
   else if(strcmp(STRINGIFY(NDPI_TCP_ISSUES), risk) == 0)
     return(NDPI_MINOR_ISSUES);
-  else if(strcmp(STRINGIFY(NDPI_FREE_51), risk) == 0)
-    return(NDPI_FREE_51);
+  else if(strcmp(STRINGIFY(NDPI_UNRESOLVED_HOSTNAME), risk) == 0)
+    return(NDPI_UNRESOLVED_HOSTNAME);
   else if(strcmp(STRINGIFY(NDPI_TLS_ALPN_SNI_MISMATCH), risk) == 0)
     return(NDPI_TLS_ALPN_SNI_MISMATCH);
   else if(strcmp(STRINGIFY(NDPI_MALWARE_HOST_CONTACTED), risk) == 0)
@@ -2707,7 +2707,7 @@ const char *ndpi_risk_shortnames[NDPI_MAX_RISK] = {
   "periodic_flow",
   "minor_issues",
   "tcp_issues",                 /* NDPI_TCP_ISSUES */
-  "free51",
+  "unresolved_hostname",
   "tls_alpn_mismatch",
   "malware_host",
   "binary_data_transfer",

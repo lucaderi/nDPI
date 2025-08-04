@@ -529,3 +529,100 @@ u_int32_t ndpi_cache_address_flush_expired(struct ndpi_detection_module_struct *
   else
     return(ndpi_address_cache_flush_expired(ndpi_struct->address_cache, epoch_now));
 }
+
+/* ***************************************************** */
+/* ***************************************************** */
+
+/*
+  Used to cache resolved IP addresses in order to trigger
+  risk NDPI_UNRESOLVED_HOSTNAME
+ */
+static u_int32_t ndpi_cache_hash_hostname_ip(ndpi_ip_addr_t *ip_addr, char *hostname) {
+  u_char buf[128];
+  u_int32_t len = snprintf((char*)buf, sizeof(buf), "%s", hostname);
+  
+  if(len < sizeof(buf)) {
+    int32_t leftover = sizeof(buf) - len;
+
+    if(leftover > 0) {
+      u_int32_t to_add = ndpi_min((u_int32_t)leftover, sizeof(ndpi_ip_addr_t));
+      
+      if((u_int32_t)leftover >= to_add) {
+	memcpy(&buf[len], ip_addr, to_add);
+	len += to_add;
+      }
+      
+#ifdef DEBUG_ADDR_CACHE
+      printf("[DEBUG] Hashing %s [len=%u]\n", hostname, len);
+#endif
+    }
+  }
+  
+  return(ndpi_quick_hash(buf, len));
+}
+
+// #define DEBUG_ADDR_CACHE
+/* ***************************************************** */
+
+/*
+  Used to cache resolved IP addresses in order to trigger
+  risk NDPI_UNRESOLVED_HOSTNAME
+ */
+bool ndpi_cache_hostname_ip(struct ndpi_detection_module_struct *ndpi_struct,
+			    ndpi_ip_addr_t *ip_addr, char *hostname) {
+  if(ndpi_struct->dns_hostname.cache == NULL)
+    ndpi_struct->dns_hostname.cache = ndpi_filter_alloc();  
+
+  if(ndpi_struct->dns_hostname.cache) {
+    u_int32_t hashval = ndpi_cache_hash_hostname_ip(ip_addr, hostname);
+  
+    NDPI_LOG_DBG2(ndpi_struct, "[DEBUG] ->>> %s [%u]\n", hostname, hashval);
+
+#ifdef DEBUG_ADDR_CACHE
+    printf("[DEBUG] Adding %s [%u][%u]\n", hostname, ip_addr->ipv4, hashval);
+#endif
+    
+    return(ndpi_filter_add(ndpi_struct->dns_hostname.cache, hashval));
+  }
+  
+  return(false);
+}
+
+/* ***************************************************** */
+
+/*
+  Check if the combination hostname/IP was found
+
+  Return value
+  - true if was found, false otherwise
+*/
+bool ndpi_cache_find_hostname_ip(struct ndpi_detection_module_struct *ndpi_struct,
+				 ndpi_ip_addr_t *ip_addr, char *hostname) {
+  if(ndpi_struct->dns_hostname.cache) {
+    u_int32_t hashval = ndpi_cache_hash_hostname_ip(ip_addr, hostname);
+    bool ret;
+    
+#ifdef DEBUG_ADDR_CACHE
+    printf("[DEBUG] ->>> Searching %s [%u][%u]\n", hostname, ip_addr->ipv4, hashval);
+#endif
+    
+    ret = ndpi_filter_contains(ndpi_struct->dns_hostname.cache, hashval);
+
+    if((!ret) && (ndpi_struct->dns_hostname.cache_shadow != NULL))
+      ret = ndpi_filter_contains(ndpi_struct->dns_hostname.cache_shadow, hashval);
+    
+    return(ret);
+  }
+
+  return(false);
+}
+
+/* ***************************************************** */
+
+void ndpi_cache_hostname_ip_swap(struct ndpi_detection_module_struct *ndpi_struct) {
+  if(ndpi_struct->dns_hostname.cache_shadow)
+    ndpi_filter_free(ndpi_struct->dns_hostname.cache_shadow);
+
+  ndpi_struct->dns_hostname.cache_shadow = ndpi_struct->dns_hostname.cache;
+  ndpi_struct->dns_hostname.cache        = ndpi_filter_alloc();
+}

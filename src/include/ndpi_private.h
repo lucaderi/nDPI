@@ -221,6 +221,7 @@ struct ndpi_detection_module_config_struct {
   int compute_entropy;
   int address_cache_size;
   int fpc_enabled;
+  int hostname_dns_check_enabled;
   int guess_ip_before_port;
   int use_client_ip_in_guess;
   int use_client_port_in_guess;
@@ -471,8 +472,10 @@ struct ndpi_detection_module_struct {
 
   ndpi_str_hash *public_domain_suffixes;
   struct ndpi_address_cache *address_cache;
+  struct {    
+    ndpi_filter *cache, *cache_shadow;
+  } dns_hostname;
 };
-
 
 /* Used by ndpi_set_proto_subprotocols */
 #define NDPI_PROTOCOL_NO_MORE_SUBPROTOCOLS (-1)

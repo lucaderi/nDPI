@@ -1127,10 +1127,36 @@ static void check_content_type_and_change_protocol(struct ndpi_detection_module_
     if(ndpi_struct->cfg.http_referer_enabled)
       flow->http.referer = ndpi_strndup((const char *)packet->referer_line.ptr, packet->referer_line.len);
 
-  if((packet->host_line.ptr != NULL) && (flow->http.host == NULL))
-    if(ndpi_struct->cfg.http_host_enabled)
+  if((packet->host_line.ptr != NULL) && (flow->http.host == NULL)) {
+    if(ndpi_struct->cfg.http_host_enabled) {
       flow->http.host = ndpi_strndup((const char *)packet->host_line.ptr, packet->host_line.len);
 
+      if(ndpi_struct->cfg.hostname_dns_check_enabled && (flow->http.host != NULL)) {
+	ndpi_ip_addr_t ip_addr;
+
+	memset(&ip_addr, 0, sizeof(ip_addr));
+		      
+	if(packet->iph)
+	  ip_addr.ipv4 = packet->iph->daddr;
+	else
+	  memcpy(&ip_addr.ipv6, &packet->iphv6->ip6_dst, sizeof(struct ndpi_in6_addr));
+		      
+	if(!ndpi_cache_find_hostname_ip(ndpi_struct, &ip_addr, flow->http.host)) {
+#ifdef DEBUG_HTTP
+	  printf("[HTTP] Not found host %s\n", flow->http.host);
+#endif
+	  ndpi_set_risk(ndpi_struct, flow, NDPI_UNRESOLVED_HOSTNAME, flow->http.host);
+
+	} else {
+#ifdef DEBUG_HTTP
+	  printf("[HTTP] Found host %s\n", flow->http.host);
+#endif
+	}
+
+      }
+    }
+  }
+  
   if(packet->content_line.ptr != NULL) {
     NDPI_LOG_DBG2(ndpi_struct, "Content Type line found %.*s\n",
 		  packet->content_line.len, packet->content_line.ptr);
