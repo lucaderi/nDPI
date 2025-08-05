@@ -645,3 +645,9 @@ void ndpi_cache_hostname_ip_swap(struct ndpi_detection_module_struct *ndpi_struc
   ndpi_struct->dns_hostname.cache_shadow = ndpi_struct->dns_hostname.cache;
   ndpi_struct->dns_hostname.cache        = ndpi_filter_alloc();
 }
+
+/* ***************************************************** */
+
+void ndpi_cache_enable(struct ndpi_detection_module_struct *ndpi_struct) {
+  ndpi_struct->cfg.hostname_dns_check_enabled = 1;
+}
