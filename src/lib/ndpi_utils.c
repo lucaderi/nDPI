@@ -4496,3 +4496,16 @@ void ndpi_bitmask_reset(struct ndpi_bitmask *b)
   if(b && b->fds)
     memset(b->fds, 0x00, b->num_fds * sizeof(ndpi_ndpi_mask));
 }
+
+/* **************************************** */
+
+bool ndpi_check_is_numeric_ip(char *host) {
+  unsigned char buf[sizeof(struct in6_addr)];
+
+  if(inet_pton(AF_INET, host, buf) == 1)
+    return true;
+  else if(inet_pton(AF_INET6, host, buf) == 1)
+    return true;
+  else
+    return false;
+}

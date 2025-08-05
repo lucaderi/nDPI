@@ -2400,6 +2400,8 @@ extern "C" {
   void ndpi_bitmask_set_all(struct ndpi_bitmask *b);
   void ndpi_bitmask_reset(struct ndpi_bitmask *b);
 
+  bool ndpi_check_is_numeric_ip(char *host);
+  
 #ifdef __cplusplus
 }
 #endif

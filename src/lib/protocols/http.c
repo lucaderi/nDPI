@@ -1131,7 +1131,9 @@ static void check_content_type_and_change_protocol(struct ndpi_detection_module_
     if(ndpi_struct->cfg.http_host_enabled) {
       flow->http.host = ndpi_strndup((const char *)packet->host_line.ptr, packet->host_line.len);
 
-      if(ndpi_struct->cfg.hostname_dns_check_enabled && (flow->http.host != NULL)) {
+      if(ndpi_struct->cfg.hostname_dns_check_enabled
+	 && (flow->http.host != NULL)
+	 && (ndpi_check_is_numeric_ip(flow->http.host) == false)) {
 	ndpi_ip_addr_t ip_addr;
 
 	memset(&ip_addr, 0, sizeof(ip_addr));
