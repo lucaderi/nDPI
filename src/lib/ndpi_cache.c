@@ -543,6 +543,12 @@ static u_int32_t ndpi_cache_hash_hostname_ip(struct ndpi_detection_module_struct
   u_char buf[128];
   const char *hostname = use_domain_name ? ndpi_get_host_domain(ndpi_struct, _hostname) : _hostname;
   u_int32_t len = snprintf((char*)buf, sizeof(buf), "%s", hostname);
+  char *double_column = strchr((char*)buf, ':');
+
+  if(double_column != NULL) {
+    double_column[0] = '\0';
+    len = strlen(double_column);
+  }
 
   if(len < sizeof(buf)) {
     int32_t leftover = sizeof(buf) - len;
