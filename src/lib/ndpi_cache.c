@@ -625,8 +625,7 @@ bool ndpi_cache_find_hostname_ip(struct ndpi_detection_module_struct *ndpi_struc
       printf("[DEBUG] ->>> Searching %s [%u/%s][%u]: %s\n",
 	     hostname, ip_addr->ipv4,
 	     ndpi_intoav4(ntohl(ip_addr->ipv4), buf, sizeof(buf)),
-	     hashval,
-	     ret ? "found" : "NOT FOUND");
+	     hashval, ret ? "found" : "NOT FOUND");
     }
 #endif
 
@@ -639,11 +638,13 @@ bool ndpi_cache_find_hostname_ip(struct ndpi_detection_module_struct *ndpi_struc
 /* ***************************************************** */
 
 void ndpi_cache_hostname_ip_swap(struct ndpi_detection_module_struct *ndpi_struct) {
-  if(ndpi_struct->dns_hostname.cache_shadow)
-    ndpi_filter_free(ndpi_struct->dns_hostname.cache_shadow);
+  if(ndpi_struct->cfg.hostname_dns_check_enabled) {
+    if(ndpi_struct->dns_hostname.cache_shadow)
+      ndpi_filter_free(ndpi_struct->dns_hostname.cache_shadow);
 
-  ndpi_struct->dns_hostname.cache_shadow = ndpi_struct->dns_hostname.cache;
-  ndpi_struct->dns_hostname.cache        = ndpi_filter_alloc();
+    ndpi_struct->dns_hostname.cache_shadow = ndpi_struct->dns_hostname.cache;
+    ndpi_struct->dns_hostname.cache        = ndpi_filter_alloc();
+  }
 }
 
 /* ***************************************************** */
