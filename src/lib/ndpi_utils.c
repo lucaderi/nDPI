@@ -3237,7 +3237,7 @@ bool ndpi_is_valid_hostname(char * const hostname, size_t len) {
   size_t label_len = 0, idx = 0;
   bool has_valid_label = false;
 
-  if(!hostname || *hostname == '\0')
+  if(!hostname || len == 0 || *hostname == '\0')
     return(false); /* Empty string or NULL pointer */
 
   if(len > 253) /* Maximum length of a full hostname */
