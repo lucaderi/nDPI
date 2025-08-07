@@ -3246,7 +3246,7 @@ bool ndpi_is_valid_hostname(char * const hostname, size_t len) {
   /* Check each label (part between dots) */
   p = hostname;
 
-  while (p[idx] && (idx < len)) {
+  while ((idx < len) && p[idx]) {
     if(*p == '.') {
       /* Check previous label */
       if(label_len == 0 || (label_len > 63))
