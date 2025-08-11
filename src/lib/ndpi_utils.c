@@ -1078,6 +1078,49 @@ char* ndpi_base64_encode(unsigned char const* bytes_to_encode, size_t in_len) {
 
 /* ********************************** */
 
+/* NOTE: caller MUST free returned pointer */
+char* ndpi_hex_encode(unsigned char const* bytes_to_encode, size_t in_len) {
+  size_t double_len = in_len * 2;
+  char *ret = (char*)ndpi_malloc(double_len+1);
+
+  if(ret != NULL) {
+    u_int i, ret_idx = 0;
+
+    for(i=0; i<in_len; i++) {
+      sprintf(&ret[ret_idx], "%02x", bytes_to_encode[i]);
+      ret_idx += 2;
+    }
+
+    ret[ret_idx] = '\0';
+  }
+
+  return(ret);
+}
+
+/* ********************************** */
+
+u_char* ndpi_hex_decode(const u_char *src, size_t len, size_t *out_len) {
+  u_char *ret;
+
+  *out_len = len / 2;
+  ret = (u_char*)ndpi_malloc(*out_len+1);
+
+  if(ret != NULL) {
+    u_int i, ret_idx = 0;
+
+    for(i=0; i<*out_len; i++) {
+      sscanf((const char*)&src[ret_idx], "%02X", (unsigned int*)&ret[i]);
+      ret_idx += 2;
+    }
+
+    ret[i] = '\0';
+  }
+
+  return(ret);
+}
+
+/* ********************************** */
+
 void ndpi_serialize_risk(ndpi_serializer *serializer,
                          ndpi_risk risk) {
   u_int32_t i;
@@ -3242,7 +3285,7 @@ bool ndpi_is_valid_hostname(char * const hostname, size_t len) {
 
   if(len > 253) /* Maximum length of a full hostname */
     return(false);
-  
+
   /* Check each label (part between dots) */
   p = hostname;
 
@@ -4254,6 +4297,15 @@ char* ndpi_quick_decrypt(const char *encrypted_msg,
   ndpi_free(content);
 
   return(decoded_string);
+}
+
+/* ************************************************************** */
+
+void ndpi_fill_randombytes(unsigned char *buf, unsigned int buf_len) {
+  unsigned int i;
+
+  for(i=0; i<buf_len; i++)
+    buf[i] = (unsigned char)rand();
 }
 
 /* ************************************************************** */

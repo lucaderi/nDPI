@@ -1062,8 +1062,13 @@ extern "C" {
   void ndpi_patchIPv6Address(char *str);
   void ndpi_user_pwd_payload_copy(u_int8_t *dest, u_int dest_len, u_int offset,
 				  const u_int8_t *src, u_int src_len);
+
   u_char* ndpi_base64_decode(const u_char *src, size_t len, size_t *out_len);
   char* ndpi_base64_encode(unsigned char const* bytes_to_encode, size_t in_len); /* NOTE: caller MUST free the returned pointer */
+
+  u_char* ndpi_hex_decode(const u_char *src, size_t len, size_t *out_len);
+  char* ndpi_hex_encode(unsigned char const* bytes_to_encode, size_t in_len); /* NOTE: caller MUST free the returned pointer */
+
   void ndpi_string_sha1_hash(const u_int8_t *message, size_t len, u_char *hash /* 20-bytes */);
 
   int ndpi_load_ipv4_ptree(struct ndpi_detection_module_struct *ndpi_str,
@@ -2264,6 +2269,9 @@ extern "C" {
 			   u_int16_t *decrypted_msg_len,
 			   u_char decrypt_key[64]);
 
+  void ndpi_fill_randombytes(unsigned char *buf,
+			     unsigned int buf_len);
+  
   /* ******************************* */
 
   const char* ndpi_print_os_hint(ndpi_os os_hint);
