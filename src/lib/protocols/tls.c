@@ -1393,7 +1393,7 @@ int ndpi_search_tls_tcp(struct ndpi_detection_module_struct *ndpi_struct,
 
   if(packet->tcp == NULL)
     return 0; /* Error -> stop (this doesn't seem to be TCP) */
-  
+
 #ifdef DEBUG_TLS_MEMORY
   printf("[TLS Mem] ndpi_search_tls_tcp() Processing new packet [payload_packet_len: %u][Dir: %u]\n",
 	 packet->payload_packet_len, packet->packet_direction);
@@ -2844,7 +2844,7 @@ int processClientServerHello(struct ndpi_detection_module_struct *ndpi_struct,
 	      if(extension_id == 0 /* server name */) {
 		u_int16_t len;
 		bool sni_numeric = false;
-		
+
 #ifdef DEBUG_TLS
 		printf("[TLS] Extensions: found server name\n");
 #endif
@@ -2888,7 +2888,7 @@ int processClientServerHello(struct ndpi_detection_module_struct *ndpi_struct,
 		      /* printf("[SIGNAL] SNI: [%s]\n", sni); */
 		      signal_add_to_cache(ndpi_struct, flow);
 		    }
-		      
+
 		    if(ndpi_check_dga_name(ndpi_struct, flow, sni, 1, 0, 0)) {
 #ifdef DEBUG_TLS
 		      printf("[TLS] SNI: (DGA) [%s]\n", sni);
@@ -2909,13 +2909,13 @@ int processClientServerHello(struct ndpi_detection_module_struct *ndpi_struct,
 		      ndpi_ip_addr_t ip_addr;
 
 		      memset(&ip_addr, 0, sizeof(ip_addr));
-		      
+
 		      if(packet->iph)
 			ip_addr.ipv4 = packet->iph->daddr;
 		      else
 			memcpy(&ip_addr.ipv6, &packet->iphv6->ip6_dst,
 			       sizeof(struct ndpi_in6_addr));
-		      
+
 		      if(!ndpi_cache_find_hostname_ip(ndpi_struct, &ip_addr, sni)) {
 #ifdef DEBUG_TLS
 			printf("[TLS] Not found SNI %s\n", sni);
@@ -3203,7 +3203,7 @@ int processClientServerHello(struct ndpi_detection_module_struct *ndpi_struct,
 
                 alpn_str_len = ndpi_min(sizeof(ja.client.alpn), (size_t)alpn_str_len);
 		memcpy(ja.client.alpn, alpn_str, alpn_str_len);
-		
+
 		/* Store the last character of the first ALPN protocol (before any semicolon) */
 		ja.client.alpn_original_last = '0';
 		if(alpn_str_len > 0) {
@@ -3218,7 +3218,7 @@ int processClientServerHello(struct ndpi_detection_module_struct *ndpi_struct,
 		    ja.client.alpn_original_last = ja.client.alpn[first_alpn_end - 1];
 		  }
 		}
-		
+
 		if(alpn_str_len > 0)
 		  ja.client.alpn[alpn_str_len - 1] = '\0';
 
@@ -3345,7 +3345,7 @@ int processClientServerHello(struct ndpi_detection_module_struct *ndpi_struct,
 
 		  if(sni != NULL) {
 		    u_int sni_len = strlen(sni);
-		    
+
 		    if((flow->protos.tls_quic.advertised_alpns == NULL) /* No ALPN */
 		       && (sni_len > 8)
 		       && ((strcmp(&sni[sni_len-4], ".com") == 0) || (strcmp(&sni[sni_len-4], ".net") == 0))
@@ -3370,6 +3370,20 @@ int processClientServerHello(struct ndpi_detection_module_struct *ndpi_struct,
 compute_ja4c:
 	      if(ndpi_struct->cfg.tls_ja4c_fingerprint_enabled) {
 	        ndpi_compute_ja4(ndpi_struct, flow, quic_version, &ja);
+
+		if(ndpi_struct->ja4_custom_protos != NULL) {
+		  u_int16_t proto_id;
+
+		  /* This protocol has been defined in protos.txt-like files */
+		  if(ndpi_hash_find_entry(ndpi_struct->ja4_custom_protos,
+					  flow->protos.tls_quic.ja4_client,
+					  NDPI_ARRAY_LENGTH(flow->protos.tls_quic.ja4_client) - 1,
+					  &proto_id) == 0) {
+		    ndpi_set_detected_protocol(ndpi_struct, flow, proto_id,
+					       __get_master(ndpi_struct, flow),
+					       NDPI_CONFIDENCE_CUSTOM_RULE);
+		  }
+		}
 
                 if(ndpi_struct->malicious_ja4_hashmap != NULL) {
                   u_int16_t rc1 = ndpi_hash_find_entry(ndpi_struct->malicious_ja4_hashmap,

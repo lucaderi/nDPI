@@ -3522,6 +3522,25 @@ static void ndpi_init_ptree_ipv6(struct ndpi_detection_module_struct *ndpi_str,
 
 /* ******************************************* */
 
+static int ndpi_add_ja4_subprotocol(struct ndpi_detection_module_struct *ndpi_str,
+				    char *ja4, u_int16_t protocol_id) {
+  int ja4_len = strlen(ja4);
+
+  if(ja4_len != 36  /* size of JA4C */) {
+    NDPI_LOG_ERR(ndpi_str, "Not a JA4C: [%s]\n", ja4);
+    return(-1);
+  }
+
+  if(ndpi_str->ja4_custom_protos == NULL) {
+    if(ndpi_hash_init(&ndpi_str->malicious_ja4_hashmap) != 0)
+      return(-2);
+  }
+  
+  return(ndpi_hash_add_entry(&ndpi_str->ja4_custom_protos, ja4, ja4_len, protocol_id));
+}
+
+/* ******************************************* */
+
 static int ndpi_add_host_ip_subprotocol(struct ndpi_detection_module_struct *ndpi_str,
 					char *value, u_int16_t protocol_id,
 					u_int8_t is_ipv6) {
@@ -4021,9 +4040,10 @@ struct ndpi_detection_module_struct *ndpi_init_detection_module(struct ndpi_glob
   ndpi_str->tls_cert_subject_automa.ac_automa = ac_automata_init(NULL);
   ndpi_str->risky_domain_automa.ac_automa = NULL; /* Initialized on demand */
 
-  ndpi_str->malicious_ja4_hashmap = NULL;   /* Initialized on demand */
+  ndpi_str->malicious_ja4_hashmap  = NULL;  /* Initialized on demand */
   ndpi_str->malicious_sha1_hashmap = NULL;  /* Initialized on demand */
-
+  ndpi_str->ja4_custom_protos      = NULL;  /* Initialized on demand */
+  
   ndpi_str->trusted_issuer_dn = NULL; /* Initialized on demand */
 
   ndpi_str->custom_categories.sc_hostnames        = ndpi_domain_classify_alloc();
@@ -5030,6 +5050,9 @@ void ndpi_exit_detection_module(struct ndpi_detection_module_struct *ndpi_str) {
     if(ndpi_str->public_domain_suffixes)
       ndpi_hash_free(&ndpi_str->public_domain_suffixes);
 
+    if(ndpi_str->ja4_custom_protos)
+      ndpi_hash_free(&ndpi_str->ja4_custom_protos);
+
     if(ndpi_str->address_cache)
       ndpi_term_address_cache(ndpi_str->address_cache);
 
@@ -5485,7 +5508,7 @@ static int ndpi_handle_rule(struct ndpi_detection_module_struct *ndpi_str,
   while((elem = strsep(&rule, ",")) != NULL) {
     char *attr = elem, *value = NULL;
     ndpi_port_range range;
-    int is_tcp = 0, is_udp = 0, is_ip = 0;
+    int is_tcp = 0, is_udp = 0, is_ip = 0, is_ja4 = 0;
     u_int8_t is_ipv6_ip = 0;
 
     if(strncmp(attr, "tcp:", 4) == 0)
@@ -5542,6 +5565,8 @@ static int ndpi_handle_rule(struct ndpi_detection_module_struct *ndpi_str,
       NDPI_LOG_INFO(ndpi_str, "nDPI compiled without nBPF support: skipping rule\n");
       return(-6);
 #endif
+    } else if(strncmp(attr, "ja4:", 4) == 0) {
+      is_ja4 = 1, value = &attr[4]; 
     }
 
     if(is_tcp || is_udp) {
@@ -5575,6 +5600,11 @@ static int ndpi_handle_rule(struct ndpi_detection_module_struct *ndpi_str,
       }
     } else if(is_ip) {
       int rc = ndpi_add_host_ip_subprotocol(ndpi_str, value, subprotocol_id, is_ipv6_ip);
+
+      if(rc != 0)
+	return(rc);
+    } else if(is_ja4) {
+      int rc = ndpi_add_ja4_subprotocol(ndpi_str, value, subprotocol_id);
 
       if(rc != 0)
 	return(rc);
@@ -6297,6 +6327,9 @@ int load_malicious_sha1_file_fd(struct ndpi_detection_module_struct *ndpi_str, F
   nBPF-based Filters
   nbpf:"<nBPF filter>@<proto>
 
+  JA4
+  ja4:t13d1713h1_XXXXXXXX_XXXXXXX@<proto>
+  
   Example:
   tcp:80,tcp:3128@HTTP
   udp:139@NETBIOS

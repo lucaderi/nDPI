@@ -470,7 +470,7 @@ struct ndpi_detection_module_struct {
 
   u_int16_t max_payload_track_len;
 
-  ndpi_str_hash *public_domain_suffixes;
+  ndpi_str_hash *public_domain_suffixes, *ja4_custom_protos;
   struct ndpi_address_cache *address_cache;
   struct {    
     ndpi_filter *cache, *cache_shadow;
