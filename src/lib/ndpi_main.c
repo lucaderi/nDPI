@@ -3535,8 +3535,27 @@ static int ndpi_add_ja4_subprotocol(struct ndpi_detection_module_struct *ndpi_st
     if(ndpi_hash_init(&ndpi_str->malicious_ja4_hashmap) != 0)
       return(-2);
   }
-  
+
   return(ndpi_hash_add_entry(&ndpi_str->ja4_custom_protos, ja4, ja4_len, protocol_id));
+}
+
+/* ******************************************* */
+
+static int ndpi_add_ndpifp_subprotocol(struct ndpi_detection_module_struct *ndpi_str,
+				       char *ndpifp, u_int16_t protocol_id) {
+  int ndpifp_len = strlen(ndpifp);
+
+  if(ndpifp_len != 32  /* size of nDPI FP */) {
+    NDPI_LOG_ERR(ndpi_str, "Not a NDPIFPC: [%s]\n", ndpifp);
+    return(-1);
+  }
+
+  if(ndpi_str->ndpifp_custom_protos == NULL) {
+    if(ndpi_hash_init(&ndpi_str->ndpifp_custom_protos) != 0)
+      return(-2);
+  }
+
+  return(ndpi_hash_add_entry(&ndpi_str->ndpifp_custom_protos, ndpifp, ndpifp_len, protocol_id));
 }
 
 /* ******************************************* */
@@ -4043,7 +4062,8 @@ struct ndpi_detection_module_struct *ndpi_init_detection_module(struct ndpi_glob
   ndpi_str->malicious_ja4_hashmap  = NULL;  /* Initialized on demand */
   ndpi_str->malicious_sha1_hashmap = NULL;  /* Initialized on demand */
   ndpi_str->ja4_custom_protos      = NULL;  /* Initialized on demand */
-  
+  ndpi_str->ndpifp_custom_protos  = NULL;  /* Initialized on demand */
+
   ndpi_str->trusted_issuer_dn = NULL; /* Initialized on demand */
 
   ndpi_str->custom_categories.sc_hostnames        = ndpi_domain_classify_alloc();
@@ -5053,15 +5073,18 @@ void ndpi_exit_detection_module(struct ndpi_detection_module_struct *ndpi_str) {
     if(ndpi_str->ja4_custom_protos)
       ndpi_hash_free(&ndpi_str->ja4_custom_protos);
 
+    if(ndpi_str->ndpifp_custom_protos)
+      ndpi_hash_free(&ndpi_str->ndpifp_custom_protos);
+
     if(ndpi_str->address_cache)
       ndpi_term_address_cache(ndpi_str->address_cache);
 
     if(ndpi_str->dns_hostname.cache)
       ndpi_filter_free(ndpi_str->dns_hostname.cache);
-	
+
     if(ndpi_str->dns_hostname.cache_shadow)
       ndpi_filter_free(ndpi_str->dns_hostname.cache_shadow);
-	
+
     ndpi_free(ndpi_str);
   }
 
@@ -5508,7 +5531,7 @@ static int ndpi_handle_rule(struct ndpi_detection_module_struct *ndpi_str,
   while((elem = strsep(&rule, ",")) != NULL) {
     char *attr = elem, *value = NULL;
     ndpi_port_range range;
-    int is_tcp = 0, is_udp = 0, is_ip = 0, is_ja4 = 0;
+    int is_tcp = 0, is_udp = 0, is_ip = 0, is_ja4 = 0, is_ndpifp = 0;
     u_int8_t is_ipv6_ip = 0;
 
     if(strncmp(attr, "tcp:", 4) == 0)
@@ -5566,7 +5589,9 @@ static int ndpi_handle_rule(struct ndpi_detection_module_struct *ndpi_str,
       return(-6);
 #endif
     } else if(strncmp(attr, "ja4:", 4) == 0) {
-      is_ja4 = 1, value = &attr[4]; 
+      is_ja4 = 1, value = &attr[4];
+    } else if(strncmp(attr, "ndpifp:", 7) == 0) {
+      is_ndpifp = 1, value = &attr[7];
     }
 
     if(is_tcp || is_udp) {
@@ -5605,6 +5630,11 @@ static int ndpi_handle_rule(struct ndpi_detection_module_struct *ndpi_str,
 	return(rc);
     } else if(is_ja4) {
       int rc = ndpi_add_ja4_subprotocol(ndpi_str, value, subprotocol_id);
+
+      if(rc != 0)
+	return(rc);
+    } else if(is_ndpifp) {
+      int rc = ndpi_add_ndpifp_subprotocol(ndpi_str, value, subprotocol_id);
 
       if(rc != 0)
 	return(rc);
@@ -6329,7 +6359,7 @@ int load_malicious_sha1_file_fd(struct ndpi_detection_module_struct *ndpi_str, F
 
   JA4
   ja4:t13d1713h1_XXXXXXXX_XXXXXXX@<proto>
-  
+
   Example:
   tcp:80,tcp:3128@HTTP
   udp:139@NETBIOS
@@ -11894,8 +11924,7 @@ u_int8_t ndpi_extra_dissection_possible(struct ndpi_detection_module_struct *ndp
 		!!flow->extra_packets_func);
 
   if(!flow->extra_packets_func) {
-    if(ndpi_str->cfg.ndpi_fingerprint_enabled)
-      ndpi_compute_ndpi_flow_fingerprint(ndpi_str, flow);
+    ndpi_compute_ndpi_flow_fingerprint(ndpi_str, flow);
     return(0);
   }
 
@@ -13040,7 +13069,7 @@ static const struct cfg_param {
 
   { NULL,            "metadata.ndpi_fingerprint",               "enable", NULL, NULL, CFG_PARAM_ENABLE_DISABLE, __OFF(ndpi_fingerprint_enabled), NULL },
   { NULL,            "metadata.ndpi_fingerprint_format",         "0", "0" /* include server info */, "1" /* client only */, CFG_PARAM_INT, __OFF(ndpi_fingerprint_format), NULL },
-  
+
   { NULL,            "flow_risk_lists.load",                    "1", NULL, NULL, CFG_PARAM_ENABLE_DISABLE, __OFF(flow_risk_lists_enabled), NULL },
 
   { NULL,            "flow_risk.$FLOWRISK_NAME_OR_ID",          "enable", NULL, NULL, CFG_PARAM_FLOWRISK_ENABLE_DISABLE, __OFF(flowrisk_bitmask), NULL },
@@ -13381,4 +13410,3 @@ char *ndpi_stack2str(struct ndpi_detection_module_struct *ndpi_str,
   }
   return buf;
 }
-

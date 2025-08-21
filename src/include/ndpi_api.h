@@ -2271,7 +2271,7 @@ extern "C" {
 
   void ndpi_fill_randombytes(unsigned char *buf,
 			     unsigned int buf_len);
-  
+
   /* ******************************* */
 
   const char* ndpi_print_os_hint(ndpi_os os_hint);
@@ -2410,6 +2410,9 @@ extern "C" {
   void ndpi_bitmask_reset(struct ndpi_bitmask *b);
 
   bool ndpi_check_is_numeric_ip(char *host);
+  u_int16_t ndpi_get_master_proto(struct ndpi_detection_module_struct *ndpi_struct,
+				  struct ndpi_flow_struct *flow);
+
 
 #ifdef __cplusplus
 }
