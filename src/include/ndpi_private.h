@@ -196,6 +196,15 @@ struct ndpi_global_context {
     NDPI_MUONFP_TCP_FINGERPRINT /* https://github.com/sundruid/muonfp */
   } ndpi_tcp_fingerprint_format;
   
+  /*
+    NOTE: keep it in sync with "metadata.ndpi_fingerprint_format"
+    in ndpi_main.c
+   */
+  typedef enum  {
+    NDPI_CLIENT_SERVER_NDPI_FINGERPRINT = 0,
+    NDPI_CLIENT_ONLY_NDPI_FINGERPRINT
+  } ndpi_fingerprint_format;
+  
 struct ndpi_detection_module_config_struct {
   int max_packets_to_process;
   int direction_detect_enabled;
@@ -228,6 +237,8 @@ struct ndpi_detection_module_config_struct {
   ndpi_tcp_fingerprint_format tcp_fingerprint_format;
   int tcp_fingerprint_enabled;
   int tcp_fingerprint_raw_enabled;
+  int ndpi_fingerprint_enabled;
+  ndpi_fingerprint_format ndpi_fingerprint_format;
   
   char filename_config[CFG_MAX_LEN];
 
@@ -782,7 +793,9 @@ int tpkt_verify_hdr(const struct ndpi_packet_struct * const packet);
 /* Mining Protocols (Ethereum, Monero, ...) */
 u_int64_t mining_make_lru_cache_key(struct ndpi_flow_struct *flow);
 
-
+/* nDPI fingerprint */
+char* ndpi_compute_ndpi_flow_fingerprint(struct ndpi_detection_module_struct *ndpi_str, struct ndpi_flow_struct *flow);
+    
 /* Protocols init */
 void init_diameter_dissector(struct ndpi_detection_module_struct *ndpi_struct);
 void init_afp_dissector(struct ndpi_detection_module_struct *ndpi_struct);

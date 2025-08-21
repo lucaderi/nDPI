@@ -2265,6 +2265,9 @@ static void printFlow(u_int32_t id, struct ndpi_flow_info *flow, u_int16_t threa
 	fprintf(out, "[Risk Info: %s]", flow->risk_str);
     }
 
+    if(flow->ndpi_fingerprint)
+      fprintf(out, "[nDPI Fingerprint: %s]", flow->ndpi_fingerprint);
+
     if(flow->tcp_fingerprint)
       fprintf(out, "[TCP Fingerprint: %s]", flow->tcp_fingerprint);
 

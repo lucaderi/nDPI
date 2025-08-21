@@ -24,7 +24,6 @@
 #include <math.h>
 #include <sys/types.h>
 
-
 #define NDPI_CURRENT_PROTO NDPI_PROTOCOL_UNKNOWN
 
 #include "ndpi_config.h"
@@ -54,6 +53,7 @@
 #include "third_party/include/rce_injection.h"
 
 #include "ndpi_replace_printf.h"
+#include "ndpi_sha256.h"
 
 #define NDPI_CONST_GENERIC_PROTOCOL_NAME  "GenericProtocol"
 
@@ -1904,6 +1904,9 @@ int ndpi_flow2json(struct ndpi_detection_module_struct *ndpi_struct,
 
   if(flow->tcp.fingerprint_raw)
     ndpi_serialize_string_string(serializer, "tcp_fingerprint_raw", flow->tcp.fingerprint_raw);
+
+  if(flow->ndpi.fingerprint)
+    ndpi_serialize_string_string(serializer, "ndpi_fingerprint", flow->ndpi.fingerprint);
 
   ndpi_serialize_string_string(serializer, "proto",
 			       ndpi_get_ip_proto_name(l4_protocol, l4_proto_name, sizeof(l4_proto_name)));
@@ -4603,4 +4606,44 @@ bool ndpi_check_is_numeric_ip(char *host) {
     return true;
   else
     return false;
+}
+
+/* **************************************** */
+
+char* ndpi_compute_ndpi_flow_fingerprint(struct ndpi_detection_module_struct *ndpi_str,
+					 struct ndpi_flow_struct *flow) {
+  if(flow->ndpi.fingerprint == NULL) {
+    char *l4_fp = flow->tcp.fingerprint ? flow->tcp.fingerprint : "no_l4_fp";
+    char *l7_pf = "no_app_fp_cli";
+    char *l7_pf_server = "no_app_fp_srv";
+    u_int8_t sha_hash[NDPI_SHA256_BLOCK_SIZE];
+    size_t s;
+    u_int8_t fp_buf[128];
+
+    if(flow->protos.tls_quic.ja4_client[0] != '\0') l7_pf = flow->protos.tls_quic.ja4_client;
+
+    if(ndpi_str->cfg.ndpi_fingerprint_format == NDPI_CLIENT_SERVER_NDPI_FINGERPRINT) {
+      if(flow->protos.tls_quic.sha1_certificate_fingerprint[0] != '\0')
+	l7_pf_server = (char*)flow->protos.tls_quic.sha1_certificate_fingerprint;
+      else {
+	if(flow->protos.tls_quic.ja3_server[0] != '\0') l7_pf_server = flow->protos.tls_quic.ja3_server;
+      }
+    }
+    
+    s = snprintf((char*)fp_buf, sizeof(fp_buf), "%s-%s-%s", l4_fp, l7_pf, l7_pf_server);
+    ndpi_sha256(fp_buf, s, sha_hash);
+
+    ndpi_snprintf((char*)fp_buf, sizeof(fp_buf),
+		  "%02x%02x%02x%02x%02x%02x%02x%02x"
+		  "%02x%02x%02x%02x%02x%02x%02x%02x",
+		  sha_hash[0], sha_hash[1], sha_hash[2],    sha_hash[3],
+		  sha_hash[4], sha_hash[5], sha_hash[6],    sha_hash[7],
+		  sha_hash[8], sha_hash[9], sha_hash[10],   sha_hash[11],
+		  sha_hash[12], sha_hash[13], sha_hash[14], sha_hash[15]
+		  );
+  
+    flow->ndpi.fingerprint = ndpi_strdup((char*)fp_buf);
+  }
+
+  return(flow->ndpi.fingerprint);
 }

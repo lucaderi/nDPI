@@ -1455,6 +1455,10 @@ struct ndpi_flow_struct {
     ndpi_os os_hint;
   } tcp;
 
+  struct {
+    char *fingerprint;
+  } ndpi;
+  
   /*
     This structure below will not not stay inside the protos
     structure below as HTTP is used by many subprotocols

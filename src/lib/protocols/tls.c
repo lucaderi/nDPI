@@ -3369,8 +3369,8 @@ int processClientServerHello(struct ndpi_detection_module_struct *ndpi_struct,
 
 compute_ja4c:
 	      if(ndpi_struct->cfg.tls_ja4c_fingerprint_enabled) {
-	        ndpi_compute_ja4(ndpi_struct, flow, quic_version, &ja);
-
+	        ndpi_compute_ja4(ndpi_struct, flow, quic_version, &ja);		
+		
 		if(ndpi_struct->ja4_custom_protos != NULL) {
 		  u_int16_t proto_id;
 
