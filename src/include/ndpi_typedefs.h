@@ -2065,4 +2065,35 @@ typedef int (*ndpi_custom_dga_predict_fctn)(const char* domain, int domain_lengt
 
 /* **************************************** */
 
+#define NDPI_RANKING_VERSION  1
+
+typedef struct {
+  u_int32_t item_unique_id; /* e.g. IP address or ASN */
+  u_int32_t value;          /* current measurement */
+} ndpi_ranking_epoch_entry;
+
+typedef struct {
+  u_int32_t item_unique_id; /* e.g. IP address or ASN */
+} ndpi_ranking_change;
+
+typedef struct {
+  u_int32_t epoch;
+  ndpi_ranking_epoch_entry *entries;
+} ndpi_ranking_epoch;
+
+typedef struct {
+  u_int8_t  ranking_version;
+  u_int32_t epochs_memory_len;
+  u_int16_t max_num_entries;
+  u_int8_t  num_epochs;    /* max # of recently stored measurements */
+  u_int8_t  next_epoch_id; /* Next epoch to be written */
+} ndpi_ranking_header;
+
+typedef struct {
+  ndpi_ranking_header header;
+  char *epochs;
+} ndpi_ranking;
+
+/* **************************************** */
+
 #endif /* __NDPI_TYPEDEFS_H__ */
