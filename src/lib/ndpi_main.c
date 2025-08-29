@@ -11759,10 +11759,10 @@ u_int16_t ndpi_match_host_subprotocol(struct ndpi_detection_module_struct *ndpi_
   memset(ret_match, 0, sizeof(*ret_match));
 
   /* Match host first... */
-  if(ndpi_automa_match_string_subprotocol(ndpi_str, string_to_match, string_to_match_len, ret_match) == NDPI_PROTOCOL_UNKNOWN) {
+  if((rc = ndpi_automa_match_string_subprotocol(ndpi_str, string_to_match, string_to_match_len, ret_match)) == NDPI_PROTOCOL_UNKNOWN) {
     string_to_match = (char*)ndpi_get_host_domain(ndpi_str, buf);
     string_to_match_len = strlen(string_to_match);
-
+    
     /* In case of failure try the domain name as last resort */
     rc = ndpi_automa_match_string_subprotocol(ndpi_str, string_to_match, string_to_match_len, ret_match);
   }
