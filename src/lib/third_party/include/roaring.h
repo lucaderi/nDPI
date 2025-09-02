@@ -1,3 +1,8 @@
+/* ntop */
+#if defined(__FreeBSD__) || defined(__NetBSD__)
+#include <sys/endian.h>
+#endif
+
 #ifdef USE_OLD_ROARING
 #include "roaring_v2.h"
 #else
