@@ -2249,10 +2249,15 @@ bool ndpi_deserialize_ranking(ndpi_ranking *rank, const char *path) {
   else
     rank->epochs = (char*)ndpi_calloc(1, rank->header.epochs_memory_len);
 
-  if(rank->epochs)
-    fwrite(&rank->epochs, rank->header.epochs_memory_len, 1, fd);
-  else
-    ret = false;
+  if(ret) {
+    if(rank->epochs) {
+      n_read = fread(rank->epochs, rank->header.epochs_memory_len, 1, fd);
+
+      if(n_read != 1)
+	ret = false;
+    } else
+      ret = false;
+  }
 
   fclose(fd);
 
