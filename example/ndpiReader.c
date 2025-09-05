@@ -468,8 +468,23 @@ void ndpiCheckHostStringMatch(char *testChar) {
 	   match.protocol_category, appBufStr,
 	   ndpi_get_proto_breed_name(match.protocol_breed ),
 	   ndpi_category_get_name(ndpi_str, match.protocol_category));
-  } else
-    printf("Match NOT Found for string: %s\n\n", testChar );
+  } else {
+    ndpi_protocol_category_t category;
+    ndpi_protocol_breed_t breed;
+
+    /* No protocol match (on the ahocorasick); let's find out if we have
+     * at least the category */
+
+    if(ndpi_match_custom_category(ndpi_str, testChar, strlen(testChar), &category, &breed) == 0) {
+      printf("Match Found for string [%s] (no protocol) -> B(%d) C(%d) => %s %s\n",
+             testChar, breed, category,
+             ndpi_get_proto_breed_name(breed),
+             ndpi_category_get_name(ndpi_str, category));
+
+    } else {
+      printf("Match NOT Found for string: %s\n\n", testChar );
+    }
+  }
 
   ndpi_exit_detection_module(ndpi_str);
 }
