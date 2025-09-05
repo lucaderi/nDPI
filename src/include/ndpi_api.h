@@ -2424,7 +2424,8 @@ extern "C" {
   u_int16_t ndpi_ranking_add_epoch(ndpi_ranking *rank, u_int32_t epoch,
 				   ndpi_ranking_epoch_entry *entries,
 				   u_int16_t num_epoch_entries,
-				   ndpi_ranking_change *changes /* Out */);
+				   ndpi_ranking_change *curr_ranking,/* Out */
+				   ndpi_ranking_change *prev_ranking /* Out */);
 #ifdef __cplusplus
 }
 #endif

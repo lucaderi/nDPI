@@ -2075,9 +2075,7 @@ typedef struct {
   u_int32_t value;          /* current measurement */
 } ndpi_ranking_epoch_entry;
 
-typedef struct {
-  u_int32_t item_unique_id; /* e.g. IP address or ASN */
-} ndpi_ranking_change;
+typedef ndpi_ranking_epoch_entry ndpi_ranking_change;
 
 typedef struct {
   u_int32_t epoch;

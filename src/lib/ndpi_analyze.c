@@ -2308,11 +2308,13 @@ u_int16_t ndpi_ranking_add_epoch(ndpi_ranking *rank,
 				 u_int32_t epoch,
 				 ndpi_ranking_epoch_entry *entries,
 				 u_int16_t num_epoch_entries,
-				 ndpi_ranking_change *changes) {
+				 ndpi_ranking_change *curr_ranking,
+				 ndpi_ranking_change *prev_ranking) {
   u_int epoch_len, offset, i;
   ndpi_ranking_epoch *this_epoch, *prev_epoch;
   ndpi_ranking_epoch_entry *this_entries, *prev_entries;
   u_int16_t num_value_changed = 0;
+  u_int32_t el;
 
   /* Avoid overflow */
   num_epoch_entries = (u_int16_t)ndpi_min(num_epoch_entries, rank->header.max_num_entries);
@@ -2328,7 +2330,8 @@ u_int16_t ndpi_ranking_add_epoch(ndpi_ranking *rank,
 
   /* Reset first */
   memset(this_entries, 0, rank->header.max_num_entries * sizeof(ndpi_ranking_epoch_entry));
-  memcpy(this_entries, entries, num_epoch_entries * sizeof(ndpi_ranking_epoch_entry));
+  el = num_epoch_entries * sizeof(ndpi_ranking_epoch_entry);
+  memcpy(this_entries, entries, el);
 
   /* Calculate changes */
   offset = epoch_len * ((rank->header.next_epoch_id == 0) ? (rank->header.num_epochs-1) : (rank->header.next_epoch_id - 1));
@@ -2338,12 +2341,18 @@ u_int16_t ndpi_ranking_add_epoch(ndpi_ranking *rank,
     /* Prev epoch was filled up */
     prev_entries = (ndpi_ranking_epoch_entry*)&(rank->epochs[offset+sizeof(prev_epoch->epoch)]);
 
+    memcpy(prev_ranking, prev_entries, el);
+    memcpy(curr_ranking, this_entries, el);
+
     for(i=0; i<rank->header.max_num_entries; i++) {
       if(this_entries[i].item_unique_id != prev_entries[i].item_unique_id) {
 	/* Value changed */
-	changes[num_value_changed++].item_unique_id = this_entries[i].item_unique_id;
+	num_value_changed++;
       }
     }
+  } else {
+    memset(prev_ranking, 0, el);
+    memset(curr_ranking, 0, el);
   }
 
   /* Move to the next slot */

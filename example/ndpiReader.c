@@ -6858,7 +6858,7 @@ void checkRankingUnitTest() {
   const u_int num = 3;
   ndpi_ranking_epoch_entry entries[3];
   u_int i, j;
-  ndpi_ranking_change changes[3];
+  ndpi_ranking_change curr_ranking[3], prev_ranking[3];
   u_int32_t now = (u_int32_t)time(NULL);
   bool do_trace = false;
 
@@ -6877,10 +6877,11 @@ void checkRankingUnitTest() {
 
   for(j=0; j<5; j++) {
     u_int16_t num_changes;
-
+    
     for(i=0; i<num; i++) entries[i].item_unique_id = i+1, entries[i].value = rand();
 
-    num_changes = ndpi_ranking_add_epoch(&rank, now, entries, num,changes);
+    num_changes = ndpi_ranking_add_epoch(&rank, now, entries, num,
+					 curr_ranking, prev_ranking);
 
     if(do_trace) {
       if(num_changes > 0)
