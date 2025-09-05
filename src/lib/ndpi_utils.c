@@ -4689,7 +4689,8 @@ char* ndpi_compute_ndpi_flow_fingerprint(struct ndpi_detection_module_struct *nd
 
       flow->ndpi.fingerprint = ndpi_strdup((char*)fp_buf);
 
-      if(ndpi_str->ndpifp_custom_protos != NULL) {
+      if(flow->ndpi.fingerprint != NULL &&
+         ndpi_str->ndpifp_custom_protos != NULL) {
 	u_int32_t proto_id;
 
 	/* This protocol has been defined in protos.txt-like files */
