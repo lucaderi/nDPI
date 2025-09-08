@@ -2288,7 +2288,7 @@ void ndpi_print_ranking(ndpi_ranking *rank) {
     for(j=0; j<rank->header.max_num_entries; j++) {
       fprintf(stdout, "\t\t[%2d] %u - %llu\n", j,
 	      this_entries[j].item_unique_id,
-	      this_entries[j].value);
+	      (unsigned long long)this_entries[j].value);
     }
   }
 }
