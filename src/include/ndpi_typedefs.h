@@ -2072,7 +2072,7 @@ typedef int (*ndpi_custom_dga_predict_fctn)(const char* domain, int domain_lengt
 
 typedef struct {
   u_int32_t item_unique_id; /* e.g. IP address or ASN */
-  u_int32_t value;          /* current measurement */
+  u_int64_t value;          /* current measurement */
 } ndpi_ranking_epoch_entry;
 
 typedef ndpi_ranking_epoch_entry ndpi_ranking_change;

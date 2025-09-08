@@ -2275,7 +2275,7 @@ void ndpi_print_ranking(ndpi_ranking *rank) {
 	  rank->header.epochs_memory_len,
 	  rank->header.next_epoch_id);
 
-  epoch_len = (sizeof(ndpi_ranking_epoch_entry)*rank->header.max_num_entries) + sizeof(u_int32_t /* epoch */);;
+  epoch_len = (sizeof(ndpi_ranking_epoch_entry)*rank->header.max_num_entries) + sizeof(u_int32_t /* epoch */);
 
   for(i=0; i<rank->header.num_epochs; i++) {
     ndpi_ranking_epoch *epoch = (ndpi_ranking_epoch*)&rank->epochs[i*epoch_len];
@@ -2286,7 +2286,7 @@ void ndpi_print_ranking(ndpi_ranking *rank) {
     fprintf(stdout, "\t[epoch %u @ %u]\n", i, epoch->epoch);
 
     for(j=0; j<rank->header.max_num_entries; j++) {
-      fprintf(stdout, "\t\t[%2d] %u - %u\n", j,
+      fprintf(stdout, "\t\t[%2d] %u - %llu\n", j,
 	      this_entries[j].item_unique_id,
 	      this_entries[j].value);
     }
@@ -2296,8 +2296,8 @@ void ndpi_print_ranking(ndpi_ranking *rank) {
 /* *********************** */
 
 static int _comp(const void *a, const void *b) {
-  u_int32_t _va = ((ndpi_ranking_epoch_entry *)a)->value;
-  u_int32_t _vb = ((ndpi_ranking_epoch_entry *)b)->value;
+  u_int64_t _va = ((ndpi_ranking_epoch_entry *)a)->value;
+  u_int64_t _vb = ((ndpi_ranking_epoch_entry *)b)->value;
 
   if(_va < _vb) return(1);
   else if(_va > _vb) return(-1);
@@ -2321,7 +2321,7 @@ u_int16_t ndpi_ranking_add_epoch(ndpi_ranking *rank,
 
   qsort(entries, num_epoch_entries, sizeof(ndpi_ranking_epoch_entry), _comp);
 
-  epoch_len = (sizeof(ndpi_ranking_epoch_entry) * rank->header.max_num_entries) + sizeof(u_int32_t /* epoch */);;
+  epoch_len = (sizeof(ndpi_ranking_epoch_entry) * rank->header.max_num_entries) + sizeof(u_int32_t /* epoch */);
   offset = epoch_len * rank->header.next_epoch_id;
   this_epoch = (ndpi_ranking_epoch*)&rank->epochs[offset];
   this_epoch->epoch = epoch;
