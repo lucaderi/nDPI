@@ -2345,7 +2345,8 @@ u_int16_t ndpi_ranking_add_epoch(ndpi_ranking *rank,
     memcpy(curr_ranking, this_entries, el);
 
     for(i=0; i<rank->header.max_num_entries; i++) {
-      if(this_entries[i].item_unique_id != prev_entries[i].item_unique_id) {
+      if((prev_entries[i].item_unique_id != 0) && (this_entries[i].item_unique_id != 0)
+	 && (this_entries[i].item_unique_id != prev_entries[i].item_unique_id)) {
 	/* Value changed */
 	num_value_changed++;
       }
