@@ -6875,7 +6875,7 @@ void checkRankingUnitTest() {
   u_int i, j;
   ndpi_ranking_change curr_ranking[4], prev_ranking[4];
   u_int32_t now = (u_int32_t)time(NULL);
-  bool do_trace = true;
+  bool do_trace = false;
   u_int16_t num_changes;
     
   srand(now);
@@ -6919,7 +6919,8 @@ void checkRankingUnitTest() {
 	printf("[loop %u] No ranking changes at epoch %u\n", j+1, now);
     }
 
-    ndpi_print_ranking(&rank);
+    if(do_trace)
+      ndpi_print_ranking(&rank);
     
     assert(num_changes == 0);
     now++;
@@ -6937,8 +6938,9 @@ void checkRankingUnitTest() {
     } else
       printf("[loop %u] No ranking changes at epoch %u\n", j+1, now);
   }
-  
-  ndpi_print_ranking(&rank);
+
+  if(do_trace)
+    ndpi_print_ranking(&rank);
   
   assert(num_changes > 0);
   now++;
