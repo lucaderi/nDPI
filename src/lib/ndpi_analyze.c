@@ -2344,8 +2344,14 @@ u_int16_t ndpi_ranking_add_epoch(ndpi_ranking *rank,
     memcpy(curr_ranking, entries, e_len);
 
     for(i=0; i<rank->header.max_num_entries; i++) {
-      if(entries[i].item_unique_id != prev_entries[i].item_unique_id) {
-	num_value_changed++;
+      if(i >= num_epoch_entries) {
+	if(0 /* missing value */ != prev_entries[i].item_unique_id) {
+	  num_value_changed++;
+	}
+      } else {
+	if(entries[i].item_unique_id != prev_entries[i].item_unique_id) {
+	  num_value_changed++;
+	}
       }
     } /* for */
   } else {
