@@ -2315,7 +2315,7 @@ u_int16_t ndpi_ranking_add_epoch(ndpi_ranking *rank,
 				 u_int32_t *prev_ranking_epoch) {
   u_int epoch_len, offset, i;
   ndpi_ranking_epoch *this_epoch, *prev_epoch;
-  ndpi_ranking_epoch_entry *this_entries, *prev_entries;
+  ndpi_ranking_epoch_entry *this_entries, *prev_entries = NULL;
   u_int16_t num_value_changed = 0;
   u_int32_t e_len = num_epoch_entries * sizeof(ndpi_ranking_epoch_entry);
   bool first_run = false;
@@ -2376,8 +2376,11 @@ u_int16_t ndpi_ranking_add_epoch(ndpi_ranking *rank,
   } else {
     prev_epoch->epoch = epoch;
     rank->num_updates_without_ranking_changes++;
-    memset(prev_entries, 0, rank->header.max_num_entries * sizeof(ndpi_ranking_epoch_entry));
-    memcpy(prev_entries, entries, e_len);
+
+    if(prev_entries != NULL) {
+      memset(prev_entries, 0, rank->header.max_num_entries * sizeof(ndpi_ranking_epoch_entry));
+      memcpy(prev_entries, entries, e_len);
+    }
   }
 
   return(num_value_changed);
