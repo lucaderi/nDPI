@@ -5938,6 +5938,7 @@ int load_category_file_fd(struct ndpi_detection_module_struct *ndpi_str,
   u_int num_loaded = 0;
   unsigned int failed_lines = 0;
   unsigned int lines_read = 0;
+  ndpi_protocol_breed_t breed;
 
   (void)lines_read;
 
@@ -5987,7 +5988,20 @@ int load_category_file_fd(struct ndpi_detection_module_struct *ndpi_str,
       continue;
     }
 
-    if(ndpi_load_category(ndpi_str, line, category_id, NDPI_PROTOCOL_ACCEPTABLE /* TODO */, NULL) >= 0)
+    /* TODO: proper breed configuration.
+       For the time being:
+        - use NDPI_PROTOCOL_ACCEPTABLE as default
+        - some reasonable exceptions
+     */
+    breed = NDPI_PROTOCOL_ACCEPTABLE;
+    if(category_id == NDPI_PROTOCOL_CATEGORY_ADVERTISEMENT)
+      breed = NDPI_PROTOCOL_TRACKER_ADS;
+    if(category_id == NDPI_PROTOCOL_CATEGORY_MINING ||
+       category_id == NDPI_PROTOCOL_CATEGORY_MALWARE ||
+       category_id == NDPI_PROTOCOL_CATEGORY_GAMBLING)
+      breed = NDPI_PROTOCOL_UNSAFE;
+
+    if(ndpi_load_category(ndpi_str, line, category_id, breed, NULL) >= 0)
       num_loaded++;
   }
 
