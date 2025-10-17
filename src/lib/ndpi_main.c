@@ -9231,7 +9231,8 @@ static void internal_giveup(struct ndpi_detection_module_struct *ndpi_struct,
     check_probing_attempt(ndpi_struct, flow);
   }
 
-  if(ndpi_struct->proto_defaults[ret->proto.app_protocol].performIPcheck
+  if((ret->proto.app_protocol < ndpi_struct->proto_defaults_num_allocated)
+     && ndpi_struct->proto_defaults[ret->proto.app_protocol].performIPcheck
      && (ret->proto.app_protocol != ret->protocol_by_ip)) {
     /* Handle exceptions */
     bool trigger_risk = false;
