@@ -5625,7 +5625,8 @@ void automataDomainsUnitTest() {
 
   automa = ndpi_init_automa_domain();
   assert(automa);
-  assert(ndpi_add_string_to_automa(automa, ndpi_strdup("wikipedia.")) == 0);
+  assert(ndpi_add_string_to_automa(automa, ndpi_strdup("wikipedia.")) == 0); /* matches wikipedia.xxx */
+  assert(ndpi_add_string_to_automa(automa, ndpi_strdup("wikipedia.it.")) == 0); /* matches wikipedia.it.xxx */
   ndpi_finalize_automa(automa);
   assert(ndpi_match_string(automa, "wikipedia.it") == 1);
   assert(ndpi_match_string(automa, "foo.wikipedia.it") == 1);
