@@ -2259,8 +2259,8 @@ const char* ndpi_risk2str(ndpi_risk_enum risk) {
   case NDPI_SMB_INSECURE_VERSION:
     return("SMB Insecure Vers");
 
-  case NDPI_FREE_21:
-    return("FREE21");
+  case NDPI_MISMATCHING_PROTOCOL_WITH_IP:
+    return("Mismatching Protocol with server IP address");
 
   case NDPI_UNSAFE_PROTOCOL:
     return("Unsafe Protocol");
@@ -2421,8 +2421,8 @@ const char* ndpi_risk2code(ndpi_risk_enum risk) {
     return STRINGIFY(NDPI_SSH_OBSOLETE_SERVER_VERSION_OR_CIPHER);
   case NDPI_SMB_INSECURE_VERSION:
     return STRINGIFY(NDPI_SMB_INSECURE_VERSION);
-  case NDPI_FREE_21:
-    return STRINGIFY(NDPI_FREE_21);
+  case NDPI_MISMATCHING_PROTOCOL_WITH_IP:
+    return STRINGIFY(NDPI_MISMATCHING_PROTOCOL_WITH_IP);
   case NDPI_UNSAFE_PROTOCOL:
     return STRINGIFY(NDPI_TLS_SUSPICIOUS_ESNI_USAGE);
   case NDPI_DNS_SUSPICIOUS_TRAFFIC:
@@ -2544,8 +2544,8 @@ ndpi_risk_enum ndpi_code2risk(const char* risk) {
     return(NDPI_SSH_OBSOLETE_SERVER_VERSION_OR_CIPHER);
   else if(strcmp(STRINGIFY(NDPI_SMB_INSECURE_VERSION), risk) == 0)
     return(NDPI_SMB_INSECURE_VERSION);
-  else if(strcmp(STRINGIFY(NDPI_FREE_21), risk) == 0)
-    return(NDPI_FREE_21);
+  else if(strcmp(STRINGIFY(NDPI_MISMATCHING_PROTOCOL_WITH_IP), risk) == 0)
+    return(NDPI_MISMATCHING_PROTOCOL_WITH_IP);
   else if(strcmp(STRINGIFY(NDPI_UNSAFE_PROTOCOL), risk) == 0)
     return(NDPI_UNSAFE_PROTOCOL);
   else if(strcmp(STRINGIFY(NDPI_DNS_SUSPICIOUS_TRAFFIC), risk) == 0)
@@ -2723,7 +2723,7 @@ const char *ndpi_risk_shortnames[NDPI_MAX_RISK] = {
   "ssh_obsolete_client",
   "ssh_obsolete_server",
   "smb_insecure_ver",           /* NDPI_SMB_INSECURE_VERSION */
-  "free21",
+  "mismatching_hostname_with_ip",
   "unsafe_proto",
   "dns_susp",
   "tls_no_sni",
