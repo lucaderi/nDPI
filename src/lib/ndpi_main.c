@@ -3610,6 +3610,7 @@ static int ndpi_add_ja4_subprotocol(struct ndpi_detection_module_struct *ndpi_st
       return(-2);
   }
 
+  protocol_id = ndpi_map_ndpi_id_to_user_proto_id(ndpi_str, protocol_id);
   return(ndpi_hash_add_entry(&ndpi_str->ja4_custom_protos, ja4, ja4_len, protocol_id));
 }
 
@@ -3629,7 +3630,23 @@ static int ndpi_add_ndpifp_subprotocol(struct ndpi_detection_module_struct *ndpi
       return(-2);
   }
 
+  protocol_id = ndpi_map_ndpi_id_to_user_proto_id(ndpi_str, protocol_id);
   return(ndpi_hash_add_entry(&ndpi_str->ndpifp_custom_protos, ndpifp, ndpifp_len, protocol_id));
+}
+
+/* ******************************************* */
+
+static int ndpi_add_http_url_subprotocol(struct ndpi_detection_module_struct *ndpi_str,
+					 char *url, u_int16_t protocol_id) {
+  int url_len = strlen(url);
+
+  if(ndpi_str->http_url_hashmap == NULL) {
+    if(ndpi_hash_init(&ndpi_str->http_url_hashmap) != 0)
+      return(-2);
+  }
+
+  protocol_id = ndpi_map_ndpi_id_to_user_proto_id(ndpi_str, protocol_id);
+  return(ndpi_hash_add_entry(&ndpi_str->http_url_hashmap, url, url_len, protocol_id));
 }
 
 /* ******************************************* */
@@ -4136,8 +4153,9 @@ struct ndpi_detection_module_struct *ndpi_init_detection_module(struct ndpi_glob
   ndpi_str->malicious_ja4_hashmap  = NULL;  /* Initialized on demand */
   ndpi_str->malicious_sha1_hashmap = NULL;  /* Initialized on demand */
   ndpi_str->ja4_custom_protos      = NULL;  /* Initialized on demand */
-  ndpi_str->ndpifp_custom_protos  = NULL;  /* Initialized on demand */
-
+  ndpi_str->ndpifp_custom_protos   = NULL;  /* Initialized on demand */
+  ndpi_str->http_url_hashmap       = NULL;  /* Initialized on demand */
+  
   ndpi_str->trusted_issuer_dn = NULL; /* Initialized on demand */
 
   ndpi_str->custom_categories.sc_hostnames        = ndpi_domain_classify_alloc();
@@ -5198,6 +5216,9 @@ void ndpi_exit_detection_module(struct ndpi_detection_module_struct *ndpi_str) {
     if(ndpi_str->ndpifp_custom_protos)
       ndpi_hash_free(&ndpi_str->ndpifp_custom_protos);
 
+    if(ndpi_str->http_url_hashmap)
+      ndpi_hash_free(&ndpi_str->http_url_hashmap);
+
     if(ndpi_str->address_cache)
       ndpi_term_address_cache(ndpi_str->address_cache);
 
@@ -5493,11 +5514,10 @@ int ndpi_add_trusted_issuer_dn(struct ndpi_detection_module_struct *ndpi_str, ch
 
 static int ndpi_handle_rule(struct ndpi_detection_module_struct *ndpi_str,
 		            char *rule) {
-  char *at, *proto, *elem;
+  char *at, *proto, *elem, *equal;
   ndpi_proto_defaults_t *def;
   u_int subprotocol_id, i;
   int ret = 0;
-
   char *additional_params = NULL;
   ndpi_protocol_category_t category = NDPI_PROTOCOL_CATEGORY_UNSPECIFIED;
   ndpi_protocol_breed_t breed = NDPI_PROTOCOL_ACCEPTABLE;
@@ -5554,8 +5574,15 @@ static int ndpi_handle_rule(struct ndpi_detection_module_struct *ndpi_str,
     }
   }
 
+  equal = strchr(proto, '=');
+  if(equal)
+    equal[0] = '\0';
+  
   subprotocol_id = ndpi_get_proto_by_name(ndpi_str, proto);
 
+  if(equal)
+    equal[0] = '=';
+  
   if(subprotocol_id == NDPI_PROTOCOL_UNKNOWN) {
     def = NULL;
   } else {
@@ -5656,7 +5683,7 @@ static int ndpi_handle_rule(struct ndpi_detection_module_struct *ndpi_str,
   while((elem = strsep(&rule, ",")) != NULL) {
     char *attr = elem, *value = NULL;
     ndpi_port_range range;
-    int is_tcp = 0, is_udp = 0, is_ip = 0, is_ja4 = 0, is_ndpifp = 0;
+    int is_tcp = 0, is_udp = 0, is_ip = 0, is_ja4 = 0, is_ndpifp = 0, is_httpurl = 0;;
     u_int8_t is_ipv6_ip = 0;
 
     if(strncmp(attr, "tcp:", 4) == 0)
@@ -5717,6 +5744,8 @@ static int ndpi_handle_rule(struct ndpi_detection_module_struct *ndpi_str,
       is_ja4 = 1, value = &attr[4];
     } else if(strncmp(attr, "ndpifp:", 7) == 0) {
       is_ndpifp = 1, value = &attr[7];
+    } else if(strncmp(attr, "url:", 4) == 0) {
+      is_httpurl = 1, value = &attr[4];
     }
 
     if(is_tcp || is_udp) {
@@ -5763,14 +5792,21 @@ static int ndpi_handle_rule(struct ndpi_detection_module_struct *ndpi_str,
 
       if(rc != 0)
 	return(rc);
+    } else if(is_httpurl) {
+      int rc = ndpi_add_http_url_subprotocol(ndpi_str, value, subprotocol_id);
+
+      if(rc != 0)
+	return(rc);
     } else {
-      ndpi_add_host_url_subprotocol(ndpi_str, value, subprotocol_id, category, breed, 0);
+      int rc = ndpi_add_host_url_subprotocol(ndpi_str, value, subprotocol_id, category, breed, 0);
+
+      if(rc != 0)
+	return(rc);
     }
   }
 
   return(ret);
 }
-
 
 /* ******************************************************************** */
 
