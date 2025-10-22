@@ -4552,6 +4552,9 @@ static void printResults(u_int64_t processing_time_usec, u_int64_t setup_time_us
       printf("\tHash fp custom protos:     %llu/%llu (search/found)\n",
              (long long unsigned int)cumulative_stats.hash_stats[NDPI_STR_HASH_FP_CUSTOM_PROTOS].n_search,
              (long long unsigned int)cumulative_stats.hash_stats[NDPI_STR_HASH_FP_CUSTOM_PROTOS].n_found);
+      printf("\tHash url custom protos:    %llu/%llu (search/found)\n",
+             (long long unsigned int)cumulative_stats.hash_stats[NDPI_STR_HASH_HTTP_URL].n_search,
+             (long long unsigned int)cumulative_stats.hash_stats[NDPI_STR_HASH_HTTP_URL].n_found);
 
       if(enable_malloc_bins)
 	printf("\tData-path malloc histogram: %s\n", ndpi_print_bin(&malloc_bins, 0, buf, sizeof(buf)));
@@ -4681,6 +4684,9 @@ static void printResults(u_int64_t processing_time_usec, u_int64_t setup_time_us
       fprintf(results_file, "Hash fp custom protos:     %llu/%llu (search/found)\n",
              (long long unsigned int)cumulative_stats.hash_stats[NDPI_STR_HASH_FP_CUSTOM_PROTOS].n_search,
              (long long unsigned int)cumulative_stats.hash_stats[NDPI_STR_HASH_FP_CUSTOM_PROTOS].n_found);
+      fprintf(results_file, "Hash url custom protos:    %llu/%llu (search/found)\n",
+             (long long unsigned int)cumulative_stats.hash_stats[NDPI_STR_HASH_HTTP_URL].n_search,
+             (long long unsigned int)cumulative_stats.hash_stats[NDPI_STR_HASH_HTTP_URL].n_found);
 
       if(enable_malloc_bins)
         fprintf(results_file, "Data-path malloc histogram: %s\n", ndpi_print_bin(&malloc_bins, 0, buf, sizeof(buf)));
