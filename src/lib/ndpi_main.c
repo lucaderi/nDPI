@@ -8671,6 +8671,9 @@ static u_int32_t check_ndpi_subprotocols(struct ndpi_detection_module_struct * c
   if(detected_protocol == NDPI_PROTOCOL_UNKNOWN)
     return num_calls;
 
+  if(detected_protocol > ndpi_str->num_supported_protocols)
+    detected_protocol = ndpi_map_user_proto_id_to_ndpi_id(ndpi_str, detected_protocol);
+  
   for (a = 0; a < ndpi_str->proto_defaults[detected_protocol].subprotocol_count; a++) {
     u_int16_t subproto_id = ndpi_str->proto_defaults[detected_protocol].subprotocols[a];
 
