@@ -7,11 +7,11 @@
 
  - Create a new nDPI fingerprint, combining TCP fingerprint, JA4 fingepriint and TLS SHA1 certificate (or JA3S if SHA1 is missing). See: https://www.ntop.org/beyond-ja3-ja4-introducing-ndpi-traffic-fingerprint/
  - Add detection of (TLS/QUIC/HTTP) flows whose hostname was not previously resolved via DNS. See: https://www.ntop.org/when-snis-cannot-be-trusted/
- - Add support for an unlimited number of (custom) protocols. See https://github.com/ntop/nDPI/issues/2136)
+ - Add support for an unlimited number of (custom) protocols. See https://github.com/ntop/nDPI/issues/2136
  - Extend custom rules (see https://github.com/ntop/nDPI/blob/dev/example/protos.txt for some examples):
    - match via JA4 (https://github.com/ntop/nDPI/commit/087726d12d35299c1127910cd5c46e8170561f87)
    - match via nDPI fingerprint (https://github.com/ntop/nDPI/commit/7c53fcde85ae7c5584e7e14499b6aed497ef1af8)
-   - matcj via HTTP URL (https://github.com/ntop/nDPI/commit/5abe185e2c44b18e422ef8a746487271a0292781, https://github.com/ntop/nDPI/pull/3014)
+   - match via HTTP URL (https://github.com/ntop/nDPI/commit/5abe185e2c44b18e422ef8a746487271a0292781, https://github.com/ntop/nDPI/pull/3014)
    - support for category and breed in custom rules (https://github.com/ntop/nDPI/pull/2872)
 
 ## Important API Changes
@@ -57,6 +57,7 @@ Further information are available at https://github.com/ntop/nDPI/blob/dev/doc/p
  - Add support for out-of-tree builds (https://github.com/ntop/nDPI/pull/2993)
  - Provide an explicit state for the flow classification process (https://github.com/ntop/nDPI/pull/2942)
  - Add the concept of protocols stack: more than 2 protocols in the flow classification (https://github.com/ntop/nDPI/pull/2913)
+ - Add detection of flows where there is a mismatch between the numeric flow server IP address and the known IPs for such protocol. It is still a work-in-progress
 
 ## New algorithms
 
@@ -67,7 +68,12 @@ Further information are available at https://github.com/ntop/nDPI/blob/dev/doc/p
 
 Further information are available at https://github.com/ntop/nDPI/blob/dev/doc/configuration_parameters.md
 
- - 
+ - `hostname_dns_check`: enable/disable detection of flows (TLS/QUIC/HTTP) whose hostname was not previously resolved via DNS
+ - `metadata.tcp_fingerprint`: enable/disable computation and export of raw TCP fingerprint
+ - `metadata.tcp_fingerprint_format`: format of the TCP fingerprint. 0 = native nDPI format, 1 = MuonOF (see: https://github.com/sundruid/muonfp)
+ - `http,metadata.resp.content_type`: enable/disable export of Content Type (response) header for HTTP flows
+ - `http,metadata.resp.server`: enable/disable export of Server (request) header for HTTP flows
+ - `tls,blocks_analysis`: enable/disable analysis of TLS blocks size
 
 ## Improvements
 
