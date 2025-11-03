@@ -927,7 +927,7 @@ static void help(u_int long_help) {
          "  -A                         | Dump internal statistics (LRU caches / Patricia trees / Ahocarasick automas / ...\n"
          "  -M                         | Memory allocation stats on data-path (only by the library).\n"
 	 "                             | It works only on single-thread configuration\n"
-         "  --openvp_heuristics        | Enable OpenVPN heuristics.\n"
+         "  --openvpn_heuristics       | Enable OpenVPN heuristics.\n"
          "                             | It is a shortcut to --cfg=openvpn,dpi.heuristics,0x01\n"
          "  --tls_heuristics           | Enable TLS heuristics.\n"
          "                             | It is a shortcut to --cfg=tls,dpi.heuristics,0x07\n"
