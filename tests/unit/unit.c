@@ -96,7 +96,7 @@ int serializerUnitTest() {
     for(i=0; i<16; i++) {
       char kbuf[32], vbuf[32];
       int j = 0;
-      ndpi_snprintf(vbuf, sizeof(vbuf), "Value %d", i);
+      ndpi_snprintf(vbuf, sizeof(vbuf), "Value %d \t with special chars:\n$!@?", i);
       assert(ndpi_serialize_uint32_uint32(&serializer, j++, i*i) != -1);
       assert(ndpi_serialize_uint32_string(&serializer, j++, "Data") != -1);
       ndpi_snprintf(kbuf, sizeof(kbuf), "Key %d", j++);
