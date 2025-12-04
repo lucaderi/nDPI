@@ -1,5 +1,12 @@
 ACLOCAL_AMFLAGS = -I m4
-SUBDIRS = src/lib @EXTRA_TARGETS@
+
+SUBDIRS = src/lib
+
+if PLUGINS_ENABLED
+SUBDIRS += src/lib/plugins
+endif
+
+SUBDIRS += @EXTRA_TARGETS@
 
 if BUILD_FUZZTARGETS
 SUBDIRS += fuzz
@@ -34,7 +41,8 @@ EXTRA_DIST = README.md README.fuzzer.md CHANGELOG.md CONTRIBUTING.md \
 		lists/public_suffix_list.dat \
 		lists/README.md \
 		lists/protocols/README.md \
-	sonar-project.properties .github .ci-ignore
+	sonar-project.properties .github .ci-ignore \
+	src/lib/plugins/README.md
 
 doc:
 	make -C doc html

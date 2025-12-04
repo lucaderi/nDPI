@@ -349,8 +349,8 @@ ndpi_master_app_protocol ndpi_get_protocol_by_name(struct ndpi_detection_module_
 /* ************************************************************************************* */
 /* ************************************************************************************* */
 
-static void ndpi_add_user_proto_id_mapping(struct ndpi_detection_module_struct *ndpi_str,
-					   u_int16_t ndpi_proto_id, u_int16_t user_proto_id) {
+void ndpi_add_user_proto_id_mapping(struct ndpi_detection_module_struct *ndpi_str,
+                                    u_int16_t ndpi_proto_id, u_int16_t user_proto_id) {
   int idx;
 
   NDPI_LOG_DBG2(ndpi_str, "*** %u (>= %u)-> %u\n",
@@ -443,7 +443,7 @@ u_int16_t ndpi_map_ndpi_id_to_user_proto_id(struct ndpi_detection_module_struct 
 
 /* ************************************************************************************* */
 
-static ndpi_port_range *ndpi_build_default_ports_range(ndpi_port_range *ports, u_int16_t portA_low, u_int16_t portA_high,
+ndpi_port_range *ndpi_build_default_ports_range(ndpi_port_range *ports, u_int16_t portA_low, u_int16_t portA_high,
                                                        u_int16_t portB_low, u_int16_t portB_high, u_int16_t portC_low,
                                                        u_int16_t portC_high, u_int16_t portD_low, u_int16_t portD_high,
                                                        u_int16_t portE_low, u_int16_t portE_high) {
@@ -668,7 +668,7 @@ static void load_default_ports(struct ndpi_detection_module_struct *ndpi_str)
 
 /* ********************************************************************************** */
 
-static int ndpi_set_proto_defaults(struct ndpi_detection_module_struct *ndpi_str,
+int ndpi_set_proto_defaults(struct ndpi_detection_module_struct *ndpi_str,
 			           u_int8_t is_cleartext, u_int8_t is_app_protocol,
 			           ndpi_protocol_breed_t breed,
 			           u_int16_t protoId, char *protoName,
@@ -5042,7 +5042,9 @@ void ndpi_exit_detection_module(struct ndpi_detection_module_struct *ndpi_str) {
   if(ndpi_str != NULL) {
     unsigned int i;
 
-
+    /* Unload plugins (if any) */
+    ndpi_unload_protocol_plugins(ndpi_str);
+    
     ndpi_bitmask_free(&ndpi_str->cfg.detection_bitmask);
     ndpi_bitmask_free(&ndpi_str->cfg.debug_bitmask);
     ndpi_bitmask_free(&ndpi_str->cfg.ip_list_bitmask);
@@ -7447,6 +7449,8 @@ static int dissectors_init(struct ndpi_detection_module_struct *ndpi_str) {
 #endif
 
   /* ----------------------------------------------------------------- */
+
+  ndpi_init_protocol_plugins(ndpi_str);
 
   ndpi_str->callback_buffer_size = ndpi_str->callback_buffer_num;
 
@@ -12287,6 +12291,13 @@ int ndpi_match_trigram(const char *str) {
 void ndpi_free_flow(struct ndpi_flow_struct *flow) {
   if(flow) {
     ndpi_free_flow_data(flow);
+
+    if((flow->custom.plugin != NULL)
+       && (flow->custom.plugin->freeFlowFctn != NULL)
+       && (flow->custom.plugin_data != NULL)
+       )
+      flow->custom.plugin->freeFlowFctn(flow->custom.plugin_data);
+    
     ndpi_free(flow);
   }
 }

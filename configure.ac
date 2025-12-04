@@ -156,6 +156,11 @@ case "$host_os" in
 esac
 AC_SUBST(OS_TYPE)
 
+if test $OS_TYPE = "Darwin"; then
+   NDPI_CFLAGS="${NDPI_CFLAGS} -fno-color-diagnostics -fPIE"
+   NDPI_LDFLAGS="${NDPI_LDFLAGS} -fno-color-diagnostics -fPIE"
+fi
+
 #We should use latest croaring version, but with old compilers we need to
 #fallback to old/legacy code
 AS_IF([test "x${enable_oldcroaring}" = "xyes"], [
@@ -342,6 +347,12 @@ AS_IF([test "x$enable_global_context_support" != "xno"], [
   GLOBAL_CONTEXT_ENABLED=1
 ])
 
+PLUGINS_ENABLED=1
+AS_IF([test "x${enable_shared}" = "xno"],[
+  AC_MSG_WARN([plugins require shared library.])
+  PLUGINS_ENABLED=0
+])
+
 ADDITIONAL_INCS="${ADDITIONAL_INCS}"
 ADDITIONAL_LIBS="${ADDITIONAL_LIBS}"
 PCAP_HOME=$HOME/PF_RING/userland
@@ -391,6 +402,7 @@ case "$host" in
    *-*-mingw32*|*-*-msys)
       PCAP_INC=""
       PCAP_LIB=""
+      PLUGINS_ENABLED=0
       case "$host" in
         x86_64-*)
           BUILD_MINGW_X64=1
@@ -532,9 +544,15 @@ if test "${with_maxminddb+set}" = set; then :
   fi
 fi
 
+AS_IF([test "x${PLUGINS_ENABLED}" = "x1"], [
+  AC_DEFINE_UNQUOTED(HAVE_PLUGINS, "1", [plugins are supported])
+  AC_CHECK_LIB([dl], [dlopen], [LIBDL="-ldl"])
+])
+AM_CONDITIONAL([PLUGINS_ENABLED], [test "x${PLUGINS_ENABLED}" = "x1"])
+
 dnl> Add base system libraries last (lowest-level dependencies)
 dnl> This ensures proper linking order: high-level libs -> low-level libs
-ADDITIONAL_LIBS="${ADDITIONAL_LIBS} $LIBM"
+ADDITIONAL_LIBS="${ADDITIONAL_LIBS} $LIBM $LIBDL"
 
 dnl> Use absolute source directory for NDPI_BASE_DIR
 NDPI_ABS_SRCDIR="`cd ${srcdir} && pwd`"
@@ -549,10 +567,43 @@ if test "${srcdir}" != . ; then :
   cp -R ${srcdir}/lists/* lists/
 fi
 
-AC_CONFIG_FILES([Makefile example/Makefile example/Makefile.dpdk tests/Makefile tests/unit/Makefile tests/performance/Makefile tests/dga/Makefile rrdtool/Makefile influxdb/Makefile libndpi.pc src/include/ndpi_define.h src/lib/Makefile fuzz/Makefile doc/Doxyfile.cfg utils/Makefile])
+AC_CONFIG_FILES([Makefile example/Makefile example/Makefile.dpdk tests/Makefile tests/unit/Makefile tests/performance/Makefile tests/dga/Makefile rrdtool/Makefile influxdb/Makefile libndpi.pc src/include/ndpi_define.h src/lib/Makefile src/lib/plugins/Makefile fuzz/Makefile doc/Doxyfile.cfg utils/Makefile])
 AC_CONFIG_FILES([tests/do.sh], [chmod +x tests/do.sh])
 AC_CONFIG_FILES([tests/do-dga.sh], [chmod +x tests/do-dga.sh])
 AC_CONFIG_FILES([tests/do-unit.sh], [chmod +x tests/do-unit.sh])
+AC_CONFIG_FILES([tests/cfgs/caches_cfg/config.txt])
+AC_CONFIG_FILES([tests/cfgs/caches_global/config.txt])
+AC_CONFIG_FILES([tests/cfgs/classification_only//config.txt])
+AC_CONFIG_FILES([tests/cfgs/custom_rules//config.txt])
+#No config.txt file in default
+AC_CONFIG_FILES([tests/cfgs/disable_aggressiveness//config.txt])
+AC_CONFIG_FILES([tests/cfgs/disable_protocols//config.txt])
+AC_CONFIG_FILES([tests/cfgs/disable_use_client_ip//config.txt])
+AC_CONFIG_FILES([tests/cfgs/disable_use_client_port//config.txt])
+AC_CONFIG_FILES([tests/cfgs/dns_subclassification_and_process_response_disable//config.txt])
+AC_CONFIG_FILES([tests/cfgs/dns_sub_enable//config.txt])
+AC_CONFIG_FILES([tests/cfgs/enable_doh_heuristic//config.txt])
+AC_CONFIG_FILES([tests/cfgs/enable_payload_stat//config.txt])
+AC_CONFIG_FILES([tests/cfgs/flow_risk_infos_disabled//config.txt])
+AC_CONFIG_FILES([tests/cfgs/flow_risk_list_disable//config.txt])
+AC_CONFIG_FILES([tests/cfgs/fpc//config.txt])
+AC_CONFIG_FILES([tests/cfgs/fpc_disabled//config.txt])
+AC_CONFIG_FILES([tests/cfgs/guessing_disable//config.txt])
+AC_CONFIG_FILES([tests/cfgs/guess_ip_before_port_enabled//config.txt])
+AC_CONFIG_FILES([tests/cfgs/hostname_dns_check//config.txt])
+AC_CONFIG_FILES([tests/cfgs/http_process_response_disable//config.txt])
+AC_CONFIG_FILES([tests/cfgs/huge_number_of_custom_protocols//config.txt])
+AC_CONFIG_FILES([tests/cfgs/ip_lists_disable//config.txt])
+AC_CONFIG_FILES([tests/cfgs/monitoring//config.txt])
+AC_CONFIG_FILES([tests/cfgs/ndpireader_conf_file//config.txt])
+AC_CONFIG_FILES([tests/cfgs/openvpn_heuristic_enabled//config.txt])
+AC_CONFIG_FILES([tests/cfgs/packets_limit_per_flow//config.txt])
+AC_CONFIG_FILES([tests/cfgs/plugins//config.txt])
+AC_CONFIG_FILES([tests/cfgs/stun_extra_dissection//config.txt])
+AC_CONFIG_FILES([tests/cfgs/stun_only_peer_address_enabled//config.txt])
+AC_CONFIG_FILES([tests/cfgs/subclassification_disable//config.txt])
+AC_CONFIG_FILES([tests/cfgs/tls_heuristics_enabled//config.txt])
+AC_CONFIG_FILES([tests/cfgs/zoom_extra_dissection//config.txt])
 AC_CONFIG_HEADERS(src/include/ndpi_config.h)
 AC_SUBST(GIT_RELEASE)
 AC_SUBST(NDPI_MAJOR)
@@ -582,6 +633,7 @@ AC_SUBST(USE_HOST_LIBGCRYPT)
 AC_SUBST(PCRE2_ENABLED)
 AC_SUBST(NBPF_ENABLED)
 AC_SUBST(GLOBAL_CONTEXT_ENABLED)
+AC_SUBST(PLUGINS_ENABLED)
 AC_SUBST(HANDLE_TLS_SIGS)
 AC_SUBST(DISABLE_NPCAP)
 AC_SUBST(EXE_SUFFIX)
@@ -703,6 +755,12 @@ AS_IF([test "x${GLOBAL_CONTEXT_ENABLED}" = "x1"],
   Global context:          enabled (with pthread)"],
   [SUMMARY="${SUMMARY}
   Global context:          disabled"])
+
+AS_IF([test "x${PLUGINS_ENABLED}" = "x1"],
+  [SUMMARY="${SUMMARY}
+  Plugins:                 enabled"],
+  [SUMMARY="${SUMMARY}
+  Plugins:                 disabled"])
 
 AS_IF([test "x${enable_tls_sigs}" = "xyes"],
   [SUMMARY="${SUMMARY}
