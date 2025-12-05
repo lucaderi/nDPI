@@ -358,8 +358,12 @@ void ndpi_add_user_proto_id_mapping(struct ndpi_detection_module_struct *ndpi_st
 		user_proto_id);
 
   if(ndpi_proto_id < ndpi_str->num_internal_protocols){
+    /* We are overwriting an existing protocol dissector perhaps ? */
+
+#if 0
     NDPI_LOG_ERR(ndpi_str, "Something is seriously wrong with new custom protocol %d/%d/%d\n",
                  ndpi_proto_id, user_proto_id, ndpi_str->num_internal_protocols);
+#endif
     return; /* We shoudn't ever be here...*/
   }
 
@@ -6626,24 +6630,29 @@ void register_dissector(char *dissector_name, struct ndpi_detection_module_struc
   va_start(ap, num_protocol_ids);
   for(i = 0; i < num_protocol_ids; i++) {
     int ndpi_protocol_id = va_arg(ap, int);
+    
     if(!is_proto_enabled(ndpi_str, ndpi_protocol_id)) {
       NDPI_LOG_DBG(ndpi_str, "Protocol %d not enabled for dissector %s\n",
                    ndpi_protocol_id, dissector_name);
     } else {
-
       if(ndpi_str->proto_defaults[ndpi_protocol_id].dissector_idx != 0) {
+#if 1
+	/* Overwrite the existing function dissector */
+	ndpi_str->callback_buffer[ndpi_str->proto_defaults[ndpi_protocol_id].dissector_idx].func = func;
+	return;
+#else
         NDPI_LOG_ERR(ndpi_str, "Internal error: protocol %d/%s has been already registered (%d/%d)\n",
                      ndpi_protocol_id, dissector_name,
                      ndpi_str->proto_defaults[ndpi_protocol_id].dissector_idx,
                      idx);
-        /* TODO */
+#endif
       } else {
-
         if(first_protocol_id == -1)
           first_protocol_id = ndpi_protocol_id;
 
         ndpi_str->proto_defaults[ndpi_protocol_id].dissector_idx = idx;
       }
+      
       dissector_enabled = 1;
     }
   }
