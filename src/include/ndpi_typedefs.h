@@ -1516,6 +1516,8 @@ typedef struct ndpi_protocol_plugin {
 
 /* **************************************** */
 
+typedef int (*ProcessExtraPacketsFunc) (struct ndpi_detection_module_struct *, struct ndpi_flow_struct *flow);
+
 struct ndpi_flow_struct {
   u_int16_t detected_protocol_stack[NDPI_PROTOCOL_SIZE];
   struct ndpi_proto_stack protocol_stack;
@@ -1552,7 +1554,7 @@ struct ndpi_flow_struct {
   u_int8_t num_extra_packets_checked;
   u_int16_t num_processed_pkts; /* <= WARNING it can wrap but we do expect people to giveup earlier */
 
-  int (*extra_packets_func) (struct ndpi_detection_module_struct *, struct ndpi_flow_struct *flow);
+  ProcessExtraPacketsFunc extra_packets_func;
 
   u_int64_t last_packet_time_ms;
 
