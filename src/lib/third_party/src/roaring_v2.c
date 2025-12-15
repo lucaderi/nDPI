@@ -1,6 +1,6 @@
 #include "ndpi_config.h"
 
-#ifdef USE_OLD_ROARING
+#if defined(USE_OLD_ROARING) || defined(WIN32)
 // !!! DO NOT EDIT - THIS IS AN AUTO-GENERATED FILE !!!
 // Created by amalgamation.sh on 2023-02-12T11:34:02Z
 
