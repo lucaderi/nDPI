@@ -1949,31 +1949,45 @@ static char* print_cipher(ndpi_cipher_weakness c) {
 
 /* ********************************** */
 
-void print_bin(FILE *fout, const char *label, struct ndpi_bin *b) {
-  u_int16_t i;
-  const char *sep = label ? "," : ";";
+char* sprint_bin(char *buf, u_int buf_len, struct ndpi_bin *b,
+		 char *sep,  bool normalize) {
+  u_int i, idx = 0;
 
-  ndpi_normalize_bin(b);
-
-  if(label) fprintf(fout, "[%s: ", label);
-
+  if(normalize) ndpi_normalize_bin(b);
+  
   for(i=0; i<b->num_bins; i++) {
+    int l = -1;
+    
     switch(b->family) {
     case ndpi_bin_family8:
-      fprintf(fout, "%s%u", (i > 0) ? sep : "", b->u.bins8[i]);
+      l = snprintf(&buf[idx], buf_len-idx,  "%s%u", (i > 0) ? sep : "", b->u.bins8[i]);
       break;
     case ndpi_bin_family16:
-      fprintf(fout, "%s%u", (i > 0) ? sep : "", b->u.bins16[i]);
+      l = snprintf(&buf[idx], buf_len-idx,  "%s%u", (i > 0) ? sep : "", b->u.bins16[i]);
       break;
     case ndpi_bin_family32:
-      fprintf(fout, "%s%u", (i > 0) ? sep : "", b->u.bins32[i]);
+      l = snprintf(&buf[idx], buf_len-idx,  "%s%u", (i > 0) ? sep : "", b->u.bins32[i]);
       break;
     case ndpi_bin_family64:
-      fprintf(fout, "%s%llu", (i > 0) ? sep : "", (unsigned long long)b->u.bins64[i]);
+      l = snprintf(&buf[idx], buf_len-idx,  "%s%llu", (i > 0) ? sep : "", (unsigned long long)b->u.bins64[i]);
       break;
     }
+
+    if(l < 0) break; else idx += l;
   }
 
+  return(buf);
+}
+
+/* ********************************** */
+
+void print_bin(FILE *fout, const char *label, struct ndpi_bin *b) {
+  char buf[512];
+
+  sprint_bin(buf, sizeof(buf), b, label ? "," : ";", true);
+
+  if(label) fprintf(fout, "[%s: ", label);
+  fprintf(fout, "%s", buf);
   if(label) fprintf(fout, "]");
 }
 
@@ -2656,7 +2670,8 @@ static void printFlowSerialized(struct ndpi_flow_info *flow)
   //float data_ratio = ndpi_data_ratio(flow->src2dst_bytes, flow->dst2src_bytes);
   double f = (double)flow->first_seen_ms, l = (double)flow->last_seen_ms;
   float data_ratio = ndpi_data_ratio(flow->src2dst_bytes, flow->dst2src_bytes);
-
+  char buf[512];
+  
   ndpi_serialize_string_uint32(serializer, "flow_id", flow->flow_id);
   ndpi_serialize_string_double(serializer, "first_seen", f / 1000., "%.3f");
   ndpi_serialize_string_double(serializer, "last_seen", l / 1000., "%.3f");
@@ -2763,6 +2778,14 @@ static void printFlowSerialized(struct ndpi_flow_info *flow)
   ndpi_serialize_string_uint32(serializer, "c_to_s_init_win", flow->c_to_s_init_win);
   ndpi_serialize_string_uint32(serializer, "s_to_c_init_win", flow->s_to_c_init_win);
 
+  /* Bins */
+  ndpi_serialize_start_of_block(serializer, "plen_bins");
+  ndpi_serialize_string_string(serializer, "raw",
+			       sprint_bin(buf, sizeof(buf), &flow->payload_len_bin, ",", false));
+  ndpi_serialize_string_string(serializer, "normalized",
+			       sprint_bin(buf, sizeof(buf), &flow->payload_len_bin, ",", true));
+  ndpi_serialize_end_of_block(serializer);
+  
   json_str = ndpi_serializer_get_buffer(serializer, &json_str_len);
   if (json_str == NULL || json_str_len == 0)
     {
