@@ -324,6 +324,11 @@ typedef struct ndpi_flow_info {
   } ssh_tls;
 
   struct {
+    u_int8_t num_blocks;
+    struct ndpi_tls_block blocks[NDPI_MAX_NUM_TLS_APPL_BLOCKS];
+  } tls;
+  
+  struct {
     char url[256], request_content_type[64], content_type[64],
       user_agent[256], server[128], nat_ip[32], username[64], password[64], filename[256];
     u_int response_status_code;

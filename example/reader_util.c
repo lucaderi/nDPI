@@ -1604,6 +1604,9 @@ void process_ndpi_collected_info(struct ndpi_workflow * workflow, struct ndpi_fl
       flow->ssh_tls.num_blocks = flow->ndpi_flow->l4.tcp.tls.num_tls_blocks;
       memcpy(flow->ssh_tls.blocks, flow->ndpi_flow->l4.tcp.tls.tls_blocks, sizeof(flow->ndpi_flow->l4.tcp.tls.tls_blocks));
     }
+
+    flow->tls.num_blocks = flow->ndpi_flow->l4.tcp.tls.num_tls_blocks;
+    memcpy(&flow->tls.blocks, &flow->ndpi_flow->l4.tcp.tls.tls_blocks, sizeof(flow->ndpi_flow->l4.tcp.tls.tls_blocks));
   }
   /* FASTCGI */
   else if(ndpi_stack_contains(&flow->detected_protocol.protocol_stack, NDPI_PROTOCOL_FASTCGI)) {
