@@ -2800,10 +2800,10 @@ static void printFlowSerialized(struct ndpi_flow_info *flow)
     ndpi_serialize_start_of_list(serializer, "tls_blocks");
 
     for(i=0; i<flow->ssh_tls.num_blocks; i++) {
-      char str[16];
+      char str[64];
 
-      snprintf(str, sizeof(str), "%u:%d",
-	       flow->ssh_tls.blocks[i].block_type,
+      snprintf(str, sizeof(str), "%s:%d",
+	       ndpi_print_encoded_tls_block_type(flow->ssh_tls.blocks[i].block_type),
 	       flow->ssh_tls.blocks[i].len);
       ndpi_serialize_string_string(serializer, "", str);
     }
