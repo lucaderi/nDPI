@@ -29,6 +29,8 @@
 #include "../src/lib/third_party/include/ahocorasick.h"
 
 #include <stdio.h>
+#include <sys/types.h>
+#include <inttypes.h> /* Needed by PRIu64 */
 #include <stdlib.h>
 #include <getopt.h>
 #include <float.h> /* FLT_EPSILON */
@@ -60,7 +62,6 @@
 #include <libgen.h>
 #endif
 #include <errno.h>
-
 #include "reader_util.h"
 
 #define ntohl64(x) ( ( (uint64_t)(ntohl( (uint32_t)((x << 32) >> 32) )) << 32) | ntohl( ((uint32_t)(x >> 32)) ) )
@@ -1956,20 +1957,32 @@ char* sprint_bin(char *buf, u_int buf_len, struct ndpi_bin *b,
   if(normalize) ndpi_normalize_bin(b);
   
   for(i=0; i<b->num_bins; i++) {
-    int l = -1;
+    int l;
+
+    if(i > 0) {
+      l = snprintf(&buf[idx], buf_len-idx,  "%s", sep);
+      if(l < 0) break; else idx += l;
+    }
     
     switch(b->family) {
     case ndpi_bin_family8:
-      l = snprintf(&buf[idx], buf_len-idx,  "%s%u", (i > 0) ? sep : "", b->u.bins8[i]);
+      l = snprintf(&buf[idx], buf_len-idx,  "%u", b->u.bins8[i]);
       break;
     case ndpi_bin_family16:
-      l = snprintf(&buf[idx], buf_len-idx,  "%s%u", (i > 0) ? sep : "", b->u.bins16[i]);
+      l = snprintf(&buf[idx], buf_len-idx,  "%u", b->u.bins16[i]);
       break;
     case ndpi_bin_family32:
-      l = snprintf(&buf[idx], buf_len-idx,  "%s%u", (i > 0) ? sep : "", b->u.bins32[i]);
+      l = snprintf(&buf[idx], buf_len-idx,  "%u", b->u.bins32[i]);
       break;
     case ndpi_bin_family64:
-      l = snprintf(&buf[idx], buf_len-idx,  "%s%llu", (i > 0) ? sep : "", (unsigned long long)b->u.bins64[i]);
+#ifdef __MINGW64__
+      l = snprintf(&buf[idx], buf_len - idx, "%lu", (unsigned long)b->u.bins64[i]);
+#else
+      l = snprintf(&buf[idx], buf_len - idx, "%" PRIu64, b->u.bins64[i]);
+#endif
+      break;
+    default:
+      l = -1;
       break;
     }
 
@@ -2642,7 +2655,9 @@ static void printFlow(u_int32_t id, struct ndpi_flow_info *flow, u_int16_t threa
       fprintf(out, "[TLS blocks: ");
 
       for(i=0; i<flow->ssh_tls.num_blocks; i++)
-	fprintf(out, "%s%u/%d", (i > 0) ? "," : "", flow->ssh_tls.blocks[i].block_type, flow->ssh_tls.blocks[i].len);
+	fprintf(out, "%s%s/%d", (i > 0) ? "," : "",
+		ndpi_print_encoded_tls_block_type(flow->ssh_tls.blocks[i].block_type),
+		flow->ssh_tls.blocks[i].len);
 
       fprintf(out, "]");
     }
