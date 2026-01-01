@@ -50,7 +50,7 @@ static bool ndpi_load_protocol_plugin(struct ndpi_detection_module_struct *ndpi_
 
   if(ndpi_struct->proto_plugins.num_loaded_plugins == (NDPI_MAX_NUM_PLUGINS-1)) {
 #ifdef NDPI_PLUGIN_DEBUG
-    printf("WARNING: too many plugins loadeded %u\n", ndpi_struct->proto_plugins.num_loaded_plugins);
+    printf("WARNING: too many plugins loaded %u\n", ndpi_struct->proto_plugins.num_loaded_plugins);
 #endif
     return(false);
   }
