@@ -2277,6 +2277,21 @@ static void ndpi_compute_ja4(struct ndpi_detection_module_struct *ndpi_struct,
 
 /* **************************************** */
 
+bool skipTLSextension(struct ndpi_detection_module_struct *ndpi_struct,
+		      u_int16_t extension_id)  {
+  if(ndpi_struct->cfg.tls_ja_ignore_ephemeral_extensions) {
+    switch(extension_id) {
+    case 0x23: /* session ticket - RFC 8447 */
+    case 0x29: /* pre-shared key - RFC 8446 */
+      return(true);
+    }
+  }
+
+  return(false);
+}
+
+/* **************************************** */
+
 int processClientServerHello(struct ndpi_detection_module_struct *ndpi_struct,
 			     struct ndpi_flow_struct *flow, u_int32_t quic_version) {
   struct ndpi_packet_struct *packet = &ndpi_struct->packet;
@@ -2628,9 +2643,9 @@ int processClientServerHello(struct ndpi_detection_module_struct *ndpi_struct,
 
 	  if(cipher_offset+i+1 < packet->payload_packet_len &&
 	     ((packet->payload[cipher_offset+i] != packet->payload[cipher_offset+i+1]) ||
-	      ((packet->payload[cipher_offset+i] & 0xF) != 0xA)) /* Skip Grease */) {
+	      ((packet->payload[cipher_offset+i] & 0xF) != 0xA)) /* Skip GREASE */) {
 	    /*
-	      Skip GREASE [https://tools.ietf.org/id/draft-ietf-tls-grease-01.html]
+	      Skip GREASE [https://datatracker.ietf.org/doc/html/rfc8701]
 	      https://engineering.salesforce.com/tls-fingerprinting-with-ja3-and-ja3s-247362855967
 	    */
 
@@ -2791,7 +2806,9 @@ int processClientServerHello(struct ndpi_detection_module_struct *ndpi_struct,
 		    */
 		    flow->l4.tcp.tls.tls_blocks[flow->l4.tcp.tls.num_tls_blocks-1].len -= extension_len - 4 /* id + len */;
 		  }
-		  ja.client.tls_extension[ja.client.num_tls_extensions++] = extension_id;
+
+		  if(!skipTLSextension(ndpi_struct, extension_id))
+		    ja.client.tls_extension[ja.client.num_tls_extensions++] = extension_id;
 		} else {
 		  invalid_ja = 1;
 #ifdef DEBUG_TLS
@@ -3355,7 +3372,7 @@ int processClientServerHello(struct ndpi_detection_module_struct *ndpi_struct,
                            extn_offset,
                            group_id, key_extn_len);
   #endif
-		    if(group_id != 0x2a2a /* Skip GREASE */) {
+		    if(group_id != 0x2A2A /* Skip GREASE */) {
 		      if(ja.client.num_key_share_groups < MAX_NUM_JA)
 			ja.client.key_share_group[ja.client.num_key_share_groups++] = group_id;
 		    }
