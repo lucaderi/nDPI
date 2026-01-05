@@ -1300,11 +1300,10 @@ static void ndpi_tls2json(struct ndpi_detection_module_struct *ndpi_struct, ndpi
 	    if(ret > 0) idx += ret; else break;
 	  } /* for */
 
-	  if(idx > 0) {
+	  if(idx > 0)
 	    ndpi_serialize_string_string(serializer, "", buf);
-
-	    ndpi_serialize_end_of_list(serializer);
-	  }
+	  
+	  ndpi_serialize_end_of_list(serializer);	  
 	}
 
 #ifdef TLS_HANDLE_SIGNATURE_ALGORITMS
@@ -1418,9 +1417,9 @@ static void ndpi_tls2json(struct ndpi_detection_module_struct *ndpi_struct, ndpi
 
 	  ndpi_serialize_end_of_block(serializer);
 	}
-
-	ndpi_serialize_end_of_block(serializer);
       }
+
+      ndpi_serialize_end_of_block(serializer);
     }
   }
 }
