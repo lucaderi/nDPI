@@ -1266,7 +1266,7 @@ static void ndpi_tls2json(struct ndpi_detection_module_struct *ndpi_struct, ndpi
 
       if(flow->protos.tls_quic.sha1_certificate_fingerprint[0] != '\0') {
         for(i=0, off=0; i<20; i++) {
-          int rc = ndpi_snprintf(&buf[off], sizeof(buf)-off,"%s%02X", (i > 0) ? ":" : "",
+          int rc = ndpi_snprintf(&buf[off], sizeof(buf)-off-1,"%s%02X", (i > 0) ? ":" : "",
 				 flow->protos.tls_quic.sha1_certificate_fingerprint[i] & 0xFF);
 
           if(rc <= 0) break; else off += rc;
@@ -1292,7 +1292,7 @@ static void ndpi_tls2json(struct ndpi_detection_module_struct *ndpi_struct, ndpi
 	      }
 	    }
 
-	    ret = snprintf(&buf[idx], sizeof(buf)-1, "%s%s=%d",
+	    ret = snprintf(&buf[idx], sizeof(buf)-idx-1, "%s%s=%d",
 			   (idx > 0) ? "," : "",
 			   ndpi_print_encoded_tls_block_type(flow->l4.tcp.tls.tls_blocks[i].block_type, true),
 			   flow->l4.tcp.tls.tls_blocks[i].len);
