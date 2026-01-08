@@ -5022,6 +5022,10 @@ char* ndpi_compute_ndpi_flow_fingerprint(struct ndpi_detection_module_struct *nd
     }
 
     s = snprintf((char*)fp_buf, sizeof(fp_buf)-1, "%s-%s%s-%s", l4_fp, l7_pf, l7_pf_tls_blocks, l7_pf_server);
+
+    if(ndpi_str->cfg.tls_ndpifp_ignore_sni_extension)
+      fp_buf[strlen(l4_fp)+4] = '_';
+    
     if(s > 0) {
       s = ndpi_min(s, sizeof(fp_buf)-1);
       ndpi_sha256(fp_buf, s, sha_hash);

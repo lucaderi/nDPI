@@ -2300,6 +2300,9 @@ static void ndpi_compute_ja4(struct ndpi_detection_module_struct *ndpi_struct,
 
 bool skipTLSextension(struct ndpi_detection_module_struct *ndpi_struct,
 		      u_int16_t extension_id)  {
+  if((extension_id == 0x0 /* SNI */) && ndpi_struct->cfg.tls_ndpifp_ignore_sni_extension)
+    return(true);
+
   if(ndpi_struct->cfg.tls_ja_ignore_ephemeral_extensions) {
     switch(extension_id) {
     case 0x23: /* session ticket - RFC 9149 */
@@ -2826,7 +2829,10 @@ int processClientServerHello(struct ndpi_detection_module_struct *ndpi_struct,
 		      allows us to have a consistent measurement regardless of the SNI being used
 		      and other information put in ECHO across requests
 		    */
-		    flow->l4.tcp.tls.tls_blocks[flow->l4.tcp.tls.num_tls_blocks-1].len -= extension_len - 4 /* id + len */;
+		    if(extension_id == 0x0 /* SNI */)
+		      ; /* Nothing to do as already handled by (***) */
+		    else
+		      flow->l4.tcp.tls.tls_blocks[flow->l4.tcp.tls.num_tls_blocks-1].len -= extension_len + 4 /* id + len */;
 		  }
 
 		  if(!skipTLSextension(ndpi_struct, extension_id))
@@ -2864,7 +2870,10 @@ int processClientServerHello(struct ndpi_detection_module_struct *ndpi_struct,
 			Taking SNI lenght out of the block lenght allows us to have a consistent
 			measurement regardless of the SNI being used
 		      */
-		      flow->l4.tcp.tls.tls_blocks[flow->l4.tcp.tls.num_tls_blocks-1].len -= sni_len;
+		      if(ndpi_struct->cfg.tls_ndpifp_ignore_sni_extension)
+			flow->l4.tcp.tls.tls_blocks[flow->l4.tcp.tls.num_tls_blocks-1].len -= extension_len + 4 /* id + len */;
+		      else
+			flow->l4.tcp.tls.tls_blocks[flow->l4.tcp.tls.num_tls_blocks-1].len -= sni_len; /* (***) */
 		    }
 
 		    if(ndpi_is_valid_hostname((char *)&packet->payload[offset+extension_offset+5], len) == 0) {
