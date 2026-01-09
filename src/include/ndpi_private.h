@@ -300,6 +300,7 @@ struct ndpi_detection_module_config_struct {
   int tls_ja_data_enabled;
   int tls_ja_ignore_ephemeral_extensions;
   int tls_ndpifp_ignore_sni_extension;
+  int tls_ndpifp_ignore_tcp_fingerprint;
   int tls_subclassification_enabled;
   int tls_max_num_blocks_to_analyze;
   int tls_blocks_show_timing;
