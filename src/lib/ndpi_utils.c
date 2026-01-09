@@ -1292,12 +1292,18 @@ static void ndpi_tls2json(struct ndpi_detection_module_struct *ndpi_struct, ndpi
 	      }
 	    }
 
-	    ret = snprintf(&buf[idx], sizeof(buf)-idx-1, "%s%s=%d@%u",
-			   (idx > 0) ? "," : "",
-			   ndpi_print_encoded_tls_block_type(flow->l4.tcp.tls.tls_blocks[i].block_type, true),
-			   flow->l4.tcp.tls.tls_blocks[i].len,
-			   flow->l4.tcp.tls.tls_blocks[i].msec_delta);
-
+	    if(ndpi_struct->cfg.tls_blocks_show_timing)
+	      ret = snprintf(&buf[idx], sizeof(buf)-idx-1, "%s%s=%d@%u",
+			     (idx > 0) ? "," : "",
+			     ndpi_print_encoded_tls_block_type(flow->l4.tcp.tls.tls_blocks[i].block_type, true),
+			     flow->l4.tcp.tls.tls_blocks[i].len,
+			     flow->l4.tcp.tls.tls_blocks[i].msec_delta);
+	    else
+	      ret = snprintf(&buf[idx], sizeof(buf)-idx-1, "%s%s=%d",
+			     (idx > 0) ? "," : "",
+			     ndpi_print_encoded_tls_block_type(flow->l4.tcp.tls.tls_blocks[i].block_type, true),
+			     flow->l4.tcp.tls.tls_blocks[i].len);
+	      
 	    if(ret > 0) idx += ret; else break;
 	  } /* for */
 
