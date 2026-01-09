@@ -1206,6 +1206,162 @@ void ndpi_serialize_proto(struct ndpi_detection_module_struct *ndpi_struct,
 
 /* ********************************** */
 
+void ndpi_serialize_tls_blocks(struct ndpi_detection_module_struct *ndpi_struct,
+			       ndpi_serializer *serializer,
+			       struct ndpi_flow_struct *flow) {
+  if((ndpi_struct->cfg.tls_max_num_blocks_to_analyze > 0)
+     && (flow->l4.tcp.tls.tls_blocks != NULL)
+     && (flow->l4.tcp.tls.num_tls_blocks > 0)) {
+    u_int16_t i, idx = 0;
+    int ret;
+    char buf[256];
+
+    ndpi_serialize_start_of_list(serializer, "tls_blocks");
+
+    for(i=0; i< flow->l4.tcp.tls.num_tls_blocks; i++) {
+      if(!flow->l4.tcp.tls.tls_blocks[i].same_pkt) {
+	if(idx > 0) {
+	  ndpi_serialize_string_string(serializer, "", buf);
+	  idx = 0;
+	}
+      }
+
+      if(ndpi_struct->cfg.tls_blocks_show_timing)
+	ret = snprintf(&buf[idx], sizeof(buf)-idx-1, "%s%s=%d@%u",
+		       (idx > 0) ? "," : "",
+		       ndpi_print_encoded_tls_block_type(flow->l4.tcp.tls.tls_blocks[i].block_type, true),
+		       flow->l4.tcp.tls.tls_blocks[i].len,
+		       flow->l4.tcp.tls.tls_blocks[i].msec_delta);
+      else
+	ret = snprintf(&buf[idx], sizeof(buf)-idx-1, "%s%s=%d",
+		       (idx > 0) ? "," : "",
+		       ndpi_print_encoded_tls_block_type(flow->l4.tcp.tls.tls_blocks[i].block_type, true),
+		       flow->l4.tcp.tls.tls_blocks[i].len);
+	      
+      if(ret > 0) idx += ret; else break;
+    } /* for */
+
+    if(idx > 0)
+      ndpi_serialize_string_string(serializer, "", buf);
+	  
+    ndpi_serialize_end_of_list(serializer);	  
+  }
+
+#ifdef TLS_HANDLE_SIGNATURE_ALGORITMS
+  ndpi_serialize_string_uint32(serializer, "sig_algs", flow->protos.tls_quic.num_tls_signature_algorithms);
+#endif
+
+  if(flow->protos.tls_quic.ja_client != NULL) {
+    ndpi_tls_client_info *c = flow->protos.tls_quic.ja_client;
+    u_int16_t i;
+
+    ndpi_serialize_start_of_block(serializer, "client_data");
+
+    if(c->num_ciphers > 0) {
+      ndpi_serialize_start_of_list(serializer, "ciphers");
+
+      for(i=0; i<c->num_ciphers; i++)
+	ndpi_serialize_string_uint32(serializer, "", c->cipher[i]);
+
+      ndpi_serialize_end_of_list(serializer);
+    }
+
+    if(c->num_tls_extensions > 0) {
+      ndpi_serialize_start_of_list(serializer, "tls_extensions");
+
+      for(i=0; i<c->num_tls_extensions; i++)
+	ndpi_serialize_string_uint32(serializer, "", c->tls_extension[i]);
+
+      ndpi_serialize_end_of_list(serializer);
+    }
+
+    if(c->num_elliptic_curve_groups > 0) {
+      ndpi_serialize_start_of_list(serializer, "elliptic_curve_groups");
+
+      for(i=0; i<c->num_elliptic_curve_groups; i++)
+	ndpi_serialize_string_uint32(serializer, "", c->elliptic_curve_group[i]);
+
+      ndpi_serialize_end_of_list(serializer);
+    }
+
+    if(c->num_elliptic_curve_point_format > 0) {
+      ndpi_serialize_start_of_list(serializer, "elliptic_curve_point_format");
+
+      for(i=0; i<c->num_elliptic_curve_point_format; i++)
+	ndpi_serialize_string_uint32(serializer, "", c->elliptic_curve_point_format[i]);
+
+      ndpi_serialize_end_of_list(serializer);
+    }
+
+    if(c->num_signature_algorithms > 0) {
+      ndpi_serialize_start_of_list(serializer, "signature_algorithms");
+
+      for(i=0; i<c->num_signature_algorithms; i++)
+	ndpi_serialize_string_uint32(serializer, "", c->signature_algorithm[i]);
+
+      ndpi_serialize_end_of_list(serializer);
+    }
+
+    if(c->num_key_share_groups > 0) {
+      ndpi_serialize_start_of_list(serializer, "key_share_groups");
+
+      for(i=0; i<c->num_key_share_groups; i++)
+	ndpi_serialize_string_uint32(serializer, "", c->key_share_group[i]);
+
+      ndpi_serialize_end_of_list(serializer);
+    }
+
+    if(c->num_supported_versions > 0) {
+      ndpi_serialize_start_of_list(serializer, "supported_versions");
+
+      for(i=0; i<c->num_supported_versions; i++)
+	ndpi_serialize_string_uint32(serializer, "", c->supported_version[i]);
+
+      ndpi_serialize_end_of_list(serializer);
+    }
+
+    ndpi_serialize_end_of_block(serializer);
+  }
+
+  if(flow->protos.tls_quic.ja_server != NULL) {
+    ndpi_tls_server_info *s = flow->protos.tls_quic.ja_server;
+    u_int16_t i;
+
+    ndpi_serialize_start_of_block(serializer, "server_data");
+
+    if(s->num_ciphers > 0) {
+      ndpi_serialize_start_of_list(serializer, "ciphers");
+
+      for(i=0; i<s->num_ciphers; i++)
+	ndpi_serialize_string_uint32(serializer, "", s->cipher[i]);
+
+      ndpi_serialize_end_of_list(serializer);
+    }
+
+    if(s->num_tls_extensions > 0) {
+      ndpi_serialize_start_of_list(serializer, "tls_extensions");
+
+      for(i=0; i<s->num_tls_extensions; i++)
+	ndpi_serialize_string_uint32(serializer, "", s->tls_extension[i]);
+
+      ndpi_serialize_end_of_list(serializer);
+    }
+
+    if(s->num_elliptic_curve_point_format > 0) {
+      ndpi_serialize_start_of_list(serializer, "elliptic_curve_point_format");
+
+      for(i=0; i<s->num_elliptic_curve_point_format; i++)
+	ndpi_serialize_string_uint32(serializer, "", s->elliptic_curve_point_format[i]);
+
+      ndpi_serialize_end_of_list(serializer);
+    }
+
+    ndpi_serialize_end_of_block(serializer);
+  }  
+}
+
+/* ********************************** */
+
 static void ndpi_tls2json(struct ndpi_detection_module_struct *ndpi_struct, ndpi_serializer *serializer,
 			  struct ndpi_flow_struct *flow, bool is_tls_proto) {
   if(flow->protos.tls_quic.ssl_version) {
@@ -1275,156 +1431,8 @@ static void ndpi_tls2json(struct ndpi_detection_module_struct *ndpi_struct, ndpi
         ndpi_serialize_string_string(serializer, "fingerprint", buf);
       }
 
-      if (is_tls_proto == true) {
-	if((ndpi_struct->cfg.tls_max_num_blocks_to_analyze > 0)
-	   && (flow->l4.tcp.tls.num_tls_blocks > 0)) {
-	  u_int16_t i, idx = 0;
-	  int ret;
-	  char buf[256];
-
-	  ndpi_serialize_start_of_list(serializer, "tls_blocks");
-
-	  for(i=0; i< flow->l4.tcp.tls.num_tls_blocks; i++) {
-	    if(!flow->l4.tcp.tls.tls_blocks[i].same_pkt) {
-	      if(idx > 0) {
-		ndpi_serialize_string_string(serializer, "", buf);
-		idx = 0;
-	      }
-	    }
-
-	    if(ndpi_struct->cfg.tls_blocks_show_timing)
-	      ret = snprintf(&buf[idx], sizeof(buf)-idx-1, "%s%s=%d@%u",
-			     (idx > 0) ? "," : "",
-			     ndpi_print_encoded_tls_block_type(flow->l4.tcp.tls.tls_blocks[i].block_type, true),
-			     flow->l4.tcp.tls.tls_blocks[i].len,
-			     flow->l4.tcp.tls.tls_blocks[i].msec_delta);
-	    else
-	      ret = snprintf(&buf[idx], sizeof(buf)-idx-1, "%s%s=%d",
-			     (idx > 0) ? "," : "",
-			     ndpi_print_encoded_tls_block_type(flow->l4.tcp.tls.tls_blocks[i].block_type, true),
-			     flow->l4.tcp.tls.tls_blocks[i].len);
-	      
-	    if(ret > 0) idx += ret; else break;
-	  } /* for */
-
-	  if(idx > 0)
-	    ndpi_serialize_string_string(serializer, "", buf);
-	  
-	  ndpi_serialize_end_of_list(serializer);	  
-	}
-
-#ifdef TLS_HANDLE_SIGNATURE_ALGORITMS
-	ndpi_serialize_string_uint32(serializer, "sig_algs", flow->protos.tls_quic.num_tls_signature_algorithms);
-#endif
-
-	if(flow->protos.tls_quic.ja_client != NULL) {
-	  ndpi_tls_client_info *c = flow->protos.tls_quic.ja_client;
-	  u_int16_t i;
-
-	  ndpi_serialize_start_of_block(serializer, "client_data");
-
-	  if(c->num_ciphers > 0) {
-	    ndpi_serialize_start_of_list(serializer, "ciphers");
-
-	    for(i=0; i<c->num_ciphers; i++)
-	      ndpi_serialize_string_uint32(serializer, "", c->cipher[i]);
-
-	    ndpi_serialize_end_of_list(serializer);
-	  }
-
-	  if(c->num_tls_extensions > 0) {
-	    ndpi_serialize_start_of_list(serializer, "tls_extensions");
-
-	    for(i=0; i<c->num_tls_extensions; i++)
-	      ndpi_serialize_string_uint32(serializer, "", c->tls_extension[i]);
-
-	    ndpi_serialize_end_of_list(serializer);
-	  }
-
-	  if(c->num_elliptic_curve_groups > 0) {
-	    ndpi_serialize_start_of_list(serializer, "elliptic_curve_groups");
-
-	    for(i=0; i<c->num_elliptic_curve_groups; i++)
-	      ndpi_serialize_string_uint32(serializer, "", c->elliptic_curve_group[i]);
-
-	    ndpi_serialize_end_of_list(serializer);
-	  }
-
-	  if(c->num_elliptic_curve_point_format > 0) {
-	    ndpi_serialize_start_of_list(serializer, "elliptic_curve_point_format");
-
-	    for(i=0; i<c->num_elliptic_curve_point_format; i++)
-	      ndpi_serialize_string_uint32(serializer, "", c->elliptic_curve_point_format[i]);
-
-	    ndpi_serialize_end_of_list(serializer);
-	  }
-
-	  if(c->num_signature_algorithms > 0) {
-	    ndpi_serialize_start_of_list(serializer, "signature_algorithms");
-
-	    for(i=0; i<c->num_signature_algorithms; i++)
-	      ndpi_serialize_string_uint32(serializer, "", c->signature_algorithm[i]);
-
-	    ndpi_serialize_end_of_list(serializer);
-	  }
-
-	  if(c->num_key_share_groups > 0) {
-	    ndpi_serialize_start_of_list(serializer, "key_share_groups");
-
-	    for(i=0; i<c->num_key_share_groups; i++)
-	      ndpi_serialize_string_uint32(serializer, "", c->key_share_group[i]);
-
-	    ndpi_serialize_end_of_list(serializer);
-	  }
-
-	  if(c->num_supported_versions > 0) {
-	    ndpi_serialize_start_of_list(serializer, "supported_versions");
-
-	    for(i=0; i<c->num_supported_versions; i++)
-	      ndpi_serialize_string_uint32(serializer, "", c->supported_version[i]);
-
-	    ndpi_serialize_end_of_list(serializer);
-	  }
-
-	  ndpi_serialize_end_of_block(serializer);
-	}
-
-	if(flow->protos.tls_quic.ja_server != NULL) {
-	  ndpi_tls_server_info *s = flow->protos.tls_quic.ja_server;
-	  u_int16_t i;
-
-	  ndpi_serialize_start_of_block(serializer, "server_data");
-
-	  if(s->num_ciphers > 0) {
-	    ndpi_serialize_start_of_list(serializer, "ciphers");
-
-	    for(i=0; i<s->num_ciphers; i++)
-	      ndpi_serialize_string_uint32(serializer, "", s->cipher[i]);
-
-	    ndpi_serialize_end_of_list(serializer);
-	  }
-
-	  if(s->num_tls_extensions > 0) {
-	    ndpi_serialize_start_of_list(serializer, "tls_extensions");
-
-	    for(i=0; i<s->num_tls_extensions; i++)
-	      ndpi_serialize_string_uint32(serializer, "", s->tls_extension[i]);
-
-	    ndpi_serialize_end_of_list(serializer);
-	  }
-
-	  if(s->num_elliptic_curve_point_format > 0) {
-	    ndpi_serialize_start_of_list(serializer, "elliptic_curve_point_format");
-
-	    for(i=0; i<s->num_elliptic_curve_point_format; i++)
-	      ndpi_serialize_string_uint32(serializer, "", s->elliptic_curve_point_format[i]);
-
-	    ndpi_serialize_end_of_list(serializer);
-	  }
-
-	  ndpi_serialize_end_of_block(serializer);
-	}
-      }
+      if (is_tls_proto == true)
+	ndpi_serialize_tls_blocks(ndpi_struct, serializer, flow);
 
       ndpi_serialize_end_of_block(serializer);
     }
