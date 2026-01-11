@@ -156,6 +156,22 @@ float ndpi_data_average(struct ndpi_analyze_struct *s) {
 
 /* ********************************************************************************* */
 
+/*
+   Peak-to-Average Ratio (PAR)
+
+   A high PAR (typically > 10) indicates a highly bursty connection,
+   whereas a PAR near 1 indicates steady, uniform traffic.
+*/
+
+float ndpi_data_burstiness(struct ndpi_analyze_struct *s) {
+  if((!s) || (s->num_data_entries == 0))
+    return(0);
+
+  return((float)s->max_val / ndpi_data_average(s));
+}
+
+/* ********************************************************************************* */
+
 u_int64_t ndpi_data_last(struct ndpi_analyze_struct *s) {
   if((!s) || (s->num_data_entries == 0) || (s->num_values_array_len == 0))
     return(0);
