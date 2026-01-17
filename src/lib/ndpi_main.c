@@ -9181,17 +9181,31 @@ static void check_probing_attempt(struct ndpi_detection_module_struct *ndpi_str,
     u_int64_t tdiff_ms;
 
     if(flow->l4.tcp.three_way_handshake.syn_ack_time && flow->l4.tcp.three_way_handshake.syn_time) {
-      tdiff_ms = flow->l4.tcp.three_way_handshake.syn_ack_time - flow->l4.tcp.three_way_handshake.syn_time;
+      if(flow->l4.tcp.three_way_handshake.syn_ack_time > flow->l4.tcp.three_way_handshake.syn_time)
+	tdiff_ms = flow->l4.tcp.three_way_handshake.syn_ack_time - flow->l4.tcp.three_way_handshake.syn_time;
+      else /* out of order */
+	tdiff_ms = flow->l4.tcp.three_way_handshake.syn_time - flow->l4.tcp.three_way_handshake.syn_ack_time;
 
-      if(tdiff_ms > 1500 /* 1.5 sec */)
-	ndpi_set_risk(ndpi_str, flow, NDPI_SLOW_DOS, "Slow TCP 3WH (SYN|ACK)");
+      if(tdiff_ms > 1500 /* 1.5 sec */) {
+	char buf[64];
+
+	snprintf(buf, sizeof(buf), "Slow TCP 3WH (SYN|ACK): %u ms", (unsigned int)tdiff_ms);
+	ndpi_set_risk(ndpi_str, flow, NDPI_SLOW_DOS, buf);
+      }
     }
 
     if(flow->l4.tcp.three_way_handshake.ack_time && flow->l4.tcp.three_way_handshake.syn_ack_time) {
-      tdiff_ms = flow->l4.tcp.three_way_handshake.ack_time - flow->l4.tcp.three_way_handshake.syn_ack_time;
+      if(flow->l4.tcp.three_way_handshake.ack_time > flow->l4.tcp.three_way_handshake.syn_ack_time)
+	tdiff_ms = flow->l4.tcp.three_way_handshake.ack_time - flow->l4.tcp.three_way_handshake.syn_ack_time;
+      else
+	tdiff_ms = flow->l4.tcp.three_way_handshake.syn_ack_time - flow->l4.tcp.three_way_handshake.ack_time;
 
-      if(tdiff_ms > 1500 /* 1.5 sec */)
-	ndpi_set_risk(ndpi_str, flow, NDPI_SLOW_DOS, "Slow TCP 3WH (ACK)");
+      if(tdiff_ms > 1500 /* 1.5 sec */) {
+	char buf[64];
+
+	snprintf(buf, sizeof(buf), "Slow TCP 3WH (ACK): %u ms", (unsigned int)tdiff_ms);
+	ndpi_set_risk(ndpi_str, flow, NDPI_SLOW_DOS, buf);
+      }
     }
   }
 
