@@ -214,7 +214,8 @@ static ndpi_risk_info ndpi_known_risks[] = {
   { NDPI_MALWARE_HOST_CONTACTED,                NDPI_RISK_SEVERE, CLIENT_HIGH_RISK_PERCENTAGE, NDPI_CLIENT_ACCOUNTABLE },
   { NDPI_BINARY_DATA_TRANSFER,                  NDPI_RISK_MEDIUM, CLIENT_FAIR_RISK_PERCENTAGE, NDPI_CLIENT_ACCOUNTABLE },
   { NDPI_PROBING_ATTEMPT,                       NDPI_RISK_MEDIUM, CLIENT_FAIR_RISK_PERCENTAGE, NDPI_CLIENT_ACCOUNTABLE },
-  { NDPI_OBFUSCATED_TRAFFIC,                    NDPI_RISK_HIGH,   CLIENT_HIGH_RISK_PERCENTAGE, NDPI_BOTH_ACCOUNTABLE },
+  { NDPI_OBFUSCATED_TRAFFIC,                    NDPI_RISK_HIGH,   CLIENT_HIGH_RISK_PERCENTAGE, NDPI_BOTH_ACCOUNTABLE   },
+  { NDPI_SLOW_DOS,                              NDPI_RISK_HIGH,   CLIENT_HIGH_RISK_PERCENTAGE, NDPI_CLIENT_ACCOUNTABLE },
 
   /* Leave this as last member */
   { NDPI_MAX_RISK,                              NDPI_RISK_LOW,    CLIENT_FAIR_RISK_PERCENTAGE, NDPI_NO_ACCOUNTABILITY   }
@@ -9182,15 +9183,15 @@ static void check_probing_attempt(struct ndpi_detection_module_struct *ndpi_str,
     if(flow->l4.tcp.three_way_handshake.syn_ack_time && flow->l4.tcp.three_way_handshake.syn_time) {
       tdiff_ms = flow->l4.tcp.three_way_handshake.syn_ack_time - flow->l4.tcp.three_way_handshake.syn_time;
 
-      if(tdiff_ms > 1000 /* 1 sec */)
-	ndpi_set_risk(ndpi_str, flow, NDPI_TCP_ISSUES, "Slow TCP 3WH (SYN|ACK)");
+      if(tdiff_ms > 1500 /* 1.5 sec */)
+	ndpi_set_risk(ndpi_str, flow, NDPI_SLOW_DOS, "Slow TCP 3WH (SYN|ACK)");
     }
 
     if(flow->l4.tcp.three_way_handshake.ack_time && flow->l4.tcp.three_way_handshake.syn_ack_time) {
       tdiff_ms = flow->l4.tcp.three_way_handshake.ack_time - flow->l4.tcp.three_way_handshake.syn_ack_time;
 
-      if(tdiff_ms > 1000 /* 1 sec */)
-	ndpi_set_risk(ndpi_str, flow, NDPI_TCP_ISSUES, "Slow TCP 3WH (ACK)");
+      if(tdiff_ms > 1500 /* 1.5 sec */)
+	ndpi_set_risk(ndpi_str, flow, NDPI_SLOW_DOS, "Slow TCP 3WH (ACK)");
     }
   }
 
