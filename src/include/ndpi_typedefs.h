@@ -860,6 +860,10 @@ struct ndpi_tls_block {
 };
 
 struct ndpi_flow_tcp_struct {
+  struct {
+    u_int64_t syn_time, syn_ack_time, ack_time;
+  } three_way_handshake;
+
   /* TCP sequence number */
   u_int32_t next_tcp_seq_nr[2];
   u_int16_t last_tcp_pkt_payload_len;

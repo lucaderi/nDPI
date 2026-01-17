@@ -8490,10 +8490,18 @@ static void connection_tracking(struct ndpi_detection_module_struct *ndpi_str,
 
   flow->is_ipv6 = (packet->iphv6 != NULL);
 
-  flow->last_packet_time_ms = packet->current_time_ms;
-
   if(tcph != NULL) {
     u_int8_t flags = ((u_int8_t*)tcph)[13];
+    u_int16_t syn_mask = TH_SYN | TH_ECE | TH_CWR | TH_ACK;
+    u_int8_t flags_3wh = flags & syn_mask;
+
+    if((flags_3wh & (TH_SYN|TH_ACK)) == (TH_SYN|TH_ACK))
+      flow->l4.tcp.three_way_handshake.syn_ack_time = packet->current_time_ms;
+    else if((flags_3wh & TH_SYN) == TH_SYN)
+      flow->l4.tcp.three_way_handshake.syn_time = packet->current_time_ms;
+    else if(((flags_3wh & TH_ACK) == TH_ACK)
+	    && (flow->l4.tcp.three_way_handshake.ack_time == 0))
+      flow->l4.tcp.three_way_handshake.ack_time = packet->current_time_ms;
 
     if(flags == 0)
       ndpi_set_risk(ndpi_str, flow, NDPI_TCP_ISSUES, "TCP NULL scan");
@@ -8680,6 +8688,8 @@ static void connection_tracking(struct ndpi_detection_module_struct *ndpi_str,
     else
       ndpi_str->input_info->in_pkt_dir = NDPI_IN_PKT_DIR_S_TO_C;
   }
+
+  flow->last_packet_time_ms = packet->current_time_ms;
 }
 
 /* ************************************************ */
@@ -9165,6 +9175,24 @@ static void check_tcp_flags(struct ndpi_detection_module_struct *ndpi_struct, st
 static void check_probing_attempt(struct ndpi_detection_module_struct *ndpi_str,
                                   struct ndpi_flow_struct *flow) {
   /* TODO: check UDP traffic too */
+
+  if(flow->l4_proto == IPPROTO_TCP) {
+    u_int64_t tdiff_ms;
+
+    if(flow->l4.tcp.three_way_handshake.syn_ack_time && flow->l4.tcp.three_way_handshake.syn_time) {
+      tdiff_ms = flow->l4.tcp.three_way_handshake.syn_ack_time - flow->l4.tcp.three_way_handshake.syn_time;
+
+      if(tdiff_ms > 1000 /* 1 sec */)
+	ndpi_set_risk(ndpi_str, flow, NDPI_TCP_ISSUES, "Slow TCP 3WH (SYN|ACK)");
+    }
+
+    if(flow->l4.tcp.three_way_handshake.ack_time && flow->l4.tcp.three_way_handshake.syn_ack_time) {
+      tdiff_ms = flow->l4.tcp.three_way_handshake.ack_time - flow->l4.tcp.three_way_handshake.syn_ack_time;
+
+      if(tdiff_ms > 1000 /* 1 sec */)
+	ndpi_set_risk(ndpi_str, flow, NDPI_TCP_ISSUES, "Slow TCP 3WH (ACK)");
+    }
+  }
 
   if((flow->l4_proto == IPPROTO_TCP)
      && (flow->l4.tcp.cli2srv_tcp_flags & TH_PUSH)
@@ -12401,7 +12429,8 @@ u_int ndpi_get_ndpi_detection_module_size() {
 u_int32_t ndpi_get_current_time(struct ndpi_flow_struct *flow)
 {
   if(flow)
-    return flow->last_packet_time_ms / 1000;
+    return(flow->last_packet_time_ms / 1000);
+
   return 0;
 }
 
@@ -13068,14 +13097,10 @@ int ndpi_seen_flow_beginning(const struct ndpi_flow_struct *flow)
 
 void ndpi_set_user_data(struct ndpi_detection_module_struct *ndpi_str, void *user_data) {
   if (ndpi_str == NULL)
-    {
-      return;
-    }
+    return;
 
   if (ndpi_str->user_data != NULL)
-    {
-      NDPI_LOG_ERR(ndpi_str, "%s", "User data is already set. Overwriting.")
-	}
+    NDPI_LOG_ERR(ndpi_str, "%s", "User data is already set. Overwriting.")
 
   ndpi_str->user_data = user_data;
 }
