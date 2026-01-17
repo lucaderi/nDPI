@@ -10951,6 +10951,22 @@ void ndpi_parse_packet_line_info(struct ndpi_detection_module_struct *ndpi_str, 
   if(packet->packet_lines_parsed_complete != 0)
     return;
 
+  if((flow->l4.tcp.three_way_handshake.syn_time != 0) /* Check only if 3WH was observed */
+     && (flow->l4.tcp.three_way_handshake.ack_time != 0)
+     && ((flow->detected_protocol_stack[0] == NDPI_PROTOCOL_HTTP) || (flow->detected_protocol_stack[1] == NDPI_PROTOCOL_HTTP))
+     && (flow->http.method != NDPI_HTTP_METHOD_UNKNOWN)
+     && (flow->http.response_status_code == 0 /* Response code not observed yet */)
+     ) {
+    u_int64_t tdiff_ms = packet->current_time_ms - flow->l4.tcp.three_way_handshake.ack_time;
+
+    if((tdiff_ms > 3000 /* 3 sec */) && (!ndpi_isset_risk(flow, NDPI_SLOW_DOS))) {
+      char buf[64];
+
+      snprintf(buf, sizeof(buf), "Slow HTTP Req. (Slowloris): %.1f sec", tdiff_ms/1000.);
+      ndpi_set_risk(ndpi_str, flow, NDPI_SLOW_DOS, buf);
+    }
+  }
+
   packet->packet_lines_parsed_complete = 1;
   ndpi_reset_packet_line_info(packet);
 
