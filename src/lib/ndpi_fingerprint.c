@@ -170,28 +170,16 @@ static char* ndpi_compute_tls_blocks_flow_fingerprint(struct ndpi_flow_struct *f
   fp_buf[0] = '\0'; /* Not really necessary, but just to be sure */
 
   for(i=0; i< flow->l4.tcp.tls.num_tls_blocks; i++) {
-    switch(flow->l4.tcp.tls.tls_blocks[i].block_type) {
-    case tls_handshake_client_hello:
-    case tls_handshake_server_hello:
-      ret = snprintf(&fp_buf[idx], fp_buf_len-idx-1, "%s%u=%d",
-		     (i > 0) ? "," : "",
-		     flow->l4.tcp.tls.tls_blocks[i].block_type,
-		     flow->l4.tcp.tls.tls_blocks[i].len);
-
-      break;
-
-    default:
-      ret = snprintf(&fp_buf[idx], fp_buf_len-idx-1, "%s%s%u",
-		     (i > 0) ? "," : "",
-		     (flow->l4.tcp.tls.tls_blocks[i].len > 0) ? "+" : "-",
-		     flow->l4.tcp.tls.tls_blocks[i].block_type);
-    }
+    ret = snprintf(&fp_buf[idx], fp_buf_len-idx-1, "%s%u=%d",
+		   (i > 0) ? "," : "",
+		   flow->l4.tcp.tls.tls_blocks[i].block_type,
+		   flow->l4.tcp.tls.tls_blocks[i].len);
 
     if(ret > 0) idx += ret; else break;
   } /* for */
 
 #if 0
-  fprintf(stderr, "#### [sport=%u] %s", ntohs(flow->c_port), fp_buf);
+  fprintf(stderr, "#### [sport=%u] %s\n", ntohs(flow->c_port), fp_buf);
 #endif
 
   ndpi_sha256((u_char*)fp_buf, idx, sha_hash);

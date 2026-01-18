@@ -2124,6 +2124,9 @@ bool skipTLSextension(struct ndpi_detection_module_struct *ndpi_struct,
     case 0x23: /* session ticket - RFC 9149 */
     case 0x29: /* pre-shared key - RFC 8446 */
     case 0x15: /* padding        - RFC 7685 */
+      /* Noisy extensions */
+    case 0x2b: /* Supported TLS versions    */
+    case 0x0a: /* Supported groups          */
       return(true);
     }
   }
