@@ -9189,7 +9189,7 @@ static void check_probing_attempt(struct ndpi_detection_module_struct *ndpi_str,
       if(tdiff_ms > 1500 /* 1.5 sec */) {
 	char buf[64];
 
-	snprintf(buf, sizeof(buf), "Slow TCP 3WH (SYN|ACK): %u ms", (unsigned int)tdiff_ms);
+	snprintf(buf, sizeof(buf), "Slow TCP 3WH (SYN|ACK):  %.1f sec", tdiff_ms/1000.);
 	ndpi_set_risk(ndpi_str, flow, NDPI_SLOW_DOS, buf);
       }
     }
@@ -9203,7 +9203,7 @@ static void check_probing_attempt(struct ndpi_detection_module_struct *ndpi_str,
       if(tdiff_ms > 1500 /* 1.5 sec */) {
 	char buf[64];
 
-	snprintf(buf, sizeof(buf), "Slow TCP 3WH (ACK): %u ms", (unsigned int)tdiff_ms);
+	snprintf(buf, sizeof(buf), "Slow TCP 3WH (ACK):  %.1f sec", tdiff_ms/1000.);
 	ndpi_set_risk(ndpi_str, flow, NDPI_SLOW_DOS, buf);
       }
     }
