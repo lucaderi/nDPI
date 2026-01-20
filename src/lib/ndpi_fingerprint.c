@@ -280,6 +280,9 @@ char* ndpi_compute_ndpi_flow_fingerprint(struct ndpi_detection_module_struct *nd
 	  ndpi_set_detected_protocol(ndpi_str, flow, proto_id,
 				     ndpi_get_master_proto(ndpi_str, flow),
 				     NDPI_CONFIDENCE_CUSTOM_RULE);
+
+	  flow->category = ndpi_str->proto_defaults[proto_id].protoCategory,
+	    flow->breed = ndpi_str->proto_defaults[proto_id].protoBreed;
 	}
       }
     }

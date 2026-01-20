@@ -277,15 +277,13 @@ char *ndpi_get_proto_by_id(const struct ndpi_detection_module_struct *ndpi_str, 
 
 /* *********************************************************************************** */
 
-static void dissector_bitmask_set(struct ndpi_dissector_bitmask *b, u_int16_t bit)
-{
+static void dissector_bitmask_set(struct ndpi_dissector_bitmask *b, u_int16_t bit) {
   b->fds[bit / 32] |= (1ul << (bit % 32));
 }
 
 /* *********************************************************************************** */
 
-static int dissector_bitmask_is_set(const struct ndpi_dissector_bitmask *b, u_int16_t bit)
-{
+static int dissector_bitmask_is_set(const struct ndpi_dissector_bitmask *b, u_int16_t bit) {
   return b->fds[bit / 32] & (1ul << (bit % 32));
 }
 
@@ -11388,13 +11386,6 @@ static void ndpi_int_change_protocol(struct ndpi_flow_struct *flow,
     lower_detected_protocol = NDPI_PROTOCOL_UNKNOWN;
 
   ndpi_int_change_flow_protocol(flow, upper_detected_protocol, lower_detected_protocol, confidence);
-}
-
-/* ********************************************************************************* */
-
-void change_category(struct ndpi_flow_struct *flow,
-		     ndpi_protocol_category_t protocol_category) {
-  flow->category = protocol_category;
 }
 
 /* ********************************************************************************* */
