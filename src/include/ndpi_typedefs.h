@@ -1380,7 +1380,7 @@ typedef enum {
 } ndpi_cipher_weakness;
 
 #define MAX_NUM_TLS_SIGNATURE_ALGORITHMS 16
-#define MAX_NUM_DNS_RSP_ADDRESSES         4
+#define MAX_NUM_DNS_RSP_ADDRESSES         8
 
 typedef struct {
   union {
