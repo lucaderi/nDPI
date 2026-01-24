@@ -1283,7 +1283,7 @@ static void serialize_monitoring_metadata(struct ndpi_flow_info *flow)
 
 void process_ndpi_collected_info(struct ndpi_workflow * workflow, struct ndpi_flow_info *flow) {
   u_int i;
-  char out[128], *s;
+  char out[512], *s;
 
   if(!flow->ndpi_flow) return;
 
