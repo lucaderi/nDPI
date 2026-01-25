@@ -1609,7 +1609,7 @@ void process_ndpi_collected_info(struct ndpi_workflow * workflow, struct ndpi_fl
 
 	flow->tls.blocks = (struct ndpi_tls_block*)malloc(len);
 	if(flow->tls.blocks != NULL)
-	  memcpy(flow->tls.blocks, &flow->ndpi_flow->l4.tcp.tls.tls_blocks, len);
+	  memcpy(flow->tls.blocks, flow->ndpi_flow->l4.tcp.tls.tls_blocks, len);
 	else
 	  flow->tls.num_blocks = 0;
       }
