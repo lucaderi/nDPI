@@ -5195,7 +5195,7 @@ const char* ndpi_print_encoded_tls_block_type(ndpi_tls_block_type block_type, bo
   case tls_handshake_certificate_verify:  return(numeric_mode ? "22:15" : "Handshake:CertVerify");
   case tls_handshake_client_key_exchange: return(numeric_mode ? "22:16" : "Handshake:ClientKeyExch");
   case tls_handshake_finished:            return(numeric_mode ? "22:20" : "Handshake:Finished");
-  case tls_application_data:              return(numeric_mode ? "21"    : "AppData");
+  case tls_application_data:              return(numeric_mode ? "23"    : "AppData");
   case tls_heartbeat:                     return(numeric_mode ? "24"    : "Heartbeat");
   default:                                return(numeric_mode ? "0"     : "Unknown");
   }
