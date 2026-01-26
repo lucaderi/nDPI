@@ -5142,8 +5142,8 @@ ndpi_tls_block_type ndpi_encode_tls_block_type(u_int8_t block_type, u_int8_t han
     return(tls_alert);
   case 22: /* Handshake */
     switch(handshake_type) {
-    case 0: /* Hello Request */
-      return(tls_handshake_hello_request);
+    case 0: /* Encrypted Handshake Message */
+      return(tls_handshake_encrypted_message);
     case 1: /* Client Hello */
       return(tls_handshake_client_hello);
     case 2: /* Server Hello */
@@ -5183,7 +5183,7 @@ const char* ndpi_print_encoded_tls_block_type(ndpi_tls_block_type block_type, bo
   switch(block_type) {
   case tls_change_cipher:                 return(numeric_mode ? "20"    : "ChangeCipher");
   case tls_alert:                         return(numeric_mode ? "21"    : "Alert");
-  case tls_handshake_hello_request:       return(numeric_mode ? "22:0"  : "Handshake:HelloRequest");
+  case tls_handshake_encrypted_message:   return(numeric_mode ? "22:0"  : "Handshake:EncHandshakeMsg");
   case tls_handshake_client_hello:        return(numeric_mode ? "22:1"  : "Handshake:ClientHello");
   case tls_handshake_server_hello:        return(numeric_mode ? "22:2"  : "Handshake:ServerHello");
   case tls_handshake_new_session_ticket:  return(numeric_mode ? "22:4"  : "Handshake:NewSessTicket");

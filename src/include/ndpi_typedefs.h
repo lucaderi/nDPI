@@ -837,7 +837,7 @@ typedef enum {
   tls_unknown = 0,
   tls_change_cipher,
   tls_alert,
-  tls_handshake_hello_request,
+  tls_handshake_encrypted_message,
   tls_handshake_client_hello,
   tls_handshake_server_hello,
   tls_handshake_new_session_ticket,
