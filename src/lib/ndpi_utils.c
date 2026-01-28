@@ -5891,3 +5891,25 @@ const char* ndpi_tls_supported_version2str(u_int16_t version_id, char unknown_ve
   ndpi_snprintf(unknown_version, 8, "0X%04X", version_id);
   return(unknown_version);
 }
+
+/* ****************************************** */
+
+/*
+  Compares two TLS blocks of the same lenght and
+  returns a distance values: 0 = vectors are identical,
+  otherwise a value is returned. The higger is the value
+  the more different are the vectors.
+  
+ */
+float ndpi_tls_blocks_len_compare(struct ndpi_tls_block *a,
+				  struct ndpi_tls_block *b,
+				  float *multiplier, /* length = num_tls_blocks */
+				  u_int8_t num_tls_blocks) {
+  float total = 0;
+  u_int8_t n;
+  
+  for(n=0; n<num_tls_blocks; n++)
+    total += fabs((float)(a[n].len - b[n].len)) * multiplier[n];
+
+  return(total / num_tls_blocks);
+}
