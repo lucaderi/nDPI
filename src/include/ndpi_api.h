@@ -1133,8 +1133,8 @@ extern "C" {
   ndpi_tls_block_type ndpi_encode_tls_block_type(u_int8_t block_type, u_int8_t handshake_type);
   const char* ndpi_print_encoded_tls_block_type(ndpi_tls_block_type block_type, bool numeric_mode);
 
-  char* ndpi_encode_tls_blocks(struct ndpi_tls_block *tls_blocks, u_int8_t num_tls_blocks);
-  struct ndpi_tls_block* ndpi_decode_tls_blocks(u_char *encoded_blocks, u_int encoded_blocks_len,
+  u_char* ndpi_encode_tls_blocks(struct ndpi_tls_block *tls_blocks, u_int8_t num_tls_blocks);
+  struct ndpi_tls_block* ndpi_decode_tls_blocks(const u_char *encoded_blocks, u_int encoded_blocks_len,
 						u_int8_t *num_tls_blocks);
 
   ndpi_proto_defaults_t* ndpi_get_proto_defaults(struct ndpi_detection_module_struct *ndpi_mod);
@@ -1297,7 +1297,7 @@ extern "C" {
   char* ndpi_base64_encode(unsigned char const* bytes_to_encode, size_t in_len); /* NOTE: caller MUST free the returned pointer */
 
   u_char* ndpi_hex_decode(const u_char *src, size_t len, size_t *out_len);
-  char* ndpi_hex_encode(unsigned char const* bytes_to_encode, size_t in_len); /* NOTE: caller MUST free the returned pointer */
+  u_char* ndpi_hex_encode(unsigned char const* bytes_to_encode, size_t in_len); /* NOTE: caller MUST free the returned pointer */
 
   void ndpi_string_sha1_hash(const u_int8_t *message, size_t len, u_char *hash /* 20-bytes */);
 
