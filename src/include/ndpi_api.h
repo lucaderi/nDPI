@@ -2687,7 +2687,6 @@ extern "C" {
 				   u_int32_t *prev_ranking_epoch /* Out */);
   float ndpi_tls_blocks_len_compare(struct ndpi_tls_block *a,
 				    struct ndpi_tls_block *b,
-				    float *multiplier,
 				    u_int8_t num_tls_blocks);
   
 #ifdef __cplusplus

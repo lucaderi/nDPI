@@ -6004,22 +6004,29 @@ const char* ndpi_tls_supported_version2str(u_int16_t version_id, char unknown_ve
  */
 float ndpi_tls_blocks_len_compare(struct ndpi_tls_block *a,
 				  struct ndpi_tls_block *b,
-				  float *multiplier, /* length = num_tls_blocks */
 				  u_int8_t num_tls_blocks) {
   float total = 0;
   u_int8_t n;
 
   for(n=0; n<num_tls_blocks; n++) {
-    float _a = a[n].len * a[n].block_type + a[n].same_pkt;
-    float _b = b[n].len * b[n].block_type + b[n].same_pkt;
-    float _d = fabs(_a - _b);
+    if(a[n].block_type != b[n].block_type)
+      return(999999.);
+    else {
+      int diff = a[n].len - b[n].len;
 
-    if(_d > 1.) _d = 1.;
+      if((diff != 0) && (n < 2 /* C/S Hello */))
+	return(999999.);
+      
+      total += diff * diff;
 
-    total += _d * multiplier[n];
+#if 0
+      fprintf(stderr, "[%d] diff=%u [%d, %d], %.2f\n",
+	      n, diff, a[n].len, b[n].len, total);
+#endif
+    }
   }
 
-  return(total / num_tls_blocks);
+  return(total);
 }
 
 /* ****************************************** */

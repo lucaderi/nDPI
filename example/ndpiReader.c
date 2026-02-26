@@ -5875,11 +5875,10 @@ void automataDomainsUnitTest() {
   
 void blocksUnitTest() {
   struct ndpi_tls_block a[] = { { 4, 1590, 0, 1, 0}, { 5, -1212, 0, 1, 0}, { 1, -1, 0, 1, 0}, { 16, -42, 0, 1, 0}, { 16, -53, 0, 1, 0}  };
-  struct ndpi_tls_block b[] = { { 4, 1591, 0, 1, 0}, { 5, -1212, 0, 1, 0}, { 1, -1, 0, 1, 0}, { 16, -42, 0, 1, 0}, { 16, -53, 0, 1, 0}  };
-  float multiplier[]        = { 100, 100, 80, 40, 20};
-  float ret = ndpi_tls_blocks_len_compare(a, b, multiplier, sizeof(multiplier) / sizeof(float));
+  struct ndpi_tls_block b[] = { { 4, 1590, 0, 1, 0}, { 5, -1212, 0, 1, 0}, { 1, -1, 0, 1, 0}, { 16, -42, 0, 1, 0}, { 16, -52, 0, 1, 0}  };
+  float ret = ndpi_tls_blocks_len_compare(a, b, 5 /* num_blocks */);
 
-  assert(ret == 20.0);
+  assert(ret == 1.0);
 }
 
 /* *********************************************** */
