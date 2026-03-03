@@ -1126,38 +1126,9 @@ static void tls_match_ja4(struct ndpi_detection_module_struct *ndpi_struct,
 				  NDPI_ARRAY_LENGTH(flow->protos.tls_quic.ja4_client) - 1,
 				  &proto_id, &extra_data) != 0)
       return; /* Not found */
-
-    if((flow->l4_proto == IPPROTO_TCP)
-       && (flow->l4.tcp.tls.num_tls_blocks == ndpi_struct->cfg.tls_max_num_blocks_to_analyze)
-       && (ndpi_struct->cfg.tls_max_num_blocks_to_analyze <= 8 /* (&) */)
-       && (flow->l4.tcp.tls.tls_blocks != NULL)) {
-      float best_res = 9999999.;
-
-      while(extra_data != NULL) {
-	/* Multiple matches: let's find the best match (if any) */
-	struct ndpi_tls_block *tls_blocks = (struct ndpi_tls_block*)extra_data->value;
-
-	if(tls_blocks != NULL) {
-	  float res = ndpi_tls_blocks_len_compare(flow->l4.tcp.tls.tls_blocks, tls_blocks, 8 /* (&) */);
-
-#if 0
-	  printf("%s() -->> %.1f / %.1f [%u]\n",
-		 __FUNCTION__, res, best_res, tls_blocks->msec_delta);
-#endif
-
-	  if((res < 4) && (res < best_res)) {
-	    best_res = res;
-	    proto_id = tls_blocks->msec_delta; /* It stores the protocolId. See (*%*) in ndpi_main.c */
-
-	    if(res == 0) /* identical TLS blocks */
-	      break; /* No match better than this ! */
-	  }
-	}
-
-	extra_data = extra_data->next;
-      }
-    }
-
+    else
+      proto_id = ndpi_compare_flow_tls_blocks(ndpi_struct, flow, extra_data, proto_id);
+    
     if(proto_id != NDPI_PROTOCOL_UNKNOWN)
       ndpi_set_detected_protocol(ndpi_struct, flow, proto_id,
 				 ndpi_get_master_proto(ndpi_struct, flow),
