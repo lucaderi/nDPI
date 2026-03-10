@@ -255,14 +255,32 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install autoconf automake libtool pkg-config gettext libjson-c-dev flex bison libpcap-dev
-          sudo apt-get install systemtap-sdt-dev bpftrace
+          sudo apt-get install systemtap-sdt-dev bpftrace pahole llvm
+      - name: Download latest bpftrace
+        run: |
+          curl -L -O https://github.com/bpftrace/bpftrace/releases/download/v0.24.2/bpftrace
+          chmod +x bpftrace
       - name: Configure nDPI with USDT
         run: |
-          ./autogen.sh && ./configure --enable-option-checking=fatal --enable-debug-messages --enable-usdt-probes
+          # Workaround: C11 '_Atomic' type (from croaring code) is not fully supported for BPF CO-RE purposes
+          # This is needed only if you want to dereference `struct ndpi_flow_struct *`
+          # in the probe actions
+          ./autogen.sh && CFLAGS="-DCROARING_ATOMIC_IMPL=1" ./configure --enable-option-checking=fatal --enable-debug-build --enable-debug-messages --enable-usdt-probes
       - name: Build nDPI
         run: |
           make -j all
-          make -C example
+      - name: Build bpftool
+        run: |
+          # Temporary workaround: some 6.14 kernels don't have bpftool (and perf) in their packages
+          # See: https://bugs.launchpad.net/ubuntu/+source/linux-hwe-6.14/+bug/2117147
+          # See: https://gist.github.com/karlivory/9111f906f4eb06370b2b237c62a6b00e
+          curl -L -O https://gist.githubusercontent.com/karlivory/9111f906f4eb06370b2b237c62a6b00e/raw/dbd24228dda79e05815531a1db643d0709301838/build-perf.sh
+          sudo bash build-perf.sh
+      - name: Generate header file for bpftrace
+        run: |
+          pahole -J src/lib/libndpi.so
+          pahole -J example/ndpiReader
+          bpftool btf dump file example/ndpiReader format c > ndpi_types.h
       - name: Verify USDT probes are embedded (readelf)
         run: |
           echo "=== Probes in libndpi.so ==="
@@ -290,13 +308,27 @@ jobs:
           }' -c './example/ndpiReader -q -i tests/pcap/http.pcapng' 2>&1 | tee /tmp/bpf_classified.txt
           # Verify we actually traced some flows
           grep -q '@flows:' /tmp/bpf_classified.txt
-          echo "flow_classified probe: OK"
+          echo "flow_classified probe (scalar args): OK"
+      - name: Test flow_classified probe with flow pointer (arg4) via header
+        run: |
+          # Embedding .BTF section and reading it from bpftrace is still a bit buggy.
+          # Use explicit header, with latest bpftrace
+          sudo ./bpftrace -I . --include ndpi_types.h \
+          -e 'usdt:./example/ndpiReader:ndpi:flow_classified {
+            $flow = (struct ndpi_flow_struct *)arg4;
+            @flows = count();
+            if ($flow->risk != 0) { @risky[arg0] = count(); }
+          }' -c './example/ndpiReader -q -i tests/pcap/1kxun.pcap' 2>&1 | tee /tmp/bpf_classified_ptr.txt
+          grep -q '@flows:' /tmp/bpf_classified_ptr.txt
+          echo "flow_classified probe (struct dereference): OK"
       - name: Test hostname_set probe with ndpiReader
         run: |
-          sudo bpftrace -e '
-          usdt:./example/ndpiReader:ndpi:hostname_set {
+          READER=$(realpath example/ndpiReader)
+          sudo ./bpftrace -I . --include ndpi_types.h \
+          -e 'usdt:./example/ndpiReader:ndpi:hostname_set {
+            $flow = (struct ndpi_flow_struct *)arg1;
             @hostnames = count();
-            @top[str(arg0)] = count();
+            @top[str(arg0), $flow->detected_protocol_stack[0]] = count();
           }' -c './example/ndpiReader -q -i tests/pcap/tls_certificate_too_long.pcap' 2>&1 | tee /tmp/bpf_hostname.txt
           # Verify we actually traced some hostnames
           grep -q '@hostnames:' /tmp/bpf_hostname.txt
@@ -308,8 +340,8 @@ jobs:
             @hostnames = count();
           }
           usdt:./example/ndpiReader:ndpi:flow_classified {
-            @classified = count();
+            @classified[arg0] = count();
           }' -c './example/ndpiReader -q -i tests/pcap/dns.pcap' 2>&1 | tee /tmp/bpf_both.txt
-          grep -q '@classified:' /tmp/bpf_both.txt
-          grep -q '@hostnames:' /tmp/bpf_both.txt
+          grep -q '@classified' /tmp/bpf_both.txt
+          grep -q '@hostnames' /tmp/bpf_both.txt
           echo "Both probes fired successfully."

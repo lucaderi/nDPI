@@ -10,28 +10,35 @@ the application.
 Building with USDT Support
 --------------------------
 
-Install the required header (Linux):
+Install the required headers (Linux):
 
 .. code-block:: bash
 
    # Debian/Ubuntu
-   sudo apt-get install systemtap-sdt-dev
+   sudo apt-get install systemtap-sdt-dev dwarves
 
    # RHEL/CentOS/Fedora
-   sudo dnf install systemtap-sdt-devel
+   sudo dnf install systemtap-sdt-devel dwarves
 
 Then configure nDPI with USDT enabled:
 
 .. code-block:: bash
 
    ./autogen.sh
-   ./configure --enable-usdt-probes
+   ./configure --enable-usdt-probes --enable-debug-build
    make
 
 .. note::
 
    On macOS, ``sys/sdt.h`` is provided by the system. On platforms where it is
    unavailable, the probes compile to no-ops and have zero impact.
+
+.. note::
+
+   To allow bpftrace to resolve ``struct ndpi_flow_struct`` fields by name without
+   any ``--include`` flags, embed BTF into the binaries after building using
+   ``pahole -J`` (from the ``dwarves`` package). See `Struct field access`_
+   below. Without BTF the scalar arguments remain fully usable.
 
 Available Probes
 ----------------
@@ -48,19 +55,182 @@ Available Probes
        | ``arg1``: application protocol ID (``u16``)
        | ``arg2``: confidence level (``enum``)
        | ``arg3``: category (``enum``)
+       | ``arg4``: flow pointer (``struct ndpi_flow_struct *``)
      - Fires exactly once per flow when classification is finalized.
        Covers all exit paths: successful detection, giveup, max-packets,
        nBPF match, and extra-dissector completion.
+       The scalar arguments allow fast filtering in bpftrace predicates;
+       ``arg4`` provides access to all other flow fields when needed.
    * - ``hostname_set``
      - | ``arg0``: hostname string (``char *``)
-       | ``arg1``: master protocol ID (``u16``)
-       | ``arg2``: application protocol ID (``u16``)
+       | ``arg1``: flow pointer (``struct ndpi_flow_struct *``)
      - Fires when a hostname/SNI is extracted from a flow.
        Covers all protocols that resolve hostnames: TLS (SNI), DNS,
        HTTP (Host header), QUIC, NetBIOS, DHCP, STUN, and others.
+       The hostname is provided directly as a string for convenience;
+       the flow pointer gives access to all other flow fields.
+
+bpftrace Notes
+--------------
+
+Struct field access
+^^^^^^^^^^^^^^^^^^^^
+
+To be able to dereference userspace pointers (for example,
+``struct ndpi_flow_struct`` as ``arg1`` in ``hostname_set`` probe) you need to
+embed BTF information into a shared library or executable. The correct approach
+is to use ``pahole -J`` (from the ``dwarves`` package) as a post-build step:
+it reads the DWARF debug info already present in the binary and inserts a
+``.BTF`` section with full type information.
+
+.. code-block:: bash
+
+   # Debian/Ubuntu
+   sudo apt-get install dwarves
+
+   # RHEL/CentOS/Fedora
+   sudo dnf install dwarves
+
+   ./configure --enable-usdt-probes --enable-debug-build
+   make
+   pahole -J src/lib/libndpi.so
+   pahole -J example/ndpiReader
+
+Once the ``.BTF`` section is present, bpftrace can resolve
+``struct ndpi_flow_struct`` fields by name — **without any** ``--include``
+**flags** — as long as the full binary path is used in the probe specification
+(the ``::`` shorthand does not trigger BTF lookup):
+
+.. code-block:: bash
+
+   bpftrace -e 'usdt:/path/to/ndpiReader:ndpi:flow_classified {
+     $flow = (struct ndpi_flow_struct *)arg4;
+     if ($flow->risk != 0) { @risky[arg0] = count(); }
+   }'
+
+Verify the section is present with:
+
+.. code-block:: bash
+
+   readelf -S example/ndpiReader | grep '\.BTF'
+
+
+.. _btf-pitfalls:
+
+BTF Generation — Known Issues and Workarounds
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+**C11 ``_Atomic`` types break pahole BTF encoding**
+
+nDPI's bundled CRoaring library uses ``_Atomic`` qualifiers, which the
+compiler emits as ``DW_TAG_atomic_type`` entries in DWARF.  All released
+versions of ``pahole`` (including 1.31) abort BTF encoding when they
+encounter this tag, even when ``--btf_encode_force`` is passed::
+
+   Unsupported DW_TAG_atomic_type(0x47): type: 0x153c6
+   Encountered error while encoding BTF.
+
+The workaround used in nDPI's CI is to rebuild with
+``CROARING_ATOMIC_IMPL=1``, which selects a non-atomic code path and
+eliminates the offending DWARF entries:
+
+.. code-block:: bash
+
+   CFLAGS="-DCROARING_ATOMIC_IMPL=1" ./configure \
+       --enable-usdt-probes --enable-debug-build
+   make
+
+**Fallback: generate a C header with bpftool**
+
+Even with BTF info correctly embedded, pointer dereferences might fail::
+
+    stdin:1:65-93: ERROR: Cannot resolve unknown type "struct ndpi_flow_struct"
+
+In thi case, generate a C header from the BTF info and pass it to bpftrace
+with ``--include``:
+
+.. code-block:: bash
+
+   # Generate a C header with the full layout of the userspace structures
+   bpftool btf dump file /path/to/ndpiReader format c > ndpi_types.h
+
+   # Use the header in bpfttrace
+   sudo bpftrace -I .--include ndpi_types.h \
+     -e 'usdt:/path/to/ndpiReader:ndpi:flow_classified {
+       $flow = (struct ndpi_flow_struct *)arg4;
+       if ($flow->risk != 0) { @risky[arg0] = count(); }
+     }'
+
+bpftrace Map Size Limits
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+When tracing long or high-throughput captures, bpftrace maps can fill
+up and emit a kernel-level ``E2BIG`` warning::
+
+   WARNING: Map full; can't update element.
+   Additional Info - helper: map_update_elem, retcode: -7
+
+Increase map key limit via the environment variable (works with all
+recent bpftrace versions):
+
+.. code-block:: bash
+
+   sudo BPFTRACE_MAX_MAP_KEYS=100000 bpftrace --include ndpi_types.h \
+     -e 'usdt:/path/to/ndpiReader:ndpi:hostname_set {
+       @top[str(arg0)] = count();
+     }'
+
+Some bpftrace builds also accept a ``config`` block at the top of the
+script:
+
+.. code-block:: bash
+
+   sudo bpftrace --include ndpi_types.h \
+     -e 'config = { max_map_keys = 100000 }
+   usdt:/path/to/ndpiReader:ndpi:hostname_set {
+     @top[str(arg0)] = count();
+   }'
+
+
+Predicates vs. action blocks
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+bpftrace predicates (``/condition/``) work well for filtering on scalar arguments
+(``arg0``–``arg3`` in ``flow_classified``):
+
+.. code-block:: bash
+
+   bpftrace -e 'usdt::ndpi:flow_classified /arg0 == 91/ { ... }'
+
+Filtering on struct fields via a pointer (e.g. ``arg4`` or ``arg1`` in
+``hostname_set``) is **not supported in predicates**.
+
+Use an ``if`` statement inside the action block instead:
+
+.. code-block:: bash
+
+   bpftrace -e 'usdt:/path/to/ndpiReader:ndpi:hostname_set {
+     $flow = (struct ndpi_flow_struct *)arg1;
+     if ($flow->detected_protocol_stack[0] == 5) {
+       @dns[str(arg0)] = count();
+     }
+   }'
 
 bpftrace Examples
 -----------------
+
+.. note::
+
+   Examples that dereference a userspace pointer (``arg4`` in ``flow_classified``,
+   ``arg1`` in ``hostname_set``) require either a ``.BTF`` section embedded
+   in the binary via ``pahole -J`` **or** an explicit ``--include ndpi_types.h``
+   header (generated via ``bpftool btf dump ... format c``).  See
+   `BTF Generation — Known Issues and Workarounds`_ above.
+
+   Scalar-only examples (those using only ``arg0``–``arg3`` in ``flow_classified``,
+   ``arg0`` in ``hostname_set``, without struct dereference) work without BTF or
+   headers and can use the ``::`` shorthand.
+
 
 List available probes:
 
@@ -136,6 +306,17 @@ Flows classified as SocialNetwork (category 6):
      @social[arg0, arg1] = count();
    }'
 
+Flows with non-zero risk bitmap (requires ``arg4`` / debug symbols):
+
+.. code-block:: bash
+
+   bpftrace -e 'usdt::ndpi:flow_classified {
+     $flow = (struct ndpi_flow_struct *)arg4;
+     if ($flow->risk != 0) {
+       @risky[arg0] = count();
+     }
+   }'
+
 hostname_set Examples
 ^^^^^^^^^^^^^^^^^^^^^
 
@@ -144,7 +325,11 @@ Real-time hostname log:
 .. code-block:: bash
 
    bpftrace -e 'usdt::ndpi:hostname_set {
-     printf("%s (master=%d app=%d)\n", str(arg0), arg1, arg2);
+     $flow = (struct ndpi_flow_struct *)arg1;
+     printf("%s (master=%d app=%d)\n",
+            str(arg0),
+            $flow->detected_protocol_stack[0],
+            $flow->detected_protocol_stack[1]);
    }'
 
 Top hostnames by flow count:
@@ -167,16 +352,22 @@ Hostnames resolved via DNS only (DNS = 5):
 
 .. code-block:: bash
 
-   bpftrace -e 'usdt::ndpi:hostname_set /arg1 == 5/ {
-     @dns[str(arg0)] = count();
+   bpftrace -e 'usdt::ndpi:hostname_set {
+     $flow = (struct ndpi_flow_struct *)arg1;
+     if ($flow->detected_protocol_stack[0] == 5) {
+       @dns[str(arg0)] = count();
+     }
    }'
 
 TLS SNI extraction in real time (TLS = 91):
 
 .. code-block:: bash
 
-   bpftrace -e 'usdt::ndpi:hostname_set /arg1 == 91/ {
-     printf("TLS SNI: %s\n", str(arg0));
+   bpftrace -e 'usdt::ndpi:hostname_set {
+     $flow = (struct ndpi_flow_struct *)arg1;
+     if ($flow->detected_protocol_stack[0] == 91) {
+       printf("TLS SNI: %s\n", str(arg0));
+     }
    }'
 
 Hostnames with their application protocol breakdown:
@@ -184,7 +375,8 @@ Hostnames with their application protocol breakdown:
 .. code-block:: bash
 
    bpftrace -e 'usdt::ndpi:hostname_set {
-     @host_app[str(arg0), arg2] = count();
+     $flow = (struct ndpi_flow_struct *)arg1;
+     @host_app[str(arg0), $flow->detected_protocol_stack[1]] = count();
    }'
 
 Hostname resolution rate (hostnames/sec):
@@ -199,8 +391,11 @@ Detect potential DGA activity (short hostnames with many unique values):
 
 .. code-block:: bash
 
-   bpftrace -e 'usdt::ndpi:hostname_set /arg1 == 5/ {
-     @unique_dns = count();
+   bpftrace -e 'usdt::ndpi:hostname_set {
+     $flow = (struct ndpi_flow_struct *)arg1;
+     if ($flow->detected_protocol_stack[0] == 5) {
+       @unique_dns = count();
+     }
    } interval:s:10 {
      printf("Unique DNS hostnames in last 10s: %d\n", @unique_dns);
      clear(@unique_dns);
