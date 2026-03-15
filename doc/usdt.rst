@@ -411,18 +411,6 @@ Detect potential DGA activity (count unique DNS hostnames over time):
      clear(@unique_dns);
    }'
 
-Correlate hostnames with protocol classification (combining both probes):
-
-.. code-block:: bash
-
-   bpftrace -e '
-   usdt::ndpi:hostname_set  { @host[tid] = str(arg0); }
-   usdt::ndpi:flow_classified /@host[tid] != ""/ {
-     printf("host=%s master=%d app=%d conf=%d cat=%d\n",
-            @host[tid], arg0, arg1, arg2, arg3);
-     delete(@host[tid]);
-   }'
-
 perf Example
 ------------
 
