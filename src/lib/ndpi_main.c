@@ -4103,7 +4103,12 @@ static const char *categories[NDPI_PROTOCOL_NUM_CATEGORIES] = {
   "Beauty",
   "History",
   "Politics",
-  "Vehicles"
+  "Vehicles",
+  "Search_Engine",
+  "Children",
+  "Violence",
+  "Drugs",
+  "Weapons"
 };
 
 #if !defined(NDPI_CFFI_PREPROCESSING) && defined(__linux__)
@@ -9496,6 +9501,7 @@ static void internal_giveup(struct ndpi_detection_module_struct *ndpi_struct,
       case NDPI_PROTOCOL_GMAIL:
       case NDPI_PROTOCOL_GOOGLE_MAPS:
       case NDPI_PROTOCOL_YOUTUBE:
+      case NDPI_PROTOCOL_YOUTUBE_KIDS:
       case NDPI_PROTOCOL_GOOGLE:
       case NDPI_PROTOCOL_YOUTUBE_UPLOAD:
       case NDPI_PROTOCOL_PLAYSTORE:
@@ -9558,6 +9564,7 @@ static void internal_giveup(struct ndpi_detection_module_struct *ndpi_struct,
       case NDPI_PROTOCOL_GMAIL:
       case NDPI_PROTOCOL_GOOGLE_MAPS:
       case NDPI_PROTOCOL_YOUTUBE:
+      case NDPI_PROTOCOL_YOUTUBE_KIDS:
       case NDPI_PROTOCOL_GOOGLE:
       case NDPI_PROTOCOL_YOUTUBE_UPLOAD:
       case NDPI_PROTOCOL_PLAYSTORE:
