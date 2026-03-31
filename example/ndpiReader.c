@@ -6152,7 +6152,11 @@ void hwUnitTest2() {
   u_int num_learning_points = 1;
   u_int i, num = sizeof(v) / sizeof(double);
   float alpha = 0.9, beta = 0.5, gamma = 1;
-  FILE *fd = fopen("/tmp/result.csv", "w");
+  FILE *fd = fopen(
+#ifndef WIN32
+		   "/tmp/"
+#endif
+		   "result.csv", "w");
 
   assert(ndpi_hw_init(&hw, num_learning_points, 0 /* 0=multiplicative, 1=additive */,
 		      alpha, beta, gamma, 0.05) == 0);
@@ -6227,7 +6231,11 @@ void sesUnitTest() {
   };
   u_int i, num = sizeof(v) / sizeof(double);
   float alpha = 0.9;
-  FILE *fd = fopen("/tmp/ses_result.csv", "w");
+  FILE *fd = fopen(
+#ifndef WIN32
+		   "/tmp/"
+#endif
+		   "ses_result.csv", "w");
 
   assert(ndpi_ses_init(&ses, alpha, 0.05) == 0);
   ndpi_ses_reset(&ses);
@@ -6300,7 +6308,11 @@ void desUnitTest() {
   };
   u_int i, num = sizeof(v) / sizeof(double);
   float alpha = 0.9, beta = 0.5;
-  FILE *fd = fopen("/tmp/des_result.csv", "w");
+  FILE *fd = fopen(
+#ifndef WIN32
+		   "/tmp/"
+#endif
+		   "des_result.csv", "w");
 
   assert(ndpi_des_init(&des, alpha, beta, 0.05) == 0);
   ndpi_des_reset(&des);
@@ -7309,7 +7321,15 @@ void checkRankingUnitTest(bool do_trace) {
     On GitHub Actions, ndpiReader might be called multiple times in parallel,
     so every instance must use its own file
   */
-  snprintf(path, sizeof(path), "/tmp/ranking.%u.test", (unsigned int)getpid());
+  snprintf(path, sizeof(path),"%sranking.%u.test",
+#ifdef WIN32
+	   "",
+#else
+
+	   "/tmp/",
+#endif
+	   (unsigned int)getpid());
+
 
   ndpi_init_ranking(&rank, num+1 /* max_num_items */, 8 /* num_epochs */);
   assert(ndpi_serialize_ranking(&rank, path) == true);
