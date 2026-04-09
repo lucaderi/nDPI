@@ -2002,14 +2002,19 @@ int ndpi_dpi2json(struct ndpi_detection_module_struct *ndpi_struct,
 
   case NDPI_PROTOCOL_SIP:
     ndpi_serialize_start_of_block(serializer, "sip");
+
     if(flow->protos.sip.from)
       ndpi_serialize_string_string(serializer, "from", flow->protos.sip.from);
+
     if(flow->protos.sip.from_imsi[0] != '\0')
       ndpi_serialize_string_string(serializer, "from_imsi", flow->protos.sip.from_imsi);
+
     if(flow->protos.sip.to)
       ndpi_serialize_string_string(serializer, "to", flow->protos.sip.to);
+
     if(flow->protos.sip.to_imsi[0] != '\0')
       ndpi_serialize_string_string(serializer, "to_imsi", flow->protos.sip.to_imsi);
+    
     ndpi_serialize_end_of_block(serializer);
     break;
 
@@ -2022,6 +2027,46 @@ int ndpi_dpi2json(struct ndpi_detection_module_struct *ndpi_struct,
 #ifdef CUSTOM_NDPI_PROTOCOLS
 #include "../../../nDPI-custom/ndpi_utils_dpi2json_dtls.c"
 #endif
+    break;
+    
+  case NDPI_PROTOCOL_IPSEC:
+    {
+      ndpi_serializer sub_serializer;
+      u_int32_t buffer_len;
+      char *buffer;
+      
+      ndpi_serialize_start_of_block(serializer, "ipsec");      
+      ndpi_serialize_string_uint32(serializer, "num_proposals", flow->protos.ipsec.num_proposals);
+
+
+      if(ndpi_init_serializer(&sub_serializer, ndpi_serialization_format_json) == -1)
+	;
+      else {
+	u_int8_t i;
+
+	for(i=0; i<flow->protos.ipsec.num_proposals; i++) {
+	  struct ndpi_ipsec_proposal *p = &flow->protos.ipsec.proposal[i];
+	  
+	  ndpi_serialize_string_uint32(&sub_serializer, "protocol_id", p->proto_id);
+	  ndpi_serialize_string_uint32(&sub_serializer, "num_transforms", p->num_transforms);
+	  ndpi_serialize_string_string(&sub_serializer, "encription_algorithm", ndpi_ikev2_encr_name(p->encr_alg));
+	  ndpi_serialize_string_uint32(&sub_serializer, "encription_key_bits", p->encr_key_bits);
+	  ndpi_serialize_string_string(&sub_serializer, "pseudo_random_algorithm", ndpi_ikev2_prf_name(p->prf_alg));
+	  ndpi_serialize_string_string(&sub_serializer, "integrity_algorithm", ndpi_ikev2_integ_name(p->integ_alg));
+	  ndpi_serialize_string_string(&sub_serializer, "diffie_hellman_group", ndpi_ikev2_dh_name(p->dh_group));
+	  ndpi_serialize_string_uint32(&sub_serializer, "extended_sequence_numbers", p->esn);
+	  ndpi_serialize_end_of_record(&sub_serializer);
+	}
+	
+	buffer = ndpi_serializer_get_buffer(&sub_serializer, &buffer_len);
+	if(buffer && (buffer_len > 0))
+	  ndpi_serialize_string_raw(serializer, "proposals", buffer, buffer_len);
+
+	ndpi_term_serializer(&sub_serializer);
+      }
+
+      ndpi_serialize_end_of_block(serializer);
+    }
     break;
 
 #ifdef CUSTOM_NDPI_PROTOCOLS
