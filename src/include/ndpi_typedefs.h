@@ -1582,6 +1582,27 @@ typedef struct {
   char alpn[MAX_JA_STRLEN];
 } ndpi_tls_server_info;
 
+/* Maximum number of IKEv2 SA proposals stored per flow */
+#define NDPI_IKEV2_MAX_PROPOSALS 4
+
+/* Per-proposal crypto algorithm selection from an IKEv2 SA payload (RFC 7296 §3.3) */
+struct ndpi_ipsec_proposal {
+  u_int8_t  proto_id;        /* 1=IKE, 2=AH, 3=ESP */
+  u_int8_t  num_transforms;
+  u_int16_t encr_alg;        /* Encryption algorithm transform ID */
+  u_int16_t encr_key_bits;   /* Key length attribute in bits (0 if not present) */
+  u_int16_t prf_alg;         /* Pseudo-random function transform ID */
+  u_int16_t integ_alg;       /* Integrity algorithm transform ID */
+  u_int16_t dh_group;        /* Diffie-Hellman group transform ID */
+  u_int8_t  esn;             /* ESN: 0 = no ESN, 1 = ESN */
+};
+
+struct ndpi_ipsec_details {
+  u_int8_t exchange_type;       /* IKEv2 exchange type (34=SA_INIT, 35=IKE_AUTH, ...) */
+  u_int8_t num_proposals;       /* Number of proposals captured (up to NDPI_IKEV2_MAX_PROPOSALS) */
+  struct ndpi_ipsec_proposal proposal[NDPI_IKEV2_MAX_PROPOSALS];
+};
+
 struct ndpi_flow_struct {
   u_int16_t detected_protocol_stack[NDPI_PROTOCOL_SIZE];
   struct ndpi_proto_stack protocol_stack;
@@ -1924,6 +1945,8 @@ struct ndpi_flow_struct {
       u_int8_t num_plc_stop;        /* PLC Stop (0x29) */
       u_int8_t num_other_funcs;     /* Other function codes */
     } s7comm;
+
+    struct ndpi_ipsec_details ipsec;
   } protos;
 
   struct {

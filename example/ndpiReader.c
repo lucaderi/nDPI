@@ -2354,8 +2354,7 @@ static void printFlow(u_int32_t id, struct ndpi_flow_info *flow, u_int16_t threa
 
     if(flow->host_server_name[0] != '\0') fprintf(out, "[Hostname/SNI: %s]", flow->host_server_name);
 
-    switch (flow->info_type)
-    {
+    switch (flow->info_type) {
     case INFO_INVALID:
       break;
 
@@ -2474,6 +2473,27 @@ static void printFlow(u_int32_t id, struct ndpi_flow_info *flow, u_int16_t threa
       fprintf(out, "[Conference Id: %d]", flow->bfcp.conference_id);
       fprintf(out, "[User Id: %d]", flow->bfcp.user_id);
       break;
+
+    case INFO_IPSEC:
+      if(flow->ipsec.num_proposals > 0) {
+	struct ndpi_ipsec_proposal *p = &flow->ipsec.proposal[0];
+	char *proto_id;
+
+	switch(p->proto_id) {
+	case 1:  proto_id = "IKE";  break;
+	case 3:  proto_id = "AH";  break;
+	case 4:  proto_id = "ESP";  break;
+	default: proto_id = "?"; break;
+	}
+
+	fprintf(out, "[%s/%s/%s/%s/%s]",
+		proto_id,
+		ndpi_ikev2_encr_name(p->encr_alg),
+		ndpi_ikev2_prf_name(p->prf_alg),
+		ndpi_ikev2_integ_name(p->integ_alg),
+		ndpi_ikev2_dh_name(p->dh_group));
+      }
+      break;
     }
 
     if(flow->ssh_tls.advertised_alpns)
@@ -2571,10 +2591,10 @@ static void printFlow(u_int32_t id, struct ndpi_flow_info *flow, u_int16_t threa
 
     if(flow->ndpi_client_fingerprint)
       fprintf(out, "[nDPI Cli Fingerprint: %s]", flow->ndpi_client_fingerprint);
-  
+
     if(flow->ndpi_server_fingerprint)
       fprintf(out, "[nDPI Srv Fingerprint: %s]", flow->ndpi_server_fingerprint);
-    
+
     if(flow->tcp_fingerprint)
       fprintf(out, "[TCP Fingerprint: %s]", flow->tcp_fingerprint);
 

@@ -6094,3 +6094,100 @@ bool ndpi_list_append(ndpi_list *l, void *value) {
 
   return(true); /* All good */
 }
+
+/* ****************************************** */
+
+const char *ndpi_ikev2_encr_name(u_int16_t id) {
+  switch (id) {
+    case 1:  return "DES_IV64";
+    case 2:  return "DES";
+    case 3:  return "3DES";
+    case 4:  return "RC5";
+    case 5:  return "IDEA";
+    case 6:  return "CAST";
+    case 7:  return "BLOWFISH";
+    case 8:  return "3IDEA";
+    case 9:  return "DES_IV32";
+    case 11: return "NULL";
+    case 12: return "AES_CBC";
+    case 13: return "AES_CTR";
+    case 14: return "AES_CCM_8";
+    case 15: return "AES_CCM_12";
+    case 16: return "AES_CCM_16";
+    case 18: return "AES_GCM_8";
+    case 19: return "AES_GCM_12";
+    case 20: return "AES_GCM_16";
+    case 23: return "CAMELLIA_CBC";
+    case 28: return "CHACHA20_POLY1305";
+    default: return "UNKNOWN";
+  }
+}
+
+/* ****************************************** */
+
+const char *ndpi_ikev2_prf_name(u_int16_t id) {
+  switch (id) {
+    case 1: return "HMAC_MD5";
+    case 2: return "HMAC_SHA1";
+    case 3: return "HMAC_TIGER";
+    case 4: return "AES128_XCBC";
+    case 5: return "HMAC_SHA2_256";
+    case 6: return "HMAC_SHA2_384";
+    case 7: return "HMAC_SHA2_512";
+    case 8: return "AES128_CMAC";
+    default: return "UNKNOWN";
+  }
+}
+
+/* ****************************************** */
+
+const char *ndpi_ikev2_integ_name(u_int16_t id) {
+  switch (id) {
+    case 0:  return "NONE";
+    case 1:  return "HMAC_MD5_96";
+    case 2:  return "HMAC_SHA1_96";
+    case 3:  return "DES_MAC";
+    case 4:  return "KPDK_MD5";
+    case 5:  return "AES_XCBC_96";
+    case 6:  return "HMAC_MD5_128";
+    case 7:  return "HMAC_SHA1_160";
+    case 8:  return "AES_CMAC_96";
+    case 9:  return "AES_128_GMAC";
+    case 10: return "AES_192_GMAC";
+    case 11: return "AES_256_GMAC";
+    case 12: return "HMAC_SHA2_256_128";
+    case 13: return "HMAC_SHA2_384_192";
+    case 14: return "HMAC_SHA2_512_256";
+    default: return "UNKNOWN";
+  }
+}
+
+/* ****************************************** */
+
+const char *ndpi_ikev2_dh_name(u_int16_t id) {
+  switch (id) {
+    case 0:  return "NONE";
+    case 1:  return "MODP_768";
+    case 2:  return "MODP_1024";
+    case 5:  return "MODP_1536";
+    case 14: return "MODP_2048";
+    case 15: return "MODP_3072";
+    case 16: return "MODP_4096";
+    case 17: return "MODP_6144";
+    case 18: return "MODP_8192";
+    case 19: return "ECP_256";
+    case 20: return "ECP_384";
+    case 21: return "ECP_521";
+    case 22: return "MODP_1024_160";
+    case 23: return "MODP_2048_224";
+    case 24: return "MODP_2048_256";
+    case 25: return "ECP_192";
+    case 26: return "ECP_224";
+    case 28: return "BRAINPOOL_P256";
+    case 29: return "BRAINPOOL_P384";
+    case 30: return "BRAINPOOL_P512";
+    case 31: return "CURVE25519";
+    case 32: return "CURVE448";
+    default: return "UNKNOWN";
+  }
+}
