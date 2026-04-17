@@ -53,6 +53,9 @@ enum isakmp_type {
 /* Transform Attribute Type (RFC 7296 §3.3.5) */
 #define IKEV2_ATTR_KEY_LENGTH 14
 
+static void ndpi_search_ipsec(struct ndpi_detection_module_struct *ndpi_struct,
+                              struct ndpi_flow_struct *flow);
+
 /* ********************************************* */
 
 /*
@@ -244,6 +247,22 @@ static void ndpi_dissect_ikev2_sa_init(struct ndpi_flow_struct *flow,
   }
 }
 
+/* ************************************************************************ */
+
+static int search_ipsec_again(struct ndpi_detection_module_struct *ndpi_struct,
+			      struct ndpi_flow_struct *flow) {
+  ndpi_search_ipsec(ndpi_struct, flow);
+
+  if(flow->protos.ipsec.num_proposals > 0) {
+    /* stop extra processing */
+    flow->extra_packets_func = NULL; /* We're good now */
+    return(0);
+  }
+
+  /* Possibly more processing */
+  return(1);
+}
+
 /* ********************************************* */
 
 static void ndpi_int_ipsec_add_connection(struct ndpi_detection_module_struct * const ndpi_struct,
@@ -264,6 +283,11 @@ static void ndpi_int_ipsec_add_connection(struct ndpi_detection_module_struct * 
     case ISAKMP_V2:
       NDPI_LOG_INFO(ndpi_struct, "found ISAKMPv2 (UDP)\n");
       break;
+  }
+
+  if(flow->protos.ipsec.num_proposals == 0) {
+    flow->max_extra_packets_to_check = 6;
+    flow->extra_packets_func = search_ipsec_again;
   }
 
   ndpi_set_detected_protocol(ndpi_struct, flow,
@@ -411,7 +435,7 @@ static void ndpi_search_ipsec(struct ndpi_detection_module_struct *ndpi_struct,
 
 void init_ipsec_dissector(struct ndpi_detection_module_struct *ndpi_struct) {
   ndpi_register_dissector("IPSec", ndpi_struct,
-                     ndpi_search_ipsec,
-                     NDPI_SELECTION_BITMASK_PROTOCOL_V4_V6_UDP_WITH_PAYLOAD,
-                     1, NDPI_PROTOCOL_IPSEC);
+			  ndpi_search_ipsec,
+			  NDPI_SELECTION_BITMASK_PROTOCOL_V4_V6_UDP_WITH_PAYLOAD,
+			  1, NDPI_PROTOCOL_IPSEC);
 }
