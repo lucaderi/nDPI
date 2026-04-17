@@ -174,6 +174,7 @@ static void ndpi_dissect_ikev2_sa_init(struct ndpi_flow_struct *flow,
   u_int16_t off          = isakmp_offset + 28;
   u_int8_t  next_payload = payload[isakmp_offset + 16];
 
+  flow->protos.ipsec.version = payload[isakmp_offset + 17];
   flow->protos.ipsec.exchange_type = payload[isakmp_offset + 18];
   flow->protos.ipsec.num_proposals = 0;
 
