@@ -3165,7 +3165,7 @@ ndpi_http_method ndpi_http_str2method(const char* method, u_int16_t method_len) 
         return(NDPI_HTTP_METHOD_RPC_CONNECT);
       } else if(strncmp(method, "RPC_IN_DATA", 11) == 0) {
         return(NDPI_HTTP_METHOD_RPC_IN_DATA);
-      } else if(strncmp(method, "RPC_OUT_DATA", 11) == 0) {
+      } else if(strncmp(method, "RPC_OUT_DATA", 12) == 0) {
         return(NDPI_HTTP_METHOD_RPC_OUT_DATA);
       }
     }
