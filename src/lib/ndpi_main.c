@@ -3321,6 +3321,23 @@ u_int16_t ndpi_network_ptree6_match(struct ndpi_detection_module_struct *ndpi_st
 
 /* ******************************************* */
 
+u_int16_t ndpi_network_prefix_match(struct ndpi_detection_module_struct *ndpi_str,
+				    ndpi_prefix_t *prefix) {
+  ndpi_patricia_node_t *node;
+
+  if(!ndpi_str || !ndpi_str->protocols || !prefix)
+    return(NDPI_PROTOCOL_UNKNOWN);
+
+  if(prefix->family == AF_INET)
+    node = ndpi_patricia_search_best(ndpi_str->protocols->v4, &prefix);
+  else
+    node = ndpi_patricia_search_best(ndpi_str->protocols->v6, &prefix);
+
+  return(node ? node->value.u.uv16[0].user_value : NDPI_PROTOCOL_UNKNOWN);
+}
+
+/* ******************************************* */
+
 u_int16_t ndpi_network_port_ptree_match(struct ndpi_detection_module_struct *ndpi_str,
 					struct in_addr *pin /* network byte order */,
 					u_int16_t port /* network byte order */) {
