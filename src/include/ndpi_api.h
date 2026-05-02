@@ -1365,7 +1365,8 @@ extern "C" {
   u_int16_t ndpi_patricia_get_node_bits(ndpi_patricia_node_t *node);
   u_int16_t ndpi_patricia_get_maxbits(ndpi_patricia_tree_t *tree);
   void ndpi_patricia_get_stats(ndpi_patricia_tree_t *tree, struct ndpi_patricia_tree_stats *stats);
-
+  ndpi_patricia_node_t* ndpi_add_to_ptree(ndpi_patricia_tree_t *tree, int family, void *addr, int bits);
+  
   int ndpi_get_patricia_stats(struct ndpi_detection_module_struct *ndpi_struct,
                               ptree_type ptree_type,
                               struct ndpi_patricia_tree_stats *stats);
