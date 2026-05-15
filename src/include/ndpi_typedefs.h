@@ -170,6 +170,7 @@ typedef enum {
   NDPI_PROBING_ATTEMPT,        /* Probing attempt (e.g. TCP connection with no data exchanged or unidirection traffic for bidirectional flows such as SSH) */
   NDPI_OBFUSCATED_TRAFFIC,
   NDPI_SLOW_DOS,
+  NDPI_NON_PQC,                /* Set in case an encryped traffic stream does not comply with post-quantum encryotion */
   /* Before allocating a new risk here, check if there are FREE entries above */
 
   /* Leave this as last member */

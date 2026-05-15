@@ -2734,6 +2734,9 @@ const char* ndpi_risk2str(ndpi_risk_enum risk) {
   case NDPI_SLOW_DOS:
     return("(Possible) Slow DoS");
 
+  case NDPI_NON_PQC:
+    return("Non PQC Compliant Flow");
+
   default:
     ndpi_snprintf(buf, sizeof(buf), "%d", (int)risk);
     return(buf);
@@ -2862,6 +2865,8 @@ const char* ndpi_risk2code(ndpi_risk_enum risk) {
     return STRINGIFY(NDPI_OBFUSCATED_TRAFFIC);
   case NDPI_SLOW_DOS:
     return STRINGIFY(NDPI_SLOW_DOS);
+  case NDPI_NON_PQC:
+    return STRINGIFY(NDPI_NON_PQC);
 
   default:
     return("Unknown risk");
@@ -2987,6 +2992,8 @@ ndpi_risk_enum ndpi_code2risk(const char* risk) {
     return(NDPI_OBFUSCATED_TRAFFIC);
   else if(strcmp(STRINGIFY(NDPI_SLOW_DOS), risk) == 0)
     return(NDPI_SLOW_DOS);
+  else if(strcmp(STRINGIFY(NDPI_NON_PQC), risk) == 0)
+    return(NDPI_NON_PQC);
   else
     return(NDPI_MAX_RISK);
 }
@@ -3130,7 +3137,8 @@ const char *ndpi_risk_shortnames[NDPI_MAX_RISK] = {
   "binary_data_transfer",
   "probing",
   "obfuscated",
-  "slow_DoS"
+  "slow_DoS",
+  "non_PQC"
 };
 
 /* ******************************************************************** */
