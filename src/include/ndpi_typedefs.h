@@ -106,7 +106,8 @@ typedef enum {
   2. Add the very same flow alert key to the table flow_alert_keys in scripts/lua/modules/alert_keys/flow_alert_keys.lua
   3. Add the risk to the array risk_enum_to_alert_type in src/FlowRiskAlerts.cpp
   4. Create a new file in scripts/lua/modules/alert_definitions/flow/ with the new alert risk defined
-
+  5. Create a new file in scripts/lua/modules/check_definitions/flow for turning on/off the behavioral check
+  
   Example: https://github.com/ntop/ntopng/commit/aecc1e3e6505a0522439dbb2b295a3703d3d0f9a
  */
 typedef enum {
