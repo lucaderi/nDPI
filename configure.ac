@@ -303,13 +303,9 @@ if ! test "${with_only_libndpi+set}" = set; then :
     dnl> used by json-c for unit tests
     PKG_CHECK_MODULES([JSONC], [json-c], [
         AC_DEFINE(HAVE_LIBJSON_C, 1, [libjson-c is present])
-        JSONC_LIBS="${pkg_cv_JSONC_LIBS}"
-        JSONC_CFLAGS="${pkg_cv_JSONC_CFLAGS}"
-    ], [AC_MSG_WARN([JSON-C not available. Disabled unit test.])])
-    AC_CHECK_LIB([json-c], [json_object_put], [
         EXTRA_TARGETS="$EXTRA_TARGETS tests/unit"
         build_unittests=yes
-    ],[
+    ], [
         AC_MSG_WARN([JSON-C not available. Disabled unit test.])
         JSONC_LIBS=""
         JSONC_CFLAGS=""
@@ -328,14 +324,14 @@ if ! test "${with_only_libndpi+set}" = set; then :
       ;;
     esac
     dnl > RRD (optional dependency)
-    AC_CHECK_LIB([rrd], [rrd_fetch_r], [LIBRRD=-lrrd], [
+    PKG_CHECK_MODULES([RRDTOOL], [librrd], [
+        LIBRRD="${RRDTOOL_LIBS}"
+        AC_DEFINE_UNQUOTED(HAVE_RRDTOOL, "1", [rrdtool is present])
+        EXTRA_TARGETS="$EXTRA_TARGETS rrdtool"
+    ], [
         AC_MSG_WARN([librrd not found. RRDtool support will be disabled.])
         AC_MSG_WARN([Install librrd-dev or rrdtool-devel to enable RRDtool integration.])
     ])
-    if test "x$ac_cv_lib_rrd_rrd_fetch_r" = xyes; then :
-        AC_DEFINE_UNQUOTED(HAVE_RRDTOOL, "1", [rrdtool is present])
-        EXTRA_TARGETS="$EXTRA_TARGETS rrdtool"
-    fi
 fi
 AM_CONDITIONAL([BUILD_UNITTESTS], [test "x$build_unittests" = "xyes"])
 
@@ -430,7 +426,7 @@ case "$host" in
       BUILD_MINGW=1
       EXE_SUFFIX=".exe"
       AS_IF([test "${enable_npcap+set}" != set && test "${with_only_libndpi+set}" != set],,
-            [PKG_CHECK_MODULES([PCAP], [libpcap], [PCAP_LIB="" PCAP_INC="${pkg_cv_PCAP_CFLAGS}"])
+            [PKG_CHECK_MODULES([PCAP], [libpcap], [PCAP_LIB="" PCAP_INC="${PCAP_CFLAGS}"])
              AC_CHECK_LIB([pcap], [pcap_open_live],, [AC_MSG_ERROR([Missing msys2/mingw libpcap library. Install it with `pacman -S mingw-w64-x86_64-libpcap' (msys2).])])])
       ;;
    *)
@@ -538,7 +534,7 @@ AS_IF([test "x$enable_gprof" = "xyes"], [
     ])
     GPROF_ENABLED=1
     GPROF_LIBS="-ltcmalloc_and_profiler"
-    GPROF_CFLAGS="-g3 -fvisibility=default -fno-omit-frame-pointer ${pkg_cv_PROFILER_CFLAGS} ${pkg_cv_TCMALLOC_CFLAGS}"
+    GPROF_CFLAGS="-g3 -fvisibility=default -fno-omit-frame-pointer ${PROFILER_CFLAGS} ${TCMALLOC_CFLAGS}"
 ])
 
 AC_CHECK_LIB(pthread, pthread_setaffinity_np, AC_DEFINE_UNQUOTED(HAVE_PTHREAD_SETAFFINITY_NP, 1, [libc has pthread_setaffinity_np]))
@@ -547,43 +543,43 @@ dnl> libgcrypt (external)
 USE_HOST_LIBGCRYPT=0
 AS_IF([test "${with_local_libgcrypt+set}" = set],[
   USE_HOST_LIBGCRYPT=1
-  AC_CHECK_LIB(gpg-error, gpg_strerror_r, [], AC_MSG_ERROR([libgpg-error required (because of --with-local-libgcrypt) but not found or too old.]))
-  AC_CHECK_LIB(gcrypt, gcry_cipher_checktag, [], AC_MSG_ERROR([libgcrypt required (because of --with-local-libgcrypt) but not found or too old.]))
-  ADDITIONAL_LIBS="${ADDITIONAL_LIBS} -lgcrypt -lgpg-error"
-  AC_DEFINE_UNQUOTED(USE_HOST_LIBGCRYPT, 1, [Use locally installed libgcrypt instead of builtin gcrypt-light])
+  PKG_CHECK_MODULES([LIBGCRYPT], [libgcrypt >= 1.6], [
+    ADDITIONAL_INCS="${ADDITIONAL_INCS} ${LIBGCRYPT_CFLAGS}"
+    ADDITIONAL_LIBS="${ADDITIONAL_LIBS} ${LIBGCRYPT_LIBS}"
+    AC_DEFINE_UNQUOTED(USE_HOST_LIBGCRYPT, 1, [Use locally installed libgcrypt instead of builtin gcrypt-light])
+  ], [
+    AC_MSG_ERROR([libgcrypt >= 1.6 required (because of --with-local-libgcrypt) but not found or too old.])
+  ])
 ])
 
 dnl> PCRE2 (optional dependency)
 PCRE2_ENABLED=0
 AC_ARG_WITH(pcre2, AS_HELP_STRING([--with-pcre2], [Enable nDPI build with libpcre2]))
 if test "${with_pcre2+set}" = set; then :
-  AC_CHECK_LIB(pcre2-8, pcre2_compile_8, [
+  PKG_CHECK_MODULES([PCRE2], [libpcre2-8], [
     AC_DEFINE_UNQUOTED(HAVE_PCRE2, 1, [libpcre2(-dev) is present])
+    ADDITIONAL_INCS="${ADDITIONAL_INCS} ${PCRE2_CFLAGS}"
+    ADDITIONAL_LIBS="${ADDITIONAL_LIBS} ${PCRE2_LIBS}"
+    PCRE2_ENABLED=1
   ], [
     AC_MSG_WARN([libpcre2-8 not found. PCRE2 support requested but unavailable.])
     AC_MSG_WARN([Install libpcre2-dev to enable advanced pattern matching features.])
   ])
-
- if test "x$ac_cv_lib_pcre2_8_pcre2_compile_8" = xyes; then :
-   ADDITIONAL_LIBS="${ADDITIONAL_LIBS} -lpcre2-8"
-   PCRE2_ENABLED=1
- fi
 fi
 
 dnl> GeoIP (optional dependency)
+MAXMINDDB_ENABLED=0
 AC_ARG_WITH(maxminddb, AS_HELP_STRING([--with-maxminddb], [Enable nDPI build with libmaxminddb]))
 if test "${with_maxminddb+set}" = set; then :
-  AC_CHECK_LIB([maxminddb], [MMDB_lookup_sockaddr], [], [
+  PKG_CHECK_MODULES([LIBMAXMINDDB], [libmaxminddb], [
+    ADDITIONAL_INCS="${ADDITIONAL_INCS} ${LIBMAXMINDDB_CFLAGS}"
+    ADDITIONAL_LIBS="${ADDITIONAL_LIBS} ${LIBMAXMINDDB_LIBS}"
+    AC_DEFINE_UNQUOTED(HAVE_MAXMINDDB, 1, [MaxMind DB support])
+    MAXMINDDB_ENABLED=1
+  ], [
     AC_MSG_WARN([libmaxminddb not found. GeoIP support requested but unavailable.])
     AC_MSG_WARN([Install libmaxminddb-dev to enable geographic IP lookups.])
   ])
-  AC_CHECK_HEADERS([maxminddb.h], [], [
-    AC_MSG_WARN([maxminddb.h header not found.])
-  ])
-  if test ".${ac_cv_lib_maxminddb_MMDB_lookup_sockaddr}" = ".yes" && test ".${ac_cv_header_maxminddb_h}" = ".yes"; then
-    ADDITIONAL_LIBS="${ADDITIONAL_LIBS} -lmaxminddb"
-    AC_DEFINE_UNQUOTED(HAVE_MAXMINDDB, 1, [MaxMind DB support])
-  fi
 fi
 
 AS_IF([test "x${PLUGINS_ENABLED}" = "x1"], [
@@ -781,19 +777,19 @@ SUMMARY="${SUMMARY}
 
 Optional Dependencies:"
 
-AS_IF([test "x${ac_cv_lib_maxminddb_MMDB_lookup_sockaddr}" = "xyes" -a "x${ac_cv_header_maxminddb_h}" = "xyes"],
+AS_IF([test "x${MAXMINDDB_ENABLED}" = "x1"],
   [SUMMARY="${SUMMARY}
   MaxMindDB (GeoIP):       yes"],
   [SUMMARY="${SUMMARY}
   MaxMindDB (GeoIP):       no"])
 
-AS_IF([test "x${ac_cv_lib_json_c_json_object_put}" = "xyes"],
+AS_IF([test "x${build_unittests}" = "xyes"],
   [SUMMARY="${SUMMARY}
   JSON-C:                  yes"],
   [SUMMARY="${SUMMARY}
   JSON-C:                  no"])
 
-AS_IF([test "x${ac_cv_lib_rrd_rrd_fetch_r}" = "xyes"],
+AS_IF([test "x${LIBRRD}" != "x"],
   [SUMMARY="${SUMMARY}
   RRDtool:                 yes"],
   [SUMMARY="${SUMMARY}
