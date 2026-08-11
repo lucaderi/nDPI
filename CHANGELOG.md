@@ -44,6 +44,11 @@ Further information are available at https://github.com/ntop/nDPI/blob/dev/doc/c
 * `ssdp,metadata`: Enable/disable extraction of ALL metadata for SSDP flows. Note that, unlike others protocols, for SSDP flows you can't enable/disable a specific metadata
 * `ntp,metadata`: Enable/disable extraction of ALL metadata for NTP flows. Note that, unlike others protocols, for NTP flows you can't enable/disable a specific metadata
 * `dns,max_packets_extra_dissection`: After a flow has been classified has DNS, nDPI might analyse more packets to look for a sub-classification or for metadata. This parameter set the upper limit on the number of these packets. Useful if interested in handling big DNS messages (i.e. AXFR transfers)
+* `tls,max_num_blocks_to_analyze`: Set the maximum number of TLS block to process; if 0, TLS blocks are not analyze
+* `tls,tls_blocks_show_timing`: Enable/disable usage of timing information in TLS block processing
+* `ssh,metadata.hassh_fingerprint`: Enable/disable computation and export of HASHH fingerprint for SSH flows
+* `ssh,metadata.ssh_data`: Enable/disable export of SSH key exchanges parameters and negotiated SSH key exchange method
+
 
 ## Important improvements and bux fixes
 * tests: improve parallelization in https://github.com/ntop/nDPI/pull/3027
