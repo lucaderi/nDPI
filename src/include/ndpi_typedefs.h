@@ -172,9 +172,6 @@ typedef enum {
   NDPI_OBFUSCATED_TRAFFIC,
   NDPI_SLOW_DOS,
   NDPI_NON_PQC,                /* Set in case an encryped traffic stream does not comply with post-quantum encryotion */
-  NDPI_TLS_AI_INFERENCE_TRAFFIC, /* Timing/shape of the encrypted flow looks like an AI/LLM inference
-                                     request-response exchange (long "thinking" delay followed by either
-                                     a low, steady-rate streamed response or a single one-shot response) */
   /* Before allocating a new risk here, check if there are FREE entries above */
 
   /* Leave this as last member */
@@ -1745,36 +1742,6 @@ struct ndpi_flow_struct {
     u_int8_t certificate_processed:1, change_cipher_from_client:1, change_cipher_from_server:1, from_opportunistic_tls:1, from_rdp:1, alert:1, pad:2;
     struct tls_obfuscated_heuristic_state *obfuscated_heur_state;
   } tls_quic; /* Used also by DTLS and POPS/IMAPS/SMTPS/FTPS */
-
-  /*
-    Heuristic state used to detect AI/LLM inference traffic (e.g. llama.cpp, vLLM, OpenAI/Anthropic-style
-    HTTP(S) APIs, ...) tunnelled over TLS by looking at the *timing and shape* of the encrypted
-    request/response exchange rather than at its (encrypted) content. See tls.c ai_inference_*().
-  */
-  struct {
-    /* Persistent for the whole flow lifetime: NOT reset by ai_inference_finalize().
-       They are what let this heuristic force nDPI to keep dissecting Application Data
-       records well past the point where nDPI would normally stop TLS extra-dissection
-       (see ai_inference_keep_watching() / keep_extra_dissection_tcp() in tls.c: for
-       TLS 1.3 - the overwhelming majority of TLS traffic today - nDPI otherwise gives up
-       right after ServerHello, before any real Application Data is ever observed). */
-    u_int8_t done;                 /* 1: we already have our verdict (or gave up), stop forcing extra dissection */
-    u_int32_t total_records_seen;  /* Total post-handshake records inspected so far (bounds the forcing above) */
-
-    /* Per request/response exchange: reset by ai_inference_finalize() after each exchange,
-       so persistent/keep-alive connections carrying multiple prompts are handled one at a time. */
-    u_int8_t state;          /* ndpi_ai_inference_state_t   */
-    u_int8_t classification; /* ndpi_ai_inference_class_t   */
-    u_int64_t last_client_data_time_ms;  /* Time of the last client->server Application Data record   */
-    u_int64_t first_server_byte_time_ms; /* Time of the 1st server->client record of the current reply */
-    u_int64_t last_server_byte_time_ms;  /* Time of the last server->client record seen so far         */
-    u_int32_t server_records_seen;
-    u_int32_t server_bytes_total;
-    u_int32_t server_burst_bytes;        /* Bytes received within AI_INFERENCE_BURST_WINDOW_MS of the 1st byte */
-    u_int32_t max_inter_record_gap_ms;
-    u_int32_t sum_inter_record_gap_ms;
-    u_int32_t num_inter_record_gaps;
-  } ai_inference;
 
   struct rtp_info rtp[2 /* directions */];
 
