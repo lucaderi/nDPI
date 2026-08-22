@@ -63,10 +63,10 @@ typedef unsigned int u_int;
 
 /* NDPI_LOG_LEVEL */
 typedef enum {
-	      NDPI_LOG_ERROR,
-	      NDPI_LOG_TRACE,
-	      NDPI_LOG_DEBUG,
-	      NDPI_LOG_DEBUG_EXTRA
+  NDPI_LOG_ERROR,
+  NDPI_LOG_TRACE,
+  NDPI_LOG_DEBUG,
+  NDPI_LOG_DEBUG_EXTRA
 } ndpi_log_level_t;
 
 /* License under which the nDPI library (and its dissectors) can be used */
