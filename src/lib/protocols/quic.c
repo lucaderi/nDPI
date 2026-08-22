@@ -1743,5 +1743,6 @@ void init_quic_dissector(struct ndpi_detection_module_struct *ndpi_struct)
   ndpi_register_dissector("QUIC", ndpi_struct,
                      ndpi_search_quic,
                      NDPI_SELECTION_BITMASK_PROTOCOL_V4_V6_UDP_WITH_PAYLOAD,
+                     DISSECTOR_LICENSE_NTOP_DUAL_LICENSE,
                      1, NDPI_PROTOCOL_QUIC);
 }
