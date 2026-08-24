@@ -6918,9 +6918,6 @@ static int dissectors_init(struct ndpi_detection_module_struct *ndpi_str) {
   /* USENET */
   init_usenet_dissector(ndpi_str);
 
-  /* DNS */
-  init_dns_dissector(ndpi_str);
-
   /* VMWARE */
   init_vmware_dissector(ndpi_str);
 
@@ -7642,6 +7639,12 @@ static int dissectors_init(struct ndpi_detection_module_struct *ndpi_str) {
 
   /* Free Fire */
   init_freefire_dissector(ndpi_str);
+
+
+
+  /* Keep DNS as last entry! */
+  /* DNS */
+  init_dns_dissector(ndpi_str);
 
 #ifdef CUSTOM_NDPI_PROTOCOLS
 #include "../../../nDPI-custom/custom_ndpi_main_init.c"
