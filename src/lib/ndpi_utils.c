@@ -2058,7 +2058,7 @@ int ndpi_dpi2json(struct ndpi_detection_module_struct *ndpi_struct,
 				 ndpi_multimedia_flowtype2str(content, sizeof(content), flow->flow_multimedia_types));
 
 #ifdef CUSTOM_NDPI_PROTOCOLS
-#include "../../../nDPI-custom/ndpi_utils_dpi2json_stun.c"
+#include "../../../ndpi-pro/nDPI-custom/ndpi_utils_dpi2json_stun.c"
 #endif
 
     ndpi_serialize_end_of_block(serializer);
@@ -2089,7 +2089,7 @@ int ndpi_dpi2json(struct ndpi_detection_module_struct *ndpi_struct,
   case NDPI_PROTOCOL_DTLS:
     ndpi_tls2json(ndpi_struct, serializer, flow);
 #ifdef CUSTOM_NDPI_PROTOCOLS
-#include "../../../nDPI-custom/ndpi_utils_dpi2json_dtls.c"
+#include "../../../ndpi-pro/nDPI-custom/ndpi_utils_dpi2json_dtls.c"
 #endif
     break;
 
@@ -2145,7 +2145,7 @@ int ndpi_dpi2json(struct ndpi_detection_module_struct *ndpi_struct,
     break;
 
 #ifdef CUSTOM_NDPI_PROTOCOLS
-#include "../../../nDPI-custom/ndpi_utils_dpi2json_protos.c"
+#include "../../../ndpi-pro/nDPI-custom/ndpi_utils_dpi2json_protos.c"
 #endif
   } /* switch */
 
@@ -2752,6 +2752,9 @@ const char* ndpi_risk2str(ndpi_risk_enum risk) {
   case NDPI_NON_PQC:
     return("Non PQC Compliant Flow");
 
+  case NDPI_AI_INFERENCE_TRAFFIC:
+    return("Possible AI Inference Traffic");
+
   default:
     ndpi_snprintf(buf, sizeof(buf), "%d", (int)risk);
     return(buf);
@@ -2882,6 +2885,8 @@ const char* ndpi_risk2code(ndpi_risk_enum risk) {
     return STRINGIFY(NDPI_SLOW_DOS);
   case NDPI_NON_PQC:
     return STRINGIFY(NDPI_NON_PQC);
+  case NDPI_AI_INFERENCE_TRAFFIC:
+    return STRINGIFY(NDPI_AI_INFERENCE_TRAFFIC);
 
   default:
     return("Unknown risk");
@@ -3009,6 +3014,8 @@ ndpi_risk_enum ndpi_code2risk(const char* risk) {
     return(NDPI_SLOW_DOS);
   else if(strcmp(STRINGIFY(NDPI_NON_PQC), risk) == 0)
     return(NDPI_NON_PQC);
+  else if(strcmp(STRINGIFY(NDPI_AI_INFERENCE_TRAFFIC), risk) == 0)
+    return(NDPI_AI_INFERENCE_TRAFFIC);
   else
     return(NDPI_MAX_RISK);
 }
@@ -3153,7 +3160,8 @@ const char *ndpi_risk_shortnames[NDPI_MAX_RISK] = {
   "probing",
   "obfuscated",
   "slow_DoS",
-  "non_PQC"
+  "non_PQC",
+  "AI_Inference"
 };
 
 /* ******************************************************************** */
