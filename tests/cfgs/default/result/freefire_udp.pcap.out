@@ -1,13 +1,13 @@
-DPI Packets (UDP):	1	(1.00 pkts/flow)
-Confidence DPI              : 1 (flows)
-Num dissector calls: 1 (1.00 diss/flow)
+DPI Packets (UDP):	12	(12.00 pkts/flow)
+Confidence Unknown          : 1 (flows)
+Num dissector calls: 208 (208.00 diss/flow)
 LRU cache ookla:      0/0/0 (insert/search/found)
-LRU cache bittorrent: 0/0/0 (insert/search/found)
+LRU cache bittorrent: 0/3/0 (insert/search/found)
 LRU cache stun:       0/0/0 (insert/search/found)
 LRU cache tls_cert:   0/0/0 (insert/search/found)
-LRU cache mining:     0/0/0 (insert/search/found)
+LRU cache mining:     0/1/0 (insert/search/found)
 LRU cache msteams:    0/0/0 (insert/search/found)
-LRU cache fpc_dns:    0/0/0 (insert/search/found)
+LRU cache fpc_dns:    0/1/0 (insert/search/found)
 Automa host:          0/0 (search/found)
 Automa domain:        0/0 (search/found)
 Automa tls cert:      0/0 (search/found)
@@ -27,10 +27,13 @@ Hash ja4 custom protos:    0/0 (search/found)
 Hash fp custom protos:     0/0 (search/found)
 Hash url custom protos:    0/0 (search/found)
 
-FreeFire	188	14467	1
+Unknown	188	14467	1
 
-Fun                            188 14467         1            
+Unrated                        188 14467         1            
 
-Game                           188 14467         1            
+Unspecified                    188 14467         1            
 
-	1	UDP 192.168.50.79:53688 <-> 148.222.67.38:10014 [proto: 490/FreeFire][Stack: FreeFire][IP: 0/Unknown][ClearText][Confidence: DPI][FPC: 490/FreeFire, Confidence: DPI][DPI packets: 1][cat: Game/8][Breed: Fun][75 pkts/5754 bytes <-> 113 pkts/8713 bytes][Goodput ratio: 45/46][2.31 sec][bytes ratio: -0.205 (Download)][IAT c2s/s2c min/avg/max/stddev: 0/0 28/20 101/97 28/22][Pkt Len c2s/s2c min/avg/max/stddev: 52/53 77/77 100/116 16/11][Plen Bins: 47,52,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+
+
+Undetected flows:
+	1	UDP 192.168.50.79:53688 <-> 148.222.67.38:10014 [proto: 0/Unknown][Stack: Unknown][IP: 0/Unknown][ClearText][Confidence: Unknown][FPC: 0/Unknown, Confidence: Unknown][DPI packets: 12][Breed: Unrated][75 pkts/5754 bytes <-> 113 pkts/8713 bytes][Goodput ratio: 45/46][2.31 sec][bytes ratio: -0.205 (Download)][IAT c2s/s2c min/avg/max/stddev: 0/0 28/20 101/97 28/22][Pkt Len c2s/s2c min/avg/max/stddev: 52/53 77/77 100/116 16/11][Plen Bins: 47,52,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
