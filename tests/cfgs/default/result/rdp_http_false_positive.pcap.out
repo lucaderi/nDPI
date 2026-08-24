@@ -1,11 +1,13 @@
-DPI Packets (TCP):	13	(6.50 pkts/flow)
-Confidence DPI              : 2 (flows)
-Num dissector calls: 328 (164.00 diss/flow)
+Guessed flow protos:	2
+
+DPI Packets (TCP):	20	(10.00 pkts/flow)
+Confidence Match by port    : 2 (flows)
+Num dissector calls: 366 (183.00 diss/flow)
 LRU cache ookla:      0/0/0 (insert/search/found)
-LRU cache bittorrent: 0/0/0 (insert/search/found)
+LRU cache bittorrent: 0/6/0 (insert/search/found)
 LRU cache stun:       0/0/0 (insert/search/found)
 LRU cache tls_cert:   0/0/0 (insert/search/found)
-LRU cache mining:     0/0/0 (insert/search/found)
+LRU cache mining:     0/2/0 (insert/search/found)
 LRU cache msteams:    0/0/0 (insert/search/found)
 LRU cache fpc_dns:    0/2/0 (insert/search/found)
 Automa host:          0/0 (search/found)
@@ -27,11 +29,11 @@ Hash ja4 custom protos:    2/0 (search/found)
 Hash fp custom protos:     0/0 (search/found)
 Hash url custom protos:    0/0 (search/found)
 
-RDP	20	1520	2
+HTTP	20	1520	2
 
 Acceptable                      20 1520          2            
 
-RemoteAccess                    20 1520          2            
+Web                             20 1520          2            
 
-	1	TCP 10.1.60.88:43884 <-> 172.22.16.49:80 [VLAN: 11][proto: 88/RDP][Stack: RDP][IP: 0/Unknown][ClearText][Confidence: DPI][FPC: 0/Unknown, Confidence: Unknown][DPI packets: 7][cat: RemoteAccess/12][Breed: Acceptable][6 pkts/441 bytes <-> 4 pkts/319 bytes][Goodput ratio: 4/15][0.04 sec][bytes ratio: 0.161 (Mixed)][IAT c2s/s2c min/avg/max/stddev: 0/0 7/12 22/23 9/12][Pkt Len c2s/s2c min/avg/max/stddev: 68/68 74/80 82/109 6/17][Risk: ** Known Proto on Non Std Port **** Desktop/File Sharing **** Probing Attempt **][Risk Score: 110][Risk Info: Mismatching client/server protocol;Found RDP;Expected on port 3389][TCP Fingerprint: 2_64_64240_2e3cee914fc1/Linux][PLAIN TEXT (HTTP/1.1 400 Bad Request)][Plen Bins: 50,50,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
-	2	TCP 10.1.60.88:43884 <-> 172.22.16.49:80 [VLAN: 316][proto: 88/RDP][Stack: RDP][IP: 0/Unknown][ClearText][Confidence: DPI][FPC: 0/Unknown, Confidence: Unknown][DPI packets: 6][cat: RemoteAccess/12][Breed: Acceptable][6 pkts/441 bytes <-> 4 pkts/319 bytes][Goodput ratio: 4/15][0.04 sec][bytes ratio: 0.161 (Mixed)][IAT c2s/s2c min/avg/max/stddev: 0/0 7/12 22/23 9/12][Pkt Len c2s/s2c min/avg/max/stddev: 68/68 74/80 82/109 6/17][Risk: ** Known Proto on Non Std Port **** Desktop/File Sharing **** Probing Attempt **][Risk Score: 110][Risk Info: Mismatching client/server protocol;Found RDP;Expected on port 3389][TCP Fingerprint: 2_64_64240_e2a03a76c2b4/Unknown][PLAIN TEXT (HTTP/1.1 400 Bad Request)][Plen Bins: 50,50,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+	1	TCP 10.1.60.88:43884 <-> 172.22.16.49:80 [VLAN: 11][proto: 7/HTTP][Stack: HTTP][IP: 0/Unknown][ClearText][Confidence: Match by port][FPC: 0/Unknown, Confidence: Unknown][DPI packets: 10][cat: Web/5][Breed: Acceptable][6 pkts/441 bytes <-> 4 pkts/319 bytes][Goodput ratio: 4/15][0.04 sec][bytes ratio: 0.161 (Mixed)][IAT c2s/s2c min/avg/max/stddev: 0/0 7/12 22/23 9/12][Pkt Len c2s/s2c min/avg/max/stddev: 68/68 74/80 82/109 6/17][TCP Fingerprint: 2_64_64240_2e3cee914fc1/Linux][PLAIN TEXT (HTTP/1.1 400 Bad Request)][Plen Bins: 50,50,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+	2	TCP 10.1.60.88:43884 <-> 172.22.16.49:80 [VLAN: 316][proto: 7/HTTP][Stack: HTTP][IP: 0/Unknown][ClearText][Confidence: Match by port][FPC: 0/Unknown, Confidence: Unknown][DPI packets: 10][cat: Web/5][Breed: Acceptable][6 pkts/441 bytes <-> 4 pkts/319 bytes][Goodput ratio: 4/15][0.04 sec][bytes ratio: 0.161 (Mixed)][IAT c2s/s2c min/avg/max/stddev: 0/0 7/12 22/23 9/12][Pkt Len c2s/s2c min/avg/max/stddev: 68/68 74/80 82/109 6/17][TCP Fingerprint: 2_64_64240_e2a03a76c2b4/Unknown][PLAIN TEXT (HTTP/1.1 400 Bad Request)][Plen Bins: 50,50,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
