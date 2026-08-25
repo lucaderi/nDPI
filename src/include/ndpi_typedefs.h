@@ -71,9 +71,25 @@ typedef enum {
 
 /* License under which the nDPI library (and its dissectors) can be used */
 enum ndpi_license_type {
-  NDPI_LICENSE_NON_COMMERCIAL_LGPL = 0,
-  NDPI_LICENSE_COMMERCIAL_LGPL,
-  NDPI_LICENSE_COMMERCIAL_DUAL_LICENSE,
+  /*
+    Use this value if you use nDPI in a not-for-profit project and you
+    do not have a license from ntop for dual-licensed components: all
+    components LGPL and dual-license are enabled
+  */
+  NDPI_LICENSE_NOT_FOR_PROFIT_LGPL = 0,  
+  
+  /*
+    Use this value if you use nDPI in a for profit project and you
+    do not have a license from ntop for dual-licensed components
+    hence only the LGPL components are enabled
+  */
+  NDPI_LICENSE_FOR_PROFIT_LGPL,
+
+  /*
+    Select this option if you have signed a license agreement
+    with ntop for using dual-licensed nDPI componenets
+  */
+  NDPI_LICENSE_FOR_PROFIT_DUAL_LICENSE,
 };
 
 typedef enum {

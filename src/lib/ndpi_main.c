@@ -6781,7 +6781,7 @@ void ndpi_register_dissector(char *dissector_name, struct ndpi_detection_module_
   int i, dissector_enabled = 0, first_protocol_id = -1;
   u_int32_t idx = ndpi_str->callback_buffer_num;
 
-  if(ndpi_str->license_type == NDPI_LICENSE_COMMERCIAL_LGPL &&
+  if(ndpi_str->license_type == NDPI_LICENSE_FOR_PROFIT_LGPL &&
      dissector_license_type == DISSECTOR_LICENSE_NTOP_DUAL_LICENSE) {
     NDPI_LOG_ERR(ndpi_str, "Dissector %s not loaded: incompatible license\n", dissector_name);
     return;
@@ -9651,6 +9651,7 @@ static void internal_giveup(struct ndpi_detection_module_struct *ndpi_struct,
 	switch(flow->guessed_protocol_id_by_ip) {
 	case NDPI_PROTOCOL_APPLE:
 	case NDPI_PROTOCOL_AKAMAI:
+	case NDPI_PROTOCOL_APPLE_PUSH:
 	  trigger_risk = false;
 	  break;
 	}
@@ -12119,7 +12120,7 @@ void ndpi_generate_options(u_int opt, FILE *options_out) {
   u_int i;
 
   if (!options_out) return;
-  ndpi_str = ndpi_init_detection_module(NULL, NDPI_LICENSE_NON_COMMERCIAL_LGPL);
+  ndpi_str = ndpi_init_detection_module(NULL, NDPI_LICENSE_NOT_FOR_PROFIT_LGPL);
   if (!ndpi_str) return;
 
   if(ndpi_finalize_initialization(ndpi_str) != 0) {

@@ -108,7 +108,7 @@ static int dump_fpc_stats = 0;
 
 int skip_unit_tests = 1;
 
-static enum ndpi_license_type license_type = NDPI_LICENSE_NON_COMMERCIAL_LGPL;
+static enum ndpi_license_type license_type = NDPI_LICENSE_NOT_FOR_PROFIT_LGPL;
 
 #ifdef CUSTOM_NDPI_PROTOCOLS
 #include "../../nDPI-custom/ndpiReader_defs.c"
@@ -1833,9 +1833,9 @@ static void parse_parameters(int argc, char **argv)
     {
       int license_type_int = atoi(optarg);
 
-      if(license_type_int != NDPI_LICENSE_NON_COMMERCIAL_LGPL &&
-         license_type_int != NDPI_LICENSE_COMMERCIAL_LGPL &&
-         license_type_int != NDPI_LICENSE_COMMERCIAL_DUAL_LICENSE) {
+      if(license_type_int != NDPI_LICENSE_NOT_FOR_PROFIT_LGPL &&
+         license_type_int != NDPI_LICENSE_FOR_PROFIT_LGPL &&
+         license_type_int != NDPI_LICENSE_FOR_PROFIT_DUAL_LICENSE) {
 	printf("Invalid --force-license-type value '%s'\n", optarg);
 	exit(1);
       }

@@ -101,7 +101,7 @@ int LLVMFuzzerTestOneInput(const uint8_t *Data, size_t Size) {
     g_ctx = ndpi_global_init();
 
     workflow = ndpi_workflow_init(prefs, NULL /* pcap handler will be set later */, 0, ndpi_serialization_format_json, g_ctx,
-                                  NDPI_LICENSE_NON_COMMERCIAL_LGPL);
+                                  NDPI_LICENSE_NOT_FOR_PROFIT_LGPL);
 
     ndpi_workflow_set_flow_callback(workflow, fn_flow_callback, NULL);
 
