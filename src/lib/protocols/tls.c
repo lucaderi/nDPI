@@ -98,9 +98,8 @@ static bool str_contains_digit(char *str) {
 
 /* **************************************** */
 
-/* TODO: rename */
-static int keep_extra_dissection_tcp(struct ndpi_detection_module_struct *ndpi_struct,
-                                     struct ndpi_flow_struct *flow) {
+static int tls_keep_extra_dissection_tcp(struct ndpi_detection_module_struct *ndpi_struct,
+                                     struct ndpi_flow_struct *flow) {  
   if(ndpi_struct->cfg.tls_max_num_blocks_to_analyze > 0)
     return(1); /* Process as much TLS blocks as the max packet number */
 
@@ -1650,7 +1649,7 @@ int ndpi_search_tls_tcp(struct ndpi_detection_module_struct *ndpi_struct,
      || ((ndpi_struct->cfg.tls_max_num_blocks_to_analyze > 0)
 	 && (flow->l4.tcp.tls.num_tls_blocks == ndpi_struct->cfg.tls_max_num_blocks_to_analyze))
      || ((ndpi_struct->cfg.tls_max_num_blocks_to_analyze == 0)
-	 && (!keep_extra_dissection_tcp(ndpi_struct, flow)))
+	 && (!tls_keep_extra_dissection_tcp(ndpi_struct, flow)))
      ) {
 #ifdef DEBUG_TLS_BLOCKS
     printf("*** [TLS Block] No more blocks\n");
@@ -3799,6 +3798,6 @@ void init_tls_dissector(struct ndpi_detection_module_struct *ndpi_struct) {
                      NDPI_PROTOCOL_DTLS);
 
 #ifdef CUSTOM_NDPI_PROTOCOLS
-#include "../../../../ndpi-pro/nDPI-custom/protocols/tls_init.c"
+  #include "../../../../ndpi-pro/nDPI-custom/protocols/tls_init.c"
 #endif
 }

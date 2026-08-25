@@ -2057,10 +2057,6 @@ int ndpi_dpi2json(struct ndpi_detection_module_struct *ndpi_struct,
     ndpi_serialize_string_string(serializer,  "multimedia_flow_types",
 				 ndpi_multimedia_flowtype2str(content, sizeof(content), flow->flow_multimedia_types));
 
-#ifdef CUSTOM_NDPI_PROTOCOLS
-#include "../../../ndpi-pro/nDPI-custom/ndpi_utils_dpi2json_stun.c"
-#endif
-
     ndpi_serialize_end_of_block(serializer);
     break;
 
@@ -2088,9 +2084,6 @@ int ndpi_dpi2json(struct ndpi_detection_module_struct *ndpi_struct,
 
   case NDPI_PROTOCOL_DTLS:
     ndpi_tls2json(ndpi_struct, serializer, flow);
-#ifdef CUSTOM_NDPI_PROTOCOLS
-#include "../../../ndpi-pro/nDPI-custom/ndpi_utils_dpi2json_dtls.c"
-#endif
     break;
 
   case NDPI_PROTOCOL_IPSEC:
@@ -2143,10 +2136,6 @@ int ndpi_dpi2json(struct ndpi_detection_module_struct *ndpi_struct,
       ndpi_serialize_end_of_block(serializer);
     }
     break;
-
-#ifdef CUSTOM_NDPI_PROTOCOLS
-#include "../../../ndpi-pro/nDPI-custom/ndpi_utils_dpi2json_protos.c"
-#endif
   } /* switch */
 
   if((flow->custom.plugin != NULL)

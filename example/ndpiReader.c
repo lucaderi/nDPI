@@ -110,10 +110,6 @@ int skip_unit_tests = 1;
 
 static enum ndpi_license_type license_type = NDPI_LICENSE_NOT_FOR_PROFIT_LGPL;
 
-#ifdef CUSTOM_NDPI_PROTOCOLS
-#include "../../nDPI-custom/ndpiReader_defs.c"
-#endif
-
 /** User preferences **/
 char *addr_dump_path = NULL;
 u_int8_t enable_realtime_output = 0, enable_payload_analyzer = 0, num_bin_clusters = 0, extcap_exit = 0;
@@ -2882,10 +2878,6 @@ static void printFlowSerialized(struct ndpi_flow_info *flow)
     }
 
   fprintf(serialization_fp, "%.*s\n", (int)json_str_len, json_str);
-
-#ifdef CUSTOM_NDPI_PROTOCOLS
-#include "../../nDPI-custom/ndpiReader_flow_serialize.c"
-#endif
 }
 
 /* ********************************** */
@@ -5865,10 +5857,6 @@ int main(int argc, char **argv) {
       num_bin_clusters = 1;
   }
 
-#ifdef CUSTOM_NDPI_PROTOCOLS
-#include "../../nDPI-custom/ndpiReader_init.c"
-#endif
-
   if(!quiet_mode) {
     printf("\n-----------------------------------------------------------\n"
 	   "* NOTE: This is demo app to show *some* nDPI features.\n"
@@ -5915,10 +5903,6 @@ int main(int argc, char **argv) {
 
   for(i = 0; i < fargc; i++)
     ndpi_free(fargv[i]);
-
-#ifdef CUSTOM_NDPI_PROTOCOLS
-#include "../../nDPI-custom/ndpiReader_term.c"
-#endif
 
 #ifdef DEBUG_TRACE
   if(trace) fclose(trace);

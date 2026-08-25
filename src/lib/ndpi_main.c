@@ -3048,19 +3048,9 @@ static void init_protocol_defaults(struct ndpi_detection_module_struct *ndpi_str
                           ndpi_build_default_ports(ports_b, 0, 0, 0, 0, 0) /* UDP */,
                           0, 0 /* protocol classification cannot change if partial */);
 
-#ifdef CUSTOM_NDPI_PROTOCOLS
-#include "../../../ndpi-pro/nDPI-custom/custom_ndpi_main.c"
-#endif
-
   /* calling function for host and content matched protocols */
   init_string_based_protocols(ndpi_str);
 }
-
-/* ****************************************************** */
-
-#ifdef CUSTOM_NDPI_PROTOCOLS
-#include "../../../ndpi-pro/nDPI-custom/custom_ndpi_protocols.c"
-#endif
 
 /* ****************************************************** */
 
@@ -5332,10 +5322,6 @@ void ndpi_exit_detection_module(struct ndpi_detection_module_struct *ndpi_str) {
 	head = next;
       }
     }
-
-#ifdef CUSTOM_NDPI_PROTOCOLS
-#include "../../../ndpi-pro/nDPI-custom/ndpi_exit_detection_module.c"
-#endif
 
     ndpi_free_geoip(ndpi_str);
 
@@ -7646,10 +7632,6 @@ static int dissectors_init(struct ndpi_detection_module_struct *ndpi_str) {
   /* Keep DNS as last entry! */
   /* DNS */
   init_dns_dissector(ndpi_str);
-
-#ifdef CUSTOM_NDPI_PROTOCOLS
-#include "../../../ndpi-pro/nDPI-custom/custom_ndpi_main_init.c"
-#endif
 
   /* ----------------------------------------------------------------- */
 
@@ -12501,6 +12483,9 @@ void ndpi_free_flow(struct ndpi_flow_struct *flow) {
        )
       flow->custom.plugin->freeFlowFctn(flow->custom.plugin_data);
 
+    /* Custom storage */
+    if(flow->tls_quic.opaque) ndpi_free(flow->tls_quic.opaque);
+    
     ndpi_free(flow);
   }
 }
