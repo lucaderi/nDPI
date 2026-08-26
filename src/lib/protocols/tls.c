@@ -2796,11 +2796,10 @@ int processClientServerHello(struct ndpi_detection_module_struct *ndpi_struct,
 	  }
 	} else if(extension_id == 51 &&  /* key_share */
 		  offset + 6 < packet->payload_packet_len) {
-	  u_int16_t s_offset    = offset+4;
-	  u_int32_t extn_offset = s_offset + 4;
+	  u_int32_t extn_offset = offset + 4;
 	  u_int16_t extn_end    = extn_offset + extension_len;
 
-	  if(s_offset + extension_len <= packet->payload_packet_len) {
+	  if(extn_offset + extension_len <= packet->payload_packet_len) {
 #ifdef DEBUG_TLS
 	    u_int16_t key_share_extn_len = ntohs(*((u_int16_t*)&(packet->payload[extn_offset])));
 
@@ -2809,8 +2808,6 @@ int processClientServerHello(struct ndpi_detection_module_struct *ndpi_struct,
 		   (packet->payload[extn_offset] & 0xFF),
 		   (packet->payload[extn_offset+1] & 0xFF));
 #endif
-
-	    extn_offset += 2;
 
 	    while(extn_offset + 4 < extn_end) {
 	      u_int16_t group_id     = ntohs(*((u_int16_t*)&(packet->payload[extn_offset])));
