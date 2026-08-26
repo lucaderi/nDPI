@@ -99,7 +99,7 @@ static bool str_contains_digit(char *str) {
 /* **************************************** */
 
 static int tls_keep_extra_dissection_tcp(struct ndpi_detection_module_struct *ndpi_struct,
-                                     struct ndpi_flow_struct *flow) {  
+                                     struct ndpi_flow_struct *flow) {
   if(ndpi_struct->cfg.tls_max_num_blocks_to_analyze > 0)
     return(1); /* Process as much TLS blocks as the max packet number */
 
@@ -2724,8 +2724,8 @@ int processClientServerHello(struct ndpi_detection_module_struct *ndpi_struct,
 	        }
 
 	        for(alpn_i=0; alpn_i<alpn_len; alpn_i++) {
-		    alpn_str[alpn_str_len+alpn_i] = packet->payload[s_offset+alpn_i];
-		  }
+		  alpn_str[alpn_str_len+alpn_i] = packet->payload[s_offset+alpn_i];
+		}
 
 	        s_offset += alpn_len, alpn_str_len += alpn_len;;
 	      } else {
@@ -2766,7 +2766,7 @@ int processClientServerHello(struct ndpi_detection_module_struct *ndpi_struct,
 	  for(i=0; ja.server.alpn[i] != '\0'; i++)
 	    if(ja.server.alpn[i] == ',') ja.server.alpn[i] = '-';
 	} else if(extension_id == 11 /* ec_point_formats groups */) {
-	  u_int16_t s_offset = offset+4 + 1;
+	  u_int16_t s_offset = offset + 4 + 1;
 
 #ifdef DEBUG_TLS
 	  printf("Server TLS [EllipticCurveFormat: len=%u]\n", extension_len);
@@ -2794,6 +2794,48 @@ int processClientServerHello(struct ndpi_detection_module_struct *ndpi_struct,
 	    printf("Server TLS Invalid len %u vs %u\n", s_offset+extension_len, total_len);
 #endif
 	  }
+	} else if(extension_id == 51 &&  /* key_share */
+		  offset + 6 < packet->payload_packet_len) {
+	  u_int16_t s_offset    = offset+4;
+	  u_int32_t extn_offset = s_offset + 4;
+	  u_int16_t extn_end    = extn_offset + extension_len;
+
+	  if(s_offset + extension_len <= packet->payload_packet_len) {
+#ifdef DEBUG_TLS
+	    u_int16_t key_share_extn_len = ntohs(*((u_int16_t*)&(packet->payload[extn_offset])));
+
+	    printf("[key_share] [len=%u][key_share_extn_len: %u][%02X %02X]\n",
+		   extension_len, key_share_extn_len,
+		   (packet->payload[extn_offset] & 0xFF),
+		   (packet->payload[extn_offset+1] & 0xFF));
+#endif
+
+	    extn_offset += 2;
+
+	    while(extn_offset + 4 < extn_end) {
+	      u_int16_t group_id     = ntohs(*((u_int16_t*)&(packet->payload[extn_offset])));
+	      u_int16_t key_extn_len = ntohs(*((u_int16_t*)&(packet->payload[extn_offset + 2])));
+
+#ifdef DEBUG_TLS
+	      printf("\t[%02X %02X][extn_offset: %u][group_id: %u][key_extn_len: %u]\n",
+		     (packet->payload[extn_offset] & 0xFF),
+		     (packet->payload[extn_offset+1] & 0xFF),
+		     extn_offset,
+		     group_id, key_extn_len);
+#endif
+
+	      if(group_id != 0x2A2A /* Skip GREASE */) {
+		if(ja.server.num_key_share_groups < MAX_NUM_JA)
+		  ja.server.key_share_group[ja.client.num_key_share_groups++] = group_id;
+	      }
+
+	      extn_offset += key_extn_len + 4;
+	    }
+	  }
+
+#ifdef DEBUG_TLS
+	  printf("[server] [extn_offset: %u][extn_end: %u]\n", extn_offset, extn_end);
+#endif
 	}
 
 	i += 4 + extension_len, offset += 4 + extension_len;
