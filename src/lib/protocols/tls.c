@@ -2823,7 +2823,7 @@ int processClientServerHello(struct ndpi_detection_module_struct *ndpi_struct,
 
 	      if(group_id != 0x2A2A /* Skip GREASE */) {
 		if(ja.server.num_key_share_groups < MAX_NUM_JA)
-		  ja.server.key_share_group[ja.client.num_key_share_groups++] = group_id;
+		  ja.server.key_share_group[ja.server.num_key_share_groups++] = group_id;
 	      }
 
 	      extn_offset += key_extn_len + 4;
