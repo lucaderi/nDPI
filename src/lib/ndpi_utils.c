@@ -1397,6 +1397,15 @@ void ndpi_serialize_tls_blocks(struct ndpi_detection_module_struct *ndpi_struct,
 				     ndpi_tls_key_share_group2str(c->key_share_group[i], unknown_group));
 
       ndpi_serialize_end_of_list(serializer);
+
+      /* **************************** */
+
+      ndpi_serialize_start_of_list(serializer, "key_share_group_ids");
+      
+      for(i=0; i<c->num_key_share_groups; i++)
+	ndpi_serialize_string_uint32(serializer, "", c->key_share_group[i]);
+
+      ndpi_serialize_end_of_list(serializer);
     }
 
     if(c->num_supported_versions > 0) {
@@ -1462,6 +1471,16 @@ void ndpi_serialize_tls_blocks(struct ndpi_detection_module_struct *ndpi_struct,
       for(i=0; i<s->num_key_share_groups; i++)
 	ndpi_serialize_string_string(serializer, "",
 				     ndpi_tls_key_share_group2str(s->key_share_group[i], unknown_group));
+
+      ndpi_serialize_end_of_list(serializer);
+
+      
+      /* **************************** */
+
+      ndpi_serialize_start_of_list(serializer, "key_share_group_ids");
+      
+      for(i=0; i<s->num_key_share_groups; i++)
+	ndpi_serialize_string_uint32(serializer, "", s->key_share_group[i]);
 
       ndpi_serialize_end_of_list(serializer);
     }
