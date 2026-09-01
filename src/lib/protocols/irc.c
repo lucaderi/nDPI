@@ -82,7 +82,7 @@ static void ndpi_search_irc_tcp(struct ndpi_detection_module_struct *ndpi_struct
 	strsep(&sp, " \r\n");
 	  
         snprintf(msg, sizeof(msg), "Found IRC username (%s)", buf);
-        ndpi_set_risk(ndpi_struct, flow, NDPI_CLEAR_TEXT_CREDENTIALS, msg);
+        ndpi_set_risk(ndpi_struct, &flow->core, NDPI_CLEAR_TEXT_CREDENTIALS, msg);
       }
 
       NDPI_LOG_DBG2(ndpi_struct, "IRC stage: %d\n", flow->metadata.l4.tcp.irc_stage);

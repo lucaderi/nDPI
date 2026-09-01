@@ -488,7 +488,7 @@ static void ndpi_search_openvpn(struct ndpi_detection_module_struct* ndpi_struct
     ndpi_int_openvpn_add_connection(ndpi_struct, flow, NDPI_CONFIDENCE_DPI);
   } else if (flow->metadata.openvpn.ovpn_alg_heur_opcode_state == 2) {
     ndpi_int_openvpn_add_connection(ndpi_struct, flow, NDPI_CONFIDENCE_DPI_AGGRESSIVE);
-    ndpi_set_risk(ndpi_struct, flow, NDPI_OBFUSCATED_TRAFFIC, "Obfuscated OpenVPN");
+    ndpi_set_risk(ndpi_struct, &flow->core, NDPI_OBFUSCATED_TRAFFIC, "Obfuscated OpenVPN");
   } else if(flow->metadata.openvpn.ovpn_alg_standard_state == 1 &&
             flow->metadata.openvpn.ovpn_alg_heur_opcode_state == 1) {
     NDPI_EXCLUDE_DISSECTOR(ndpi_struct, flow);

@@ -113,7 +113,7 @@ static int ftp_handle_auth(struct ndpi_detection_module_struct *ndpi_struct,
       char buf[64];
       snprintf(buf, sizeof(buf), "Found FTP username (%s)",
                flow->metadata.l4.tcp.ftp_imap_pop_smtp.username);
-      ndpi_set_risk(ndpi_struct, flow, NDPI_CLEAR_TEXT_CREDENTIALS, buf);
+      ndpi_set_risk(ndpi_struct, &flow->core, NDPI_CLEAR_TEXT_CREDENTIALS, buf);
     }
     return 1;
   }

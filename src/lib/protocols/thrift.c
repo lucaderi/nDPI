@@ -115,7 +115,7 @@ static void thrift_set_method(struct ndpi_detection_module_struct *ndpi_struct,
                               char const * const method, size_t method_length)
 {
   if (thrift_validate_method(method, method_length) == 0) {
-    ndpi_set_risk(ndpi_struct, flow, NDPI_INVALID_CHARACTERS, "Invalid method name");
+    ndpi_set_risk(ndpi_struct, &flow->core, NDPI_INVALID_CHARACTERS, "Invalid method name");
     flow->metadata.protos.thrift.method[0] = '\0';
   } else {
     strncpy(flow->metadata.protos.thrift.method, method, ndpi_min(sizeof(flow->metadata.protos.thrift.method), method_length));
@@ -127,12 +127,12 @@ static void thrift_set_type(struct ndpi_detection_module_struct *ndpi_struct,
                             uint8_t message_type)
 {
   if (message_type == TMT_INVALID_TMESSAGE_TYPE) {
-    ndpi_set_risk(ndpi_struct, flow, NDPI_MALFORMED_PACKET, "Invalid message type");
+    ndpi_set_risk(ndpi_struct, &flow->core, NDPI_MALFORMED_PACKET, "Invalid message type");
   }
   flow->metadata.protos.thrift.message_type = message_type;
 
   if (message_type == TMT_EXCEPTION) {
-    ndpi_set_risk(ndpi_struct, flow, NDPI_ERROR_CODE_DETECTED, "Apache Thrift Exception");
+    ndpi_set_risk(ndpi_struct, &flow->core, NDPI_ERROR_CODE_DETECTED, "Apache Thrift Exception");
   }
 }
 

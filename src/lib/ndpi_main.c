@@ -8193,16 +8193,16 @@ void ndpi_free_flow_data(struct ndpi_flow_struct* flow) {
     if(flow->metadata.kerberos_buf.pktbuf)
       ndpi_free(flow->metadata.kerberos_buf.pktbuf);
 
-    if(flow->metadata.dns_tcp_reasm) {
+    if(flow->core.dns_tcp_reasm) {
       u_int i;
 
       for(i = 0; i < 2; i++) {
-	      if(flow->metadata.dns_tcp_reasm->dir[i].buf)
-	        ndpi_free(flow->metadata.dns_tcp_reasm->dir[i].buf);
+	      if(flow->core.dns_tcp_reasm->dir[i].buf)
+	        ndpi_free(flow->core.dns_tcp_reasm->dir[i].buf);
       }
 
-      ndpi_free(flow->metadata.dns_tcp_reasm);
-      flow->metadata.dns_tcp_reasm = NULL;
+      ndpi_free(flow->core.dns_tcp_reasm);
+      flow->core.dns_tcp_reasm = NULL;
     }
 
     if(flow->metadata.monit)
@@ -8362,7 +8362,7 @@ static int ndpi_init_packet(struct ndpi_detection_module_struct *ndpi_str,
 	      else
 		msg = "Massive scanner detected";
 
-	      ndpi_set_risk(ndpi_str, flow, NDPI_MALICIOUS_FINGERPRINT, (char*)msg);
+	      ndpi_set_risk(ndpi_str, &flow->core, NDPI_MALICIOUS_FINGERPRINT, (char*)msg);
 	    } else {
 #ifdef DEBUG_TCP_OPTIONS
               printf("Options len: %u\n", options_len);
@@ -8468,7 +8468,7 @@ static int ndpi_init_packet(struct ndpi_detection_module_struct *ndpi_str,
 		if(packet->iphv6 /* Modern IP stack */
 		   || (packet->iph
 		       && ndpi_is_public_ipv4(ntohl(packet->iph->saddr))))
-		  ndpi_set_risk(ndpi_str, flow, NDPI_MALICIOUS_FINGERPRINT,
+		  ndpi_set_risk(ndpi_str, &flow->core, NDPI_MALICIOUS_FINGERPRINT,
 				"Unusual TCP fingerprint (scanner detected?)");
 	      }
 	    }
@@ -8548,11 +8548,10 @@ static int ndpi_init_packet(struct ndpi_detection_module_struct *ndpi_str,
 
 /* ************************************************ */
 
-u_int8_t ndpi_is_multi_or_broadcast(struct ndpi_flow_struct *flow) {
-
-  if(!flow->core.is_ipv6) {
+u_int8_t ndpi_is_multi_or_broadcast(struct ndpi_flow_core_struct *core) {
+  if(!core->is_ipv6) {
     /* IPv4 */
-    u_int32_t daddr = ntohl(flow->core.s_address.v4);
+    u_int32_t daddr = ntohl(core->s_address.v4);
 
     if(((daddr & 0xF0000000) == 0xE0000000 /* multicast 224.0.0.0/4 */)
        || ((daddr & 0x000000FF) == 0x000000FF /* last byte is 0xFF, not super correct, but a good approximation */)
@@ -8562,7 +8561,7 @@ u_int8_t ndpi_is_multi_or_broadcast(struct ndpi_flow_struct *flow) {
   } else {
     /* IPv6 */
 
-    if((ntohl((*(u_int32_t *)&flow->core.s_address.v6)) & 0xFF000000) == 0xFF000000)
+    if((ntohl((*(u_int32_t *)&core->s_address.v6)) & 0xFF000000) == 0xFF000000)
       return(1);
   }
 
@@ -8712,16 +8711,16 @@ static void ndpi_connection_tracking(struct ndpi_detection_module_struct *ndpi_s
       flow->metadata.l4.tcp.three_way_handshake.ack_time = packet->current_time_ms;
 
     if(flags == 0)
-      ndpi_set_risk(ndpi_str, flow, NDPI_TCP_ISSUES, "TCP NULL scan");
+      ndpi_set_risk(ndpi_str, &flow->core, NDPI_TCP_ISSUES, "TCP NULL scan");
     else if(flags == (TH_FIN | TH_PUSH | TH_URG))
-      ndpi_set_risk(ndpi_str, flow, NDPI_TCP_ISSUES, "TCP XMAS scan");
+      ndpi_set_risk(ndpi_str, &flow->core, NDPI_TCP_ISSUES, "TCP XMAS scan");
 
     if(tcph->source != tcph->dest)
       packet->packet_direction = (ntohs(tcph->source) < ntohs(tcph->dest)) ? 1 : 0;
 
     if(packet->packet_direction == 0 /* cli -> srv */) {
       if(flags == TH_FIN)
-	ndpi_set_risk(ndpi_str, flow, NDPI_TCP_ISSUES, "TCP FIN scan");
+	ndpi_set_risk(ndpi_str, &flow->core, NDPI_TCP_ISSUES, "TCP FIN scan");
 
       flow->metadata.l4.tcp.cli2srv_tcp_flags |= flags;
     } else
@@ -9258,12 +9257,12 @@ static void ndpi_reconcile_protocols(struct ndpi_detection_module_struct *ndpi_s
 
   switch(flow->core.detected_protocol_stack[0]) {
   case NDPI_PROTOCOL_RDP:
-    ndpi_set_risk(ndpi_str, flow, NDPI_DESKTOP_OR_FILE_SHARING_SESSION, "Found RDP"); /* Remote assistance */
+    ndpi_set_risk(ndpi_str, &flow->core, NDPI_DESKTOP_OR_FILE_SHARING_SESSION, "Found RDP"); /* Remote assistance */
     break;
 
   case NDPI_PROTOCOL_ANYDESK:
     if(flow->core.l4_proto == IPPROTO_TCP) /* TCP only */
-      ndpi_set_risk(ndpi_str, flow, NDPI_DESKTOP_OR_FILE_SHARING_SESSION, "Found AnyDesk"); /* Remote assistance */
+      ndpi_set_risk(ndpi_str, &flow->core, NDPI_DESKTOP_OR_FILE_SHARING_SESSION, "Found AnyDesk"); /* Remote assistance */
     break;
   }
 
@@ -9289,7 +9288,7 @@ static void ndpi_reconcile_protocols(struct ndpi_detection_module_struct *ndpi_s
       }
 
       if(!skip_risk)
-	ndpi_set_risk(ndpi_str, flow, NDPI_UNSAFE_PROTOCOL, NULL);
+	ndpi_set_risk(ndpi_str, &flow->core, NDPI_UNSAFE_PROTOCOL, NULL);
       break;
 
     default:
@@ -9353,16 +9352,16 @@ static void check_tcp_flags(struct ndpi_detection_module_struct *ndpi_struct, st
   if((flow->metadata.l4.tcp.cli2srv_tcp_flags & TH_SYN)
      && (flow->metadata.l4.tcp.srv2cli_tcp_flags & TH_RST)
      && (flow->core.packet_counter == 0 /* Ignore connections terminated by RST but that exchanged data (3WH + RST) */))
-    ndpi_set_risk(ndpi_struct, flow, NDPI_TCP_ISSUES, "Connection refused (server)"), is_probing = true;
+    ndpi_set_risk(ndpi_struct, &flow->core, NDPI_TCP_ISSUES, "Connection refused (server)"), is_probing = true;
   else if((flow->metadata.l4.tcp.cli2srv_tcp_flags & TH_SYN)
 	  && (flow->metadata.l4.tcp.cli2srv_tcp_flags & TH_RST)
 	  && (flow->core.packet_counter == 0 /* Ignore connections terminated by RST but that exchanged data (3WH + RST) */))
-    ndpi_set_risk(ndpi_struct, flow, NDPI_TCP_ISSUES, "Connection refused (client)"), is_probing = true;
+    ndpi_set_risk(ndpi_struct, &flow->core, NDPI_TCP_ISSUES, "Connection refused (client)"), is_probing = true;
   else if((flow->metadata.l4.tcp.srv2cli_tcp_flags & TH_RST) && (flow->core.packet_direction_complete_counter[1 /* server -> client */] == 1))
-    ndpi_set_risk(ndpi_struct, flow, NDPI_TCP_ISSUES, "Connection refused"), is_probing = true;
+    ndpi_set_risk(ndpi_struct, &flow->core, NDPI_TCP_ISSUES, "Connection refused"), is_probing = true;
 
   if(is_probing)
-    ndpi_set_risk(ndpi_struct, flow, NDPI_PROBING_ATTEMPT, "TCP probing attempt");
+    ndpi_set_risk(ndpi_struct, &flow->core, NDPI_PROBING_ATTEMPT, "TCP probing attempt");
 }
 
 /* ******************************************************************** */
@@ -9384,7 +9383,7 @@ static void check_probing_attempt(struct ndpi_detection_module_struct *ndpi_str,
 	char buf[64];
 
 	snprintf(buf, sizeof(buf), "Slow TCP 3WH (SYN_ACK): %.1f sec", tdiff_ms/1000.);
-	ndpi_set_risk(ndpi_str, flow, NDPI_SLOW_DOS, buf);
+	ndpi_set_risk(ndpi_str, &flow->core, NDPI_SLOW_DOS, buf);
       }
     }
 
@@ -9398,7 +9397,7 @@ static void check_probing_attempt(struct ndpi_detection_module_struct *ndpi_str,
 	char buf[64];
 
 	snprintf(buf, sizeof(buf), "Slow TCP 3WH (ACK): %.1f sec", tdiff_ms/1000.);
-	ndpi_set_risk(ndpi_str, flow, NDPI_SLOW_DOS, buf);
+	ndpi_set_risk(ndpi_str, &flow->core, NDPI_SLOW_DOS, buf);
       }
     }
   }
@@ -9416,7 +9415,7 @@ static void check_probing_attempt(struct ndpi_detection_module_struct *ndpi_str,
 	switch(flow->core.detected_protocol_stack[0]) {
 	case NDPI_PROTOCOL_SSH:
 	  if(flow->metadata.protos.ssh.hassh_server[0] == '\0')
-	    ndpi_set_risk(ndpi_str, flow, NDPI_PROBING_ATTEMPT, "SSH Probing");
+	    ndpi_set_risk(ndpi_str, &flow->core, NDPI_PROBING_ATTEMPT, "SSH Probing");
 	  break;
 
 	case NDPI_PROTOCOL_TLS:
@@ -9425,7 +9424,7 @@ static void check_probing_attempt(struct ndpi_detection_module_struct *ndpi_str,
 	case NDPI_PROTOCOL_MAIL_IMAPS:
 	case NDPI_PROTOCOL_DTLS:
 	  if(flow->metadata.host_server_name[0] == '\0')
-	    ndpi_set_risk(ndpi_str, flow, NDPI_PROBING_ATTEMPT, "TLS Probing");
+	    ndpi_set_risk(ndpi_str, &flow->core, NDPI_PROBING_ATTEMPT, "TLS Probing");
 	  break;
 	}
       }
@@ -9531,13 +9530,13 @@ static void internal_giveup(struct ndpi_detection_module_struct *ndpi_struct,
    * *** We can't access ndpi_str->packet from this function!!
    * ***/
 
-  if(!ndpi_is_multi_or_broadcast(flow) &&
+  if(!ndpi_is_multi_or_broadcast(&flow->core) &&
      !is_unidir_traffic_exception(flow)) {
 
     if(flow->core.packet_direction_complete_counter[flow->core.client_packet_direction] == 0)
-      ndpi_set_risk(ndpi_struct, flow, NDPI_UNIDIRECTIONAL_TRAFFIC, "No client to server traffic");
+      ndpi_set_risk(ndpi_struct, &flow->core, NDPI_UNIDIRECTIONAL_TRAFFIC, "No client to server traffic");
     else if(flow->core.packet_direction_complete_counter[!flow->core.client_packet_direction] == 0)
-      ndpi_set_risk(ndpi_struct, flow, NDPI_UNIDIRECTIONAL_TRAFFIC, "No server to client traffic");
+      ndpi_set_risk(ndpi_struct, &flow->core, NDPI_UNIDIRECTIONAL_TRAFFIC, "No server to client traffic");
   }
 
   if(flow->core.l4_proto == IPPROTO_TCP) {
@@ -9696,7 +9695,7 @@ static void internal_giveup(struct ndpi_detection_module_struct *ndpi_struct,
     }
 
     if(trigger_risk)
-      ndpi_set_risk(ndpi_struct, flow, NDPI_MISMATCHING_PROTOCOL_WITH_IP,
+      ndpi_set_risk(ndpi_struct, &flow->core, NDPI_MISMATCHING_PROTOCOL_WITH_IP,
 		    "nDPI protocol does not match the server IP address");
   }
 
@@ -9763,7 +9762,7 @@ static void ndpi_internal_detection_giveup(struct ndpi_detection_module_struct *
   /* TODO: not sure about the best "order" among fully encrypted logic, classification by-port and classification by-ip...*/
   if(flow->core.detected_protocol_stack[0] == NDPI_PROTOCOL_UNKNOWN &&
      flow->core.first_pkt_fully_encrypted == 1) {
-    ndpi_set_risk(ndpi_str, flow, NDPI_OBFUSCATED_TRAFFIC, "Fully Encrypted");
+    ndpi_set_risk(ndpi_str, &flow->core, NDPI_OBFUSCATED_TRAFFIC, "Fully Encrypted");
   }
 
   /* If guess_ip_before_port is enabled, classify by-ip first */
@@ -10060,7 +10059,7 @@ int ndpi_fill_ip_protocol_category(struct ndpi_detection_module_struct *ndpi_str
       ret->custom_category_userdata = node->custom_user_data;
 
       if((ret->category == NDPI_PROTOCOL_CATEGORY_MALWARE) && (match_client == false)) {
-	ndpi_set_risk(ndpi_str, flow, NDPI_MALWARE_HOST_CONTACTED, "Client contacted malware host");
+	ndpi_set_risk(ndpi_str, &flow->core, NDPI_MALWARE_HOST_CONTACTED, "Client contacted malware host");
       }
 
       return(1);
@@ -10106,7 +10105,7 @@ int ndpi_fill_ipv6_protocol_category(struct ndpi_detection_module_struct *ndpi_s
       ret->custom_category_userdata = node->custom_user_data;
 
       if((ret->category == NDPI_PROTOCOL_CATEGORY_MALWARE) && (match_client == false)) {
-	ndpi_set_risk(ndpi_str, flow, NDPI_MALWARE_HOST_CONTACTED, "Client contacted malware host");
+	ndpi_set_risk(ndpi_str, &flow->core, NDPI_MALWARE_HOST_CONTACTED, "Client contacted malware host");
       }
 
       return(1);
@@ -10210,7 +10209,7 @@ static void ndpi_search_shellscript(struct ndpi_detection_module_struct *ndpi_st
     return;
 
   NDPI_LOG_INFO(ndpi_struct, "found Shellscript\n");
-  ndpi_set_risk(ndpi_struct, flow, NDPI_POSSIBLE_EXPLOIT, "Shellscript found");
+  ndpi_set_risk(ndpi_struct, &flow->core, NDPI_POSSIBLE_EXPLOIT, "Shellscript found");
 }
 
 /* ********************************************************************************* */
@@ -10235,7 +10234,7 @@ static void ndpi_search_elf(struct ndpi_detection_module_struct *ndpi_struct,
     return;
 
   NDPI_LOG_INFO(ndpi_struct, "found ELF file\n");
-  ndpi_set_risk(ndpi_struct, flow, NDPI_BINARY_APPLICATION_TRANSFER, "ELF found");
+  ndpi_set_risk(ndpi_struct, &flow->core, NDPI_BINARY_APPLICATION_TRANSFER, "ELF found");
 }
 
 /* ********************************************************************************* */
@@ -10261,7 +10260,7 @@ static void ndpi_search_portable_executable(struct ndpi_detection_module_struct 
     return;
 
   NDPI_LOG_INFO(ndpi_struct, "found Portable Executable (PE) file\n");
-  ndpi_set_risk(ndpi_struct, flow, NDPI_BINARY_APPLICATION_TRANSFER, "Portable Executable (PE32/PE32+) found");
+  ndpi_set_risk(ndpi_struct, &flow->core, NDPI_BINARY_APPLICATION_TRANSFER, "Portable Executable (PE32/PE32+) found");
 }
 
 /* ********************************************************************************* */
@@ -10528,7 +10527,7 @@ static void check_proto_on_non_std_port_risk(struct ndpi_detection_module_struct
                 only_custom = 0;
 
             if(!only_custom)
-              ndpi_set_risk(ndpi_str, flow, NDPI_KNOWN_PROTOCOL_ON_NON_STANDARD_PORT,
+              ndpi_set_risk(ndpi_str, &flow->core, NDPI_KNOWN_PROTOCOL_ON_NON_STANDARD_PORT,
                             ndpi_expected_ports_str(default_ports, str, sizeof(str)));
           }
         }
@@ -10585,7 +10584,7 @@ static void check_proto_on_non_std_port_risk(struct ndpi_detection_module_struct
                 only_custom = 0;
 
             if(!only_custom)
-              ndpi_set_risk(ndpi_str, flow, NDPI_KNOWN_PROTOCOL_ON_NON_STANDARD_PORT,
+              ndpi_set_risk(ndpi_str, &flow->core, NDPI_KNOWN_PROTOCOL_ON_NON_STANDARD_PORT,
                             ndpi_expected_ports_str(default_ports, str, sizeof(str)));
           }
         }
@@ -10776,7 +10775,7 @@ ret_protocols:
     }
 
     if(net_risk != NDPI_NO_RISK)
-      ndpi_set_risk(ndpi_str, flow, net_risk, NULL);
+      ndpi_set_risk(ndpi_str, &flow->core, net_risk, NULL);
 
     flow->core.tree_risk_checked = 1;
   }
@@ -11053,11 +11052,11 @@ void ndpi_parse_packet_line_info(struct ndpi_detection_module_struct *ndpi_str, 
      && flow->metadata.http.response_status_code == 0 /* no response seen yet */) {
     u_int64_t elapsed_ms = packet->current_time_ms - flow->metadata.l4.tcp.three_way_handshake.ack_time;
 
-    if(elapsed_ms > 3000 /* 3 sec */ && !ndpi_isset_risk(flow, NDPI_SLOW_DOS)) {
+    if(elapsed_ms > 3000 /* 3 sec */ && !ndpi_isset_risk(&flow->core, NDPI_SLOW_DOS)) {
       char msg[64];
 
       snprintf(msg, sizeof(msg), "Slow HTTP Req. (Slowloris): %.1f sec", elapsed_ms / 1000.);
-      ndpi_set_risk(ndpi_str, flow, NDPI_SLOW_DOS, msg);
+      ndpi_set_risk(ndpi_str, &flow->core, NDPI_SLOW_DOS, msg);
     }
   }
 
@@ -12314,7 +12313,7 @@ void ndpi_check_subprotocol_risk(struct ndpi_detection_module_struct *ndpi_str,
 
   switch(subprotocol_id) {
   case NDPI_PROTOCOL_ANYDESK:
-    ndpi_set_risk(ndpi_str, flow, NDPI_DESKTOP_OR_FILE_SHARING_SESSION, "Found AnyDesk"); /* Remote assistance */
+    ndpi_set_risk(ndpi_str, &flow->core, NDPI_DESKTOP_OR_FILE_SHARING_SESSION, "Found AnyDesk"); /* Remote assistance */
     break;
   }
 }
@@ -12392,9 +12391,9 @@ u_int16_t ndpi_match_host_subprotocol(struct ndpi_detection_module_struct *ndpi_
 
         memcpy(str, _string_to_match, len);
         str[len] = '\0';
-        ndpi_set_risk(ndpi_str, flow, NDPI_RISKY_DOMAIN, str);
+        ndpi_set_risk(ndpi_str, &flow->core, NDPI_RISKY_DOMAIN, str);
       } else {
-        ndpi_set_risk(ndpi_str, flow, NDPI_RISKY_DOMAIN, NULL);
+        ndpi_set_risk(ndpi_str, &flow->core, NDPI_RISKY_DOMAIN, NULL);
       }
     }
   }
@@ -12407,9 +12406,9 @@ u_int16_t ndpi_match_host_subprotocol(struct ndpi_detection_module_struct *ndpi_
 
       memcpy(str, _string_to_match, len);
       str[len] = '\0';
-      ndpi_set_risk(ndpi_str, flow, NDPI_PUNYCODE_IDN, str);
+      ndpi_set_risk(ndpi_str, &flow->core, NDPI_PUNYCODE_IDN, str);
     } else {
-      ndpi_set_risk(ndpi_str, flow, NDPI_PUNYCODE_IDN, NULL);
+      ndpi_set_risk(ndpi_str, &flow->core, NDPI_PUNYCODE_IDN, NULL);
     }
   }
 
@@ -12774,7 +12773,7 @@ int ndpi_check_dga_name(struct ndpi_detection_module_struct *ndpi_str,
 
     if(rc) {
       if(flow)
-	ndpi_set_risk(ndpi_str, flow, NDPI_SUSPICIOUS_DGA_DOMAIN, _name);
+	ndpi_set_risk(ndpi_str, &flow->core, NDPI_SUSPICIOUS_DGA_DOMAIN, _name);
     }
 
     return(rc);
@@ -12921,7 +12920,7 @@ int ndpi_check_dga_name(struct ndpi_detection_module_struct *ndpi_str,
 	 || ((max_domain_element_len >= 19 /* word too long. Example bbcbedxhgjmdobdprmen.com */) && ((num_char_repetitions > 1) || (num_digits > 1)))
 	 ) {
 	if(flow) {
-	  ndpi_set_risk(ndpi_str, flow, NDPI_SUSPICIOUS_DGA_DOMAIN, _name);
+	  ndpi_set_risk(ndpi_str, &flow->core, NDPI_SUSPICIOUS_DGA_DOMAIN, _name);
 	}
 
 	NDPI_LOG_DBG2(ndpi_str, "[DGA] Found!");
@@ -13075,7 +13074,7 @@ int ndpi_check_dga_name(struct ndpi_detection_module_struct *ndpi_str,
     NDPI_LOG_DBG2(ndpi_str, "[DGA] Result: %u\n", rc);
 
     if(rc && flow)
-      ndpi_set_risk(ndpi_str, flow, NDPI_SUSPICIOUS_DGA_DOMAIN, _name);
+      ndpi_set_risk(ndpi_str, &flow->core, NDPI_SUSPICIOUS_DGA_DOMAIN, _name);
 
     return(rc);
   }
@@ -13316,7 +13315,7 @@ int ndpi_check_dga_url_path(struct ndpi_detection_module_struct *ndpi_str,
   if(rc) {
     char msg[128];
     snprintf(msg, sizeof(msg), "Possible DGA pattern in URL path [%s]", url);
-    ndpi_set_risk(ndpi_str, flow, NDPI_SUSPICIOUS_DGA_DOMAIN, msg);
+    ndpi_set_risk(ndpi_str, &flow->core, NDPI_SUSPICIOUS_DGA_DOMAIN, msg);
     NDPI_LOG_DBG2(ndpi_str, "[DGA URL] Found! %s\n", url);
   }
   ndpi_free(path);

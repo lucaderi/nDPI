@@ -70,7 +70,7 @@ static void ndpi_search_vnc_tcp(struct ndpi_detection_module_struct *ndpi_struct
       /* Matching RFB banner from the other side: handshake complete */
       NDPI_LOG_INFO(ndpi_struct, "found vnc\n");
       ndpi_set_detected_protocol(ndpi_struct, flow, NDPI_PROTOCOL_VNC, NDPI_PROTOCOL_UNKNOWN, NDPI_CONFIDENCE_DPI);
-      ndpi_set_risk(ndpi_struct, flow, NDPI_DESKTOP_OR_FILE_SHARING_SESSION, "Found VNC"); /* Remote assistance */
+      ndpi_set_risk(ndpi_struct, &flow->core, NDPI_DESKTOP_OR_FILE_SHARING_SESSION, "Found VNC"); /* Remote assistance */
       return;
     }
   }

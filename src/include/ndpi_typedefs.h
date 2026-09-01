@@ -1632,13 +1632,17 @@ struct ndpi_ipsec_proposal {
   u_int8_t  esn;             /* ESN: 0 = no ESN, 1 = ESN */
 };
 
+/* ************************ */
+
 struct ndpi_ipsec_details {
   u_int8_t version;             /* Version: major (upper 4 bits) and minor (lower 4 bits) */
   u_int8_t exchange_type;       /* IKEv2 exchange type (34=SA_INIT, 35=IKE_AUTH, ...) */
   struct ndpi_ipsec_proposal proposal[2];
 };
 
-struct ndpi_flow_struct_dns {
+/* ************************ */
+
+struct ndpi_flow_struct_dns_metadata {
   u_int8_t num_queries, num_answers, reply_code, num_rsp_addr;
   u_int8_t is_query:1, pad:7;
   u_int16_t transaction_id, query_type, query_class, rsp_type, edns0_udp_payload_size;
@@ -1649,7 +1653,9 @@ struct ndpi_flow_struct_dns {
   char ptr_domain_name[64 /* large enough but smaller than { } tls */];
 };
 
-struct ndpi_flow_code_struct {
+/* ************************ */
+
+struct ndpi_flow_core_struct {
   u_int16_t detected_protocol_stack[NDPI_PROTOCOL_SIZE];
   struct ndpi_proto_stack protocol_stack;
   ndpi_classification_state state;
@@ -1708,13 +1714,53 @@ struct ndpi_flow_code_struct {
   u_int8_t num_risk_infos;
   struct ndpi_dissector_bitmask excluded_dissectors_bitmask;
 
+  struct ndpi_dns_tcp_reasm_state *dns_tcp_reasm; /* TCP DNS reassembly */
+  
   /* Flow payload */
   u_int16_t flow_payload_len;
   char *flow_payload;
 };
 
+/* ************************ */
 
-struct ndpi_flow_protocols_struct {
+struct ndpi_flow_tls_quic_core_struct {
+  message_t message[2]; /* Directions */
+  u_int8_t certificate_processed:1, change_cipher_from_client:1, change_cipher_from_server:1, from_opportunistic_tls:1, from_rdp:1, alert:1, pad:2;
+  struct tls_obfuscated_heuristic_state *obfuscated_heur_state;
+  char *opaque; /* Plugin custom storage. If not NULL will be deleted automatically by ndpi_free_flow() */
+};
+
+/* ************************ */
+
+struct ndpi_flow_tls_quic_metadata_struct {
+  char *server_names, *advertised_alpns, *negotiated_alpn, *tls_supported_versions, *issuerDN, *subjectDN;
+  u_int32_t notBefore, notAfter;
+  char ja3_server[33], ja4_client[37], ja4_ndpi_client[37], *ja4_client_raw;
+  u_int16_t server_cipher;
+  u_int8_t sha1_certificate_fingerprint[20];
+  u_int8_t client_hello_processed:1, ch_direction:1, subprotocol_detected:1,
+    server_hello_processed:1, fingerprint_set:1, webrtc:1;
+
+  struct tls_heuristics browser_heuristics;
+  u_int16_t ssl_version, server_names_len;
+
+  struct {
+    u_int16_t version;
+  } encrypted_ch;
+
+  ndpi_cipher_weakness server_unsafe_cipher;
+
+  u_int32_t quic_version;
+  u_int32_t quic_idle_timeout_sec;
+
+  /* Optionally allocated based on nDPI configuration */
+  ndpi_tls_client_info *ja_client;
+  ndpi_tls_server_info *ja_server;
+};
+
+/* ************************ */
+
+struct ndpi_flow_metadata_struct {
   /*
     the tcp / udp / other l4 value union
     used to reduce the number of bytes for tcp or udp protocol states
@@ -1738,8 +1784,6 @@ struct ndpi_flow_protocols_struct {
   struct {
     char *client_fingerprint, *server_fingerprint;
   } ndpi;
-
-  struct ndpi_dns_tcp_reasm_state *dns_tcp_reasm; /* TCP DNS reassembly */
   
   /*
     This structure below will not not stay inside the protos
@@ -1781,12 +1825,7 @@ struct ndpi_flow_protocols_struct {
     u_int32_t t_start, t_end;
   } stun;
 
-  struct {
-    message_t message[2]; /* Directions */
-    u_int8_t certificate_processed:1, change_cipher_from_client:1, change_cipher_from_server:1, from_opportunistic_tls:1, from_rdp:1, alert:1, pad:2;
-    struct tls_obfuscated_heuristic_state *obfuscated_heur_state;
-    char *opaque; /* Plugin custom storage. If not NULL will be deleted automatically by ndpi_free_flow() */
-  } tls_quic; /* Used also by DTLS and POPS/IMAPS/SMTPS/FTPS */
+  struct ndpi_flow_tls_quic_core_struct tls_quic; /* Used also by DTLS and POPS/IMAPS/SMTPS/FTPS */
 
   struct {
     struct rtp_info rtp[2 /* directions */];
@@ -1798,7 +1837,9 @@ struct ndpi_flow_protocols_struct {
 
   union {
     /* the only fields useful for nDPI and ntopng */
-    struct ndpi_flow_struct_dns dns;
+    struct ndpi_flow_struct_dns_metadata dns;
+
+    struct ndpi_flow_tls_quic_metadata_struct tls_quic; /* Used also by DTLS and POPS/IMAPS/SMTPS/FTPS */
     
     struct ntp_info {
       u_int8_t leap_indicator: 2, version: 3, mode: 3;
@@ -1823,32 +1864,6 @@ struct ndpi_flow_protocols_struct {
     struct {
       char currency[16];
     } mining;
-
-    struct {
-      char *server_names, *advertised_alpns, *negotiated_alpn, *tls_supported_versions, *issuerDN, *subjectDN;
-      u_int32_t notBefore, notAfter;
-      char ja3_server[33], ja4_client[37], ja4_ndpi_client[37], *ja4_client_raw;
-      u_int16_t server_cipher;
-      u_int8_t sha1_certificate_fingerprint[20];
-      u_int8_t client_hello_processed:1, ch_direction:1, subprotocol_detected:1,
-	server_hello_processed:1, fingerprint_set:1, webrtc:1;
-
-      struct tls_heuristics browser_heuristics;
-      u_int16_t ssl_version, server_names_len;
-
-      struct {
-        u_int16_t version;
-      } encrypted_ch;
-
-      ndpi_cipher_weakness server_unsafe_cipher;
-
-      u_int32_t quic_version;
-      u_int32_t quic_idle_timeout_sec;
-
-      /* Optionally allocated based on nDPI configuration */
-      ndpi_tls_client_info *ja_client;
-      ndpi_tls_server_info *ja_server;
-    } tls_quic; /* Used also by DTLS and POPS/IMAPS/SMTPS/FTPS */
 
     struct {
       char client_signature[48], server_signature[48];
@@ -2042,8 +2057,8 @@ struct ndpi_flow_protocols_struct {
 };
 
 struct ndpi_flow_struct {
-  struct ndpi_flow_code_struct core;
-  struct ndpi_flow_protocols_struct metadata;
+  struct ndpi_flow_core_struct core;
+  struct ndpi_flow_metadata_struct metadata;
 };
 
 #if !defined(NDPI_CFFI_PREPROCESSING) && defined(__linux__)

@@ -112,7 +112,7 @@ static void ssh_analyze_signature_version(struct ndpi_detection_module_struct *n
   }
   
   if(obsolete_ssh_version)
-    ndpi_set_risk(ndpi_struct, flow,
+    ndpi_set_risk(ndpi_struct, &flow->core,
                   (is_client_signature ? NDPI_SSH_OBSOLETE_CLIENT_VERSION_OR_CIPHER : NDPI_SSH_OBSOLETE_SERVER_VERSION_OR_CIPHER),
                   NULL);
 }
@@ -205,7 +205,7 @@ static void ssh_analyse_cipher(struct ndpi_detection_module_struct *ndpi_struct,
     char str[64];
 
     snprintf(str, sizeof(str), "Found cipher %s", obsolete_ciphers[found_obsolete_cipher]);
-    ndpi_set_risk(ndpi_struct, flow,
+    ndpi_set_risk(ndpi_struct, &flow->core,
 		  (is_client_signature ? NDPI_SSH_OBSOLETE_CLIENT_VERSION_OR_CIPHER : NDPI_SSH_OBSOLETE_SERVER_VERSION_OR_CIPHER),
 		  str);
   }

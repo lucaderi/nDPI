@@ -70,13 +70,13 @@ static int pop_check_client_command(struct ndpi_detection_module_struct *ndpi_st
                                 5, packet->payload, packet->payload_packet_len);
     snprintf(buf, sizeof(buf), "Found username (%s)",
              flow->metadata.l4.tcp.ftp_imap_pop_smtp.username);
-    ndpi_set_risk(ndpi_struct, flow, NDPI_CLEAR_TEXT_CREDENTIALS, buf);
+    ndpi_set_risk(ndpi_struct, &flow->core, NDPI_CLEAR_TEXT_CREDENTIALS, buf);
     flow->metadata.l4.tcp.pop_command_bitmask |= POP_BIT_USER;
   } else if(ndpi_memcasecmp(packet->payload, "PASS", 4) == 0) {
     ndpi_user_pwd_payload_copy((u_int8_t *)flow->metadata.l4.tcp.ftp_imap_pop_smtp.password,
                                 sizeof(flow->metadata.l4.tcp.ftp_imap_pop_smtp.password),
                                 5, packet->payload, packet->payload_packet_len);
-    ndpi_set_risk(ndpi_struct, flow, NDPI_CLEAR_TEXT_CREDENTIALS, "Found password");
+    ndpi_set_risk(ndpi_struct, &flow->core, NDPI_CLEAR_TEXT_CREDENTIALS, "Found password");
     flow->metadata.l4.tcp.pop_command_bitmask |= POP_BIT_PASS;
   } else if(ndpi_memcasecmp(packet->payload, "CAPA", 4) == 0) {
     flow->metadata.l4.tcp.pop_command_bitmask |= POP_BIT_CAPA;

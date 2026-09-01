@@ -99,7 +99,7 @@ static void smtp_extract_auth_plain_credentials(struct ndpi_detection_module_str
 
     snprintf(msg, sizeof(msg), "Found username (%s)",
              flow->metadata.l4.tcp.ftp_imap_pop_smtp.username);
-    ndpi_set_risk(ndpi_struct, flow, NDPI_CLEAR_TEXT_CREDENTIALS, msg);
+    ndpi_set_risk(ndpi_struct, &flow->core, NDPI_CLEAR_TEXT_CREDENTIALS, msg);
 
     if(1 + user_len + 1 < decoded_len) {
       unsigned int pwd_len = ndpi_min(decoded_len - (1 + user_len + 1),
@@ -226,7 +226,7 @@ static void ndpi_search_mail_smtp_tcp(struct ndpi_detection_module_struct *ndpi_
             }
             snprintf(msg, sizeof(msg), "Found SMTP username (%s)",
                      flow->metadata.l4.tcp.ftp_imap_pop_smtp.username);
-            ndpi_set_risk(ndpi_struct, flow, NDPI_CLEAR_TEXT_CREDENTIALS, msg);
+            ndpi_set_risk(ndpi_struct, &flow->core, NDPI_CLEAR_TEXT_CREDENTIALS, msg);
           } else if(flow->metadata.l4.tcp.ftp_imap_pop_smtp.password[0] == '\0') {
             u_int8_t buf[48];
             u_char *decoded;
@@ -246,7 +246,7 @@ static void ndpi_search_mail_smtp_tcp(struct ndpi_detection_module_struct *ndpi_
               flow->metadata.l4.tcp.ftp_imap_pop_smtp.password[plen] = '\0';
               ndpi_free(decoded);
             }
-            ndpi_set_risk(ndpi_struct, flow, NDPI_CLEAR_TEXT_CREDENTIALS, "Found password");
+            ndpi_set_risk(ndpi_struct, &flow->core, NDPI_CLEAR_TEXT_CREDENTIALS, "Found password");
             flow->metadata.l4.tcp.ftp_imap_pop_smtp.auth_done = 1;
           } else {
             flow->metadata.host_server_name[0] = '\0';

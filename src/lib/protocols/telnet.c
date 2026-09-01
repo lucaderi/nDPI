@@ -67,7 +67,7 @@ static int search_telnet_again(struct ndpi_detection_module_struct *ndpi_struct,
       if(!flow->metadata.protos.telnet.password_found)
         return 1;
       flow->metadata.protos.telnet.password_detected = 1;
-      ndpi_set_risk(ndpi_struct, flow, NDPI_CLEAR_TEXT_CREDENTIALS, "Found password");
+      ndpi_set_risk(ndpi_struct, &flow->core, NDPI_CLEAR_TEXT_CREDENTIALS, "Found password");
       flow->metadata.protos.telnet.password[flow->metadata.protos.telnet.character_id] = '\0';
       return 0;
     }
@@ -99,7 +99,7 @@ static int search_telnet_again(struct ndpi_detection_module_struct *ndpi_struct,
 
     snprintf(buf, sizeof(buf), "Found Telnet username (%s)",
              flow->metadata.protos.telnet.username);
-    ndpi_set_risk(ndpi_struct, flow, NDPI_CLEAR_TEXT_CREDENTIALS, buf);
+    ndpi_set_risk(ndpi_struct, &flow->core, NDPI_CLEAR_TEXT_CREDENTIALS, buf);
     return 1;
   }
 

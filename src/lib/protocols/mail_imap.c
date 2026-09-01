@@ -165,7 +165,7 @@ static void ndpi_search_mail_imap_tcp(struct ndpi_detection_module_struct *ndpi_
                       sizeof(flow->metadata.l4.tcp.ftp_imap_pop_smtp.username), "%s", user);
         snprintf(buf, sizeof(buf), "Found IMAP username (%s)",
                  flow->metadata.l4.tcp.ftp_imap_pop_smtp.username);
-        ndpi_set_risk(ndpi_struct, flow, NDPI_CLEAR_TEXT_CREDENTIALS, buf);
+        ndpi_set_risk(ndpi_struct, &flow->core, NDPI_CLEAR_TEXT_CREDENTIALS, buf);
 
         pwd = strtok_r(NULL, " \"\r\n", &saveptr);
         if(pwd)

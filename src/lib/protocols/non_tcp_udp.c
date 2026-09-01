@@ -64,7 +64,7 @@ static void ndpi_search_in_non_tcp_udp(struct ndpi_detection_module_struct
 
       snprintf(buf, sizeof(buf), "Packet too short (%d vs %u)",
                packet->payload_packet_len, (unsigned int)sizeof(struct ndpi_icmphdr));
-      ndpi_set_risk(ndpi_struct, flow, NDPI_MALFORMED_PACKET, buf);
+      ndpi_set_risk(ndpi_struct, &flow->core, NDPI_MALFORMED_PACKET, buf);
     } else {
       u_int8_t icmp_type = (u_int8_t)packet->payload[0];
       u_int8_t icmp_code = (u_int8_t)packet->payload[1];
@@ -77,7 +77,7 @@ static void ndpi_search_in_non_tcp_udp(struct ndpi_detection_module_struct
         snprintf(buf, sizeof(buf), "Invalid type (%u)/code(%u)",
                  icmp_type, icmp_code);
 
-        ndpi_set_risk(ndpi_struct, flow, NDPI_MALFORMED_PACKET, buf);
+        ndpi_set_risk(ndpi_struct, &flow->core, NDPI_MALFORMED_PACKET, buf);
       }
 
       if(packet->payload_packet_len > sizeof(struct ndpi_icmphdr)) {
@@ -90,7 +90,7 @@ static void ndpi_search_in_non_tcp_udp(struct ndpi_detection_module_struct
         u_int16_t chksm = icmp4_checksum(packet->payload, packet->payload_packet_len);
 
         if(chksm) {
-          ndpi_set_risk(ndpi_struct, flow, NDPI_MALFORMED_PACKET, "Invalid ICMP checksum");
+          ndpi_set_risk(ndpi_struct, &flow->core, NDPI_MALFORMED_PACKET, "Invalid ICMP checksum");
         }
       }
     }
@@ -130,7 +130,7 @@ static void ndpi_search_in_non_tcp_udp(struct ndpi_detection_module_struct
       snprintf(buf, sizeof(buf), "Packet too short (%d vs %u)",
                packet->payload_packet_len, (unsigned int)sizeof(struct ndpi_icmp6hdr));
 
-      ndpi_set_risk(ndpi_struct, flow, NDPI_MALFORMED_PACKET, buf);
+      ndpi_set_risk(ndpi_struct, &flow->core, NDPI_MALFORMED_PACKET, buf);
     } else {
       u_int8_t icmp6_type = (u_int8_t)packet->payload[0];
       u_int8_t icmp6_code = (u_int8_t)packet->payload[1];
@@ -143,7 +143,7 @@ static void ndpi_search_in_non_tcp_udp(struct ndpi_detection_module_struct
         snprintf(buf, sizeof(buf), "Invalid type (%u)/code(%u)",
                  icmp6_type, icmp6_code);
 
-        ndpi_set_risk(ndpi_struct, flow, NDPI_MALFORMED_PACKET, buf);
+        ndpi_set_risk(ndpi_struct, &flow->core, NDPI_MALFORMED_PACKET, buf);
       }
     }
 
