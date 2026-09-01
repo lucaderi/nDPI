@@ -1265,10 +1265,10 @@ static void process_ndpi_monitoring_info(struct ndpi_flow_info *flow) {
     return;
 
   if(flow->monitoring_state == 0 &&
-     flow->ndpi_flow->state == NDPI_STATE_MONITORING) {
+     flow->ndpi_flow->core.state == NDPI_STATE_MONITORING) {
     /* We just moved to monitoring state */
     flow->monitoring_state = 1;
-    flow->num_packets_before_monitoring = flow->ndpi_flow->packet_direction_complete_counter[0] + flow->ndpi_flow->packet_direction_complete_counter[1];
+    flow->num_packets_before_monitoring = flow->ndpi_flow->core.packet_direction_complete_counter[0] + flow->ndpi_flow->core.packet_direction_complete_counter[1];
   }
 
   /* In theory, we should check only for STUN.
@@ -1392,9 +1392,9 @@ void process_ndpi_collected_info(struct ndpi_workflow * workflow, struct ndpi_fl
   if(s != NULL)
     flow->risk_str = ndpi_strdup(s);
 
-  flow->confidence = flow->ndpi_flow->confidence;
+  flow->confidence = flow->ndpi_flow->core.confidence;
 
-  flow->num_dissector_calls = flow->ndpi_flow->num_dissector_calls;
+  flow->num_dissector_calls = flow->ndpi_flow->core.num_dissector_calls;
 
   ndpi_snprintf(flow->host_server_name, sizeof(flow->host_server_name), "%s",
 		flow->ndpi_flow->host_server_name);
@@ -1404,7 +1404,7 @@ void process_ndpi_collected_info(struct ndpi_workflow * workflow, struct ndpi_fl
 		  flow->ndpi_flow->protos.mining.currency);
   }
 
-  flow->risk = flow->ndpi_flow->risk;
+  flow->risk = flow->ndpi_flow->core.risk;
 
   if(ndpi_stack_contains(&flow->detected_protocol.protocol_stack, NDPI_PROTOCOL_DHCP)) {
     if(flow->ndpi_flow->protos.dhcp.fingerprint[0] != '\0')
@@ -1803,7 +1803,7 @@ void process_ndpi_collected_info(struct ndpi_workflow * workflow, struct ndpi_fl
     ndpi_serialize_string_uint32(&flow->ndpi_flow_serializer, "detection_completed", flow->detection_completed);
     ndpi_serialize_string_uint32(&flow->ndpi_flow_serializer, "check_extra_packets", flow->check_extra_packets);
 
-    if(flow->ndpi_flow->state == NDPI_STATE_MONITORING) {
+    if(flow->ndpi_flow->core.state == NDPI_STATE_MONITORING) {
       serialize_monitoring_metadata(flow);
     }
 
@@ -2097,7 +2097,7 @@ static struct ndpi_proto packet_processing(struct ndpi_workflow * workflow,
       ((proto == IPPROTO_UDP && (max_num_udp_dissected_pkts > 0 && flow->src2dst_packets + flow->dst2src_packets >= max_num_udp_dissected_pkts)) ||
        (proto == IPPROTO_TCP && (max_num_tcp_dissected_pkts > 0 && flow->src2dst_packets + flow->dst2src_packets >= max_num_tcp_dissected_pkts))) ? 1 : 0;
 
-    if(flow->ndpi_flow->state == NDPI_STATE_MONITORING)
+    if(flow->ndpi_flow->core.state == NDPI_STATE_MONITORING)
       enough_packets = 0;
 
 #if 0
@@ -2133,7 +2133,7 @@ static struct ndpi_proto packet_processing(struct ndpi_workflow * workflow,
        packet - so only stop once the library itself is done with the flow
        (extra_packets_func == NULL), or the safety packet-count cap fires. */
     if((flow->detected_protocol.state == NDPI_STATE_CLASSIFIED &&
-	flow->ndpi_flow->extra_packets_func == NULL) ||
+	flow->ndpi_flow->core.extra_packets_func == NULL) ||
        enough_packets) {
 
       flow->detection_completed = 1;
@@ -2142,7 +2142,7 @@ static struct ndpi_proto packet_processing(struct ndpi_workflow * workflow,
          flow->detected_protocol = ndpi_detection_giveup(workflow->ndpi_struct, flow->ndpi_flow);
       }
 
-      if(flow->ndpi_flow->protocol_was_guessed) workflow->stats.guessed_flow_protocols++;
+      if(flow->ndpi_flow->core.protocol_was_guessed) workflow->stats.guessed_flow_protocols++;
       process_ndpi_collected_info(workflow, flow);
     }
 

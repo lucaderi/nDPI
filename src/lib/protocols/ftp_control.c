@@ -109,7 +109,7 @@ static int ftp_handle_auth(struct ndpi_detection_module_struct *ndpi_struct,
                                sizeof(flow->l4.tcp.ftp_imap_pop_smtp.username),
                                5, payload, payload_len);
     if(packet->tcp->dest == port_21 || packet->tcp->source == port_21 ||
-       flow->detected_protocol_stack[0] == NDPI_PROTOCOL_FTP_CONTROL) {
+       flow->core.detected_protocol_stack[0] == NDPI_PROTOCOL_FTP_CONTROL) {
       char buf[64];
       snprintf(buf, sizeof(buf), "Found FTP username (%s)",
                flow->l4.tcp.ftp_imap_pop_smtp.username);
@@ -164,7 +164,7 @@ static void ndpi_check_ftp_control(struct ndpi_detection_module_struct *ndpi_str
     return;
   }
 
-  if(flow->packet_counter > 8) {
+  if(flow->core.packet_counter > 8) {
     NDPI_EXCLUDE_DISSECTOR(ndpi_struct, flow);
     return;
   }
@@ -221,8 +221,8 @@ static void ndpi_check_ftp_control(struct ndpi_detection_module_struct *ndpi_str
                                  NDPI_PROTOCOL_FTPS, NDPI_PROTOCOL_UNKNOWN,
                                  NDPI_CONFIDENCE_DPI);
       NDPI_LOG_DBG(ndpi_struct, "Switching to [%d/%d]\n",
-                   flow->detected_protocol_stack[0],
-                   flow->detected_protocol_stack[1]);
+                   flow->core.detected_protocol_stack[0],
+                   flow->core.detected_protocol_stack[1]);
       switch_extra_dissection_to_tls(ndpi_struct, flow);
       return;
     }

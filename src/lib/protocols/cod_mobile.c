@@ -65,7 +65,7 @@ static void ndpi_search_cod_mobile(struct ndpi_detection_module_struct *ndpi_str
      }
   }
 
-  if (flow->packet_counter >= 4) {
+  if (flow->core.packet_counter >= 4) {
     NDPI_EXCLUDE_DISSECTOR(ndpi_struct, flow);
   }
 }

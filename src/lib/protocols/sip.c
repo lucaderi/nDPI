@@ -235,7 +235,7 @@ static void ndpi_search_sip(struct ndpi_detection_module_struct *ndpi_struct, st
 
   NDPI_LOG_DBG(ndpi_struct, "Searching for SIP\n");
 
-  if(flow->packet_counter >= 8) {
+  if(flow->core.packet_counter >= 8) {
     NDPI_EXCLUDE_DISSECTOR(ndpi_struct, flow);
     return;
   }

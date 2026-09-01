@@ -32,11 +32,11 @@ u_int64_t mining_make_lru_cache_key(struct ndpi_flow_struct *flow) {
   u_int64_t key;
 
   /* network byte order */
-  if(flow->is_ipv6)
-    key = (ndpi_quick_hash64((const char *)flow->c_address.v6.u6_addr.u6_addr8, 16) << 32)
-      | (ndpi_quick_hash64((const char *)flow->s_address.v6.u6_addr.u6_addr8, 16) & 0xFFFFFFFF);
+  if(flow->core.is_ipv6)
+    key = (ndpi_quick_hash64((const char *)flow->core.c_address.v6.u6_addr.u6_addr8, 16) << 32)
+      | (ndpi_quick_hash64((const char *)flow->core.s_address.v6.u6_addr.u6_addr8, 16) & 0xFFFFFFFF);
   else
-    key = ((u_int64_t)flow->c_address.v4 << 32) | flow->s_address.v4;
+    key = ((u_int64_t)flow->core.c_address.v4 << 32) | flow->core.s_address.v4;
 
   return key;
 }

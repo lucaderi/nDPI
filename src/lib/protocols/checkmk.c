@@ -51,7 +51,7 @@ static void ndpi_search_checkmk(struct ndpi_detection_module_struct *ndpi_struct
 	the initial connection, we need to discard these packets
 	as they are not an indication that this flow is not AFP
       */
-      if(flow->packet_counter > 6)
+      if(flow->core.packet_counter > 6)
         NDPI_EXCLUDE_DISSECTOR(ndpi_struct, flow);
       return;
     }

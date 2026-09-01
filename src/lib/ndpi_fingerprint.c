@@ -164,7 +164,7 @@ static char* ndpi_compute_tls_blocks_flow_fingerprint(struct ndpi_flow_struct *f
   int ret;
   u_int8_t sha_hash[NDPI_SHA256_BLOCK_SIZE];
 
-  if((flow->l4_proto != IPPROTO_TCP) || (flow->l4.tcp.tls.num_tls_blocks == 0))
+  if((flow->core.l4_proto != IPPROTO_TCP) || (flow->l4.tcp.tls.num_tls_blocks == 0))
     return("");
 
   fp_buf[0] = '\0'; /* Not really necessary, but just to be sure */
@@ -197,7 +197,7 @@ static char* ndpi_compute_tls_blocks_flow_fingerprint(struct ndpi_flow_struct *f
   } /* for */
 
 #if 0
-  fprintf(stderr, "#### [sport=%u] %s\n", ntohs(flow->c_port), fp_buf);
+  fprintf(stderr, "#### [sport=%u] %s\n", ntohs(flow->core.c_port), fp_buf);
 #endif
 
   ndpi_sha256((u_char*)fp_buf, idx, sha_hash);
@@ -224,7 +224,7 @@ u_int64_t ndpi_compare_flow_tls_blocks(struct ndpi_detection_module_struct *ndpi
 				       struct ndpi_flow_struct *flow,
 				       ndpi_list *extra_data,
 				       u_int64_t proto_id) {
-  if((flow->l4_proto == IPPROTO_TCP)
+  if((flow->core.l4_proto == IPPROTO_TCP)
      && (flow->l4.tcp.tls.num_tls_blocks == ndpi_str->cfg.tls_max_num_blocks_to_analyze)
      && (ndpi_str->cfg.tls_max_num_blocks_to_analyze <= 8 /* (&) */)
      && (flow->l4.tcp.tls.tls_blocks != NULL)) {
@@ -260,7 +260,7 @@ char* ndpi_compute_ndpi_flow_fingerprint(struct ndpi_detection_module_struct *nd
 					 struct ndpi_flow_struct *flow) {
   if(ndpi_str->cfg.ndpi_fingerprint_enabled &&
      (flow->ndpi.client_fingerprint == NULL) &&
-     ndpi_stack_is_tls_like(&flow->protocol_stack) &&
+     ndpi_stack_is_tls_like(&flow->core.protocol_stack) &&
      /*
        We need TCP & TLS handshake. What should we do if we don't have them?
        For the time being, keep calculating the fingerprint if we have at least
@@ -310,7 +310,7 @@ char* ndpi_compute_ndpi_flow_fingerprint(struct ndpi_detection_module_struct *nd
     }
 
 #if 0
-    fprintf(stderr, "#### [sport=%u] %s\n", ntohs(flow->c_port), fp_buf);
+    fprintf(stderr, "#### [sport=%u] %s\n", ntohs(flow->core.c_port), fp_buf);
 #endif
 
     if(s > 0) {
@@ -345,8 +345,8 @@ char* ndpi_compute_ndpi_flow_fingerprint(struct ndpi_detection_module_struct *nd
 				       ndpi_get_master_proto(ndpi_str, flow),
 				       NDPI_CONFIDENCE_CUSTOM_RULE);
 	    
-	    flow->category = ndpi_str->proto_defaults[proto_id].protoCategory,
-	      flow->breed = ndpi_str->proto_defaults[proto_id].protoBreed;
+	    flow->core.category = ndpi_str->proto_defaults[proto_id].protoCategory,
+	      flow->core.breed = ndpi_str->proto_defaults[proto_id].protoBreed;
 	  }
 	}
       }

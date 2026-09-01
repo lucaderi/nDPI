@@ -224,9 +224,9 @@ static void ndpi_search_s7comm(struct ndpi_detection_module_struct *ndpi_struct,
                                     packet->payload_packet_len - s7comm_offset);
 
           NDPI_LOG_DBG(ndpi_struct, "Enabled monitoring\n");
-          flow->state = NDPI_STATE_MONITORING;
+          flow->core.state = NDPI_STATE_MONITORING;
           /* No extra dissection, we move directly to monitor state */
-          flow->extra_packets_func = ndpi_search_s7comm_again;
+          flow->core.extra_packets_func = ndpi_search_s7comm_again;
         }
         return;
       }

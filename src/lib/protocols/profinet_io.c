@@ -46,7 +46,7 @@ static void ndpi_search_profinet_io(struct ndpi_detection_module_struct *ndpi_st
   NDPI_LOG_DBG(ndpi_struct, "searching PROFINET/IO\n");
 
   /* PROFINET/IO is based on connectionless DCE/RPC */
-  if ((flow->detected_protocol_stack[0] == NDPI_PROTOCOL_DCERPC) &&
+  if ((flow->core.detected_protocol_stack[0] == NDPI_PROTOCOL_DCERPC) &&
       (packet->payload_packet_len > 43))
   {
     u_int8_t byte_order = (packet->payload[4] >> 4) & 0xF;

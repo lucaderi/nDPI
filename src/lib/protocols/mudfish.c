@@ -57,7 +57,7 @@ static void ndpi_search_mudfish(struct ndpi_detection_module_struct *ndpi_struct
     if (packet->payload_packet_len == 1 &&
         packet->payload[0] == 0x50)
     {
-      if (flow->packet_counter >= 2)
+      if (flow->core.packet_counter >= 2)
         ndpi_int_mudfish_add_connection(ndpi_struct, flow);
       return;
     }

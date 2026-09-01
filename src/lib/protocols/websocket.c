@@ -49,7 +49,7 @@ enum websocket_opcode
 static void set_websocket_detected(struct ndpi_detection_module_struct *ndpi_struct, struct ndpi_flow_struct *flow)
 {
   /* If no custom protocol has been detected */
-  if (flow->detected_protocol_stack[0] == NDPI_PROTOCOL_UNKNOWN)
+  if (flow->core.detected_protocol_stack[0] == NDPI_PROTOCOL_UNKNOWN)
     {
       ndpi_set_detected_protocol(ndpi_struct, flow, NDPI_PROTOCOL_WEBSOCKET, NDPI_PROTOCOL_UNKNOWN, NDPI_CONFIDENCE_DPI);
     }
@@ -97,7 +97,7 @@ static void ndpi_check_websocket(struct ndpi_detection_module_struct *ndpi_struc
 static void ndpi_search_websocket(struct ndpi_detection_module_struct *ndpi_struct, struct ndpi_flow_struct *flow)
 {
   // Break after 10 packets.
-  if (flow->packet_counter > 10)
+  if (flow->core.packet_counter > 10)
     {
       NDPI_EXCLUDE_DISSECTOR(ndpi_struct, flow);
       return;
@@ -107,8 +107,8 @@ static void ndpi_search_websocket(struct ndpi_detection_module_struct *ndpi_stru
   ndpi_check_websocket(ndpi_struct, flow);
 
   // Check also some HTTP headers indicating an upcoming WebSocket connection
-  if (flow->detected_protocol_stack[0] == NDPI_PROTOCOL_HTTP &&
-      flow->detected_protocol_stack[1] != NDPI_PROTOCOL_WEBSOCKET)
+  if (flow->core.detected_protocol_stack[0] == NDPI_PROTOCOL_HTTP &&
+      flow->core.detected_protocol_stack[1] != NDPI_PROTOCOL_WEBSOCKET)
   {
     struct ndpi_packet_struct const * const packet = &ndpi_struct->packet;
     uint16_t i;

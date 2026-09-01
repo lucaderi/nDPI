@@ -59,7 +59,7 @@ static void ndpi_search_soap(struct ndpi_detection_module_struct *ndpi_struct,
     }
   }
 
-  if (flow->packet_counter > 3)
+  if (flow->core.packet_counter > 3)
   {
     if (flow->l4.tcp.soap_stage == 1)
     {

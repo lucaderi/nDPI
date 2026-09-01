@@ -42,7 +42,7 @@ static void ndpi_search_dofus(struct ndpi_detection_module_struct *ndpi_struct, 
   NDPI_LOG_DBG(ndpi_struct, "search dofus\n");
 
   /* Dofus 3 */
-  if(ntohs(flow->c_port) == 5555 || ntohs(flow->s_port) == 5555) {
+  if(ntohs(flow->core.c_port) == 5555 || ntohs(flow->core.s_port) == 5555) {
     if(packet->payload_packet_len > 3 &&
        packet->payload[0] + 1 == packet->payload_packet_len &&
        packet->payload[1] == 0x0a &&

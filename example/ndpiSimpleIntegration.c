@@ -867,14 +867,14 @@ static void ndpi_process_packet(uint8_t * const args,
    * This example tries to use maximum supported packets for detection:
    * for uint8: 0xFF
    */
-  if (flow_to_process->ndpi_flow->num_processed_pkts == 0xFF) {
+  if (flow_to_process->ndpi_flow->core.num_processed_pkts == 0xFF) {
     return;
-  } else if (flow_to_process->ndpi_flow->num_processed_pkts == 0xFE) {
+  } else if (flow_to_process->ndpi_flow->core.num_processed_pkts == 0xFE) {
     /* last chance to guess something, better then nothing */
     flow_to_process->guessed_protocol =
       ndpi_detection_giveup(workflow->ndpi_struct,
 			    flow_to_process->ndpi_flow);
-    if (flow_to_process->ndpi_flow->protocol_was_guessed != 0) {
+    if (flow_to_process->ndpi_flow->core.protocol_was_guessed != 0) {
       printf("[%8llu, %d, %4d][GUESSED] protocol: %s | app protocol: %s | category: %s\n",
 	     workflow->packets_captured,
 	     reader_thread->array_index,
@@ -912,8 +912,8 @@ static void ndpi_process_packet(uint8_t * const args,
       }
     }
 
-  if (flow_to_process->ndpi_flow->num_extra_packets_checked <=
-      flow_to_process->ndpi_flow->max_extra_packets_to_check)
+  if (flow_to_process->ndpi_flow->core.num_extra_packets_checked <=
+      flow_to_process->ndpi_flow->core.max_extra_packets_to_check)
     {
       /*
        * Your business logic starts here.

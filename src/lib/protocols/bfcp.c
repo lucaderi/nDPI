@@ -48,7 +48,7 @@ static void ndpi_search_bfcp(struct ndpi_detection_module_struct *ndpi_struct,
   /* RFC4582: 1
      RFC8855: 1 on TCP, 2 on UDP */
   if (!(version == 1 ||
-        (version == 2 && flow->l4_proto == IPPROTO_UDP))) {
+        (version == 2 && flow->core.l4_proto == IPPROTO_UDP))) {
     goto not_bfcp;
   }
   if (reserved != 0) {

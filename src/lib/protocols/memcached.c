@@ -169,7 +169,7 @@ static void ndpi_search_memcached(struct ndpi_detection_module_struct *ndpi_stru
 
   if (*matches >= MEMCACHED_MIN_MATCH)
     ndpi_int_memcached_add_connection(ndpi_struct, flow);
-  else if(flow->packet_counter > 5)
+  else if(flow->core.packet_counter > 5)
     NDPI_EXCLUDE_DISSECTOR(ndpi_struct, flow);    
 }
 

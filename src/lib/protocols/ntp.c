@@ -41,8 +41,8 @@ static int ndpi_search_ntp_again(struct ndpi_detection_module_struct *ndpi_struc
 
 static void ndpi_set_extra_dissection(struct ndpi_flow_struct *flow)
 {
-    flow->max_extra_packets_to_check = 1;
-    flow->extra_packets_func = ndpi_search_ntp_again;
+    flow->core.max_extra_packets_to_check = 1;
+    flow->core.extra_packets_func = ndpi_search_ntp_again;
 }
 
 static void ndpi_int_ntp_add_connection(struct ndpi_detection_module_struct

@@ -58,7 +58,7 @@ static void ndpi_search_ciscovpn(struct ndpi_detection_module_struct *ndpi_struc
       return;
     }
     
-    if(flow->num_processed_pkts > 5)
+    if(flow->core.num_processed_pkts > 5)
       NDPI_EXCLUDE_DISSECTOR(ndpi_struct, flow);    
   } else
     NDPI_EXCLUDE_DISSECTOR(ndpi_struct, flow);  

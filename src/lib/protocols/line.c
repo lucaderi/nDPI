@@ -42,7 +42,7 @@ static void ndpi_search_line(struct ndpi_detection_module_struct *ndpi_struct,
 
   NDPI_LOG_DBG(ndpi_struct, "searching LineCall\n");
 
-  if(packet->iph && (flow->guessed_protocol_id_by_ip == NDPI_PROTOCOL_LINE)) {
+  if(packet->iph && (flow->core.guessed_protocol_id_by_ip == NDPI_PROTOCOL_LINE)) {
     /*
       The heuristic below (coming from reverse engineering packet traces)
       will apply only to IPv4 and Line IP addresses. This is to avoid puttin
@@ -85,7 +85,7 @@ static void ndpi_search_line(struct ndpi_detection_module_struct *ndpi_struct,
       /* Basic RTP detection */
       rc = is_rtp_or_rtcp(ndpi_struct, packet->payload, packet->payload_packet_len, NULL);
       if(rc == IS_RTCP || rc == IS_RTP) {
-        if(flow->packet_counter < 10) {
+        if(flow->core.packet_counter < 10) {
           NDPI_LOG_DBG(ndpi_struct, "Probably RTP; keep looking for LINE\n");
           return;
 	}

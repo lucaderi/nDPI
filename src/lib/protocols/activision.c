@@ -58,14 +58,14 @@ static void ndpi_search_activision(struct ndpi_detection_module_struct *ndpi_str
    */
   if (magic == 0x4600 || magic == 0x4700)
   {
-    if (flow->packet_counter > 4)
+    if (flow->core.packet_counter > 4)
       ndpi_int_activision_add_connection(ndpi_struct, flow);
 
     return;
   }
 
   /* original 0x0c02/0x0d02 variant: direction-dependent */
-  if (flow->packet_direction_counter[packet->packet_direction] == 1)
+  if (flow->core.packet_direction_counter[packet->packet_direction] == 1)
   {
     if (packet->packet_direction == 0)
     {
@@ -96,7 +96,7 @@ static void ndpi_search_activision(struct ndpi_detection_module_struct *ndpi_str
     }
   }
 
-  if (flow->packet_counter > 4)
+  if (flow->core.packet_counter > 4)
   {
     ndpi_int_activision_add_connection(ndpi_struct, flow);
   }

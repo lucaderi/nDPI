@@ -41,7 +41,7 @@ static void ndpi_search_sflow(struct ndpi_detection_module_struct *ndpi_struct, 
      && (ntohl(get_u_int32_t(packet->payload, 4)) == 0x00000001 ||
          ntohl(get_u_int32_t(packet->payload, 4)) == 0x00000002)) {
     NDPI_LOG_INFO(ndpi_struct, "found (probably) sflow\n");
-    if (flow->packet_counter >= 2)
+    if (flow->core.packet_counter >= 2)
     {
       NDPI_LOG_INFO(ndpi_struct, "found sflow\n");
       ndpi_set_detected_protocol(ndpi_struct, flow,

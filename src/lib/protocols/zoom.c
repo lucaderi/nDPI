@@ -61,12 +61,12 @@ static void ndpi_int_zoom_add_connection(struct ndpi_detection_module_struct *nd
   NDPI_LOG_INFO(ndpi_struct, "found Zoom\n");
   ndpi_set_detected_protocol(ndpi_struct, flow, NDPI_PROTOCOL_ZOOM, master, NDPI_CONFIDENCE_DPI);
 
-  if(!flow->extra_packets_func) {
+  if(!flow->core.extra_packets_func) {
     if(keep_extra_dissection(flow) &&
        ndpi_struct->cfg.zoom_max_packets_extra_dissection > 0) {
       NDPI_LOG_DBG(ndpi_struct, "Enabling extra dissection\n");
-      flow->max_extra_packets_to_check = ndpi_struct->cfg.zoom_max_packets_extra_dissection;
-      flow->extra_packets_func = zoom_search_again;
+      flow->core.max_extra_packets_to_check = ndpi_struct->cfg.zoom_max_packets_extra_dissection;
+      flow->core.extra_packets_func = zoom_search_again;
     }
   }
 }
@@ -74,8 +74,8 @@ static void ndpi_int_zoom_add_connection(struct ndpi_detection_module_struct *nd
 static int is_zoom_port(struct ndpi_flow_struct *flow)
 {
   /* https://support.zoom.com/hc/en/article?id=zm_kb&sysparm_article=KB0060548 */
-  if((ntohs(flow->c_port) >= 8801 && ntohs(flow->c_port) <= 8810) ||
-     (ntohs(flow->s_port) >= 8801 && ntohs(flow->s_port) <= 8810))
+  if((ntohs(flow->core.c_port) >= 8801 && ntohs(flow->core.c_port) <= 8810) ||
+     (ntohs(flow->core.s_port) >= 8801 && ntohs(flow->core.s_port) <= 8810))
     return 1;
   return 0;
 }
@@ -154,7 +154,7 @@ static int is_sfu_5(struct ndpi_detection_module_struct *ndpi_struct,
 
 static int keep_extra_dissection(struct ndpi_flow_struct *flow)
 {
-  return flow->detected_protocol_stack[1] == NDPI_PROTOCOL_UNKNOWN; /* No sub-classification */
+  return flow->core.detected_protocol_stack[1] == NDPI_PROTOCOL_UNKNOWN; /* No sub-classification */
 }
 
 static int zoom_search_again(struct ndpi_detection_module_struct *ndpi_struct,
@@ -201,7 +201,7 @@ static void ndpi_search_zoom(struct ndpi_detection_module_struct *ndpi_struct,
     /* SFU types 3 and 4. This check is quite weak: let give time to the other
        dissectors to kick in */
     } else if((packet->payload[0] == 0x03 || packet->payload[0] == 0x04)) {
-      if(flow->packet_counter < 4)
+      if(flow->core.packet_counter < 4)
         return;
       ndpi_int_zoom_add_connection(ndpi_struct, flow);
       return;

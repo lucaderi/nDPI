@@ -260,7 +260,7 @@ static int search_ipsec_again(struct ndpi_detection_module_struct *ndpi_struct,
   if(flow->protos.ipsec.proposal[NDPI_IKEV2_REQUEST_PROPOSAL].proto_id
      && flow->protos.ipsec.proposal[NDPI_IKEV2_RESPONSE_PROPOSAL].proto_id) {
     /* stop extra processing */
-    flow->extra_packets_func = NULL; /* We're good now */
+    flow->core.extra_packets_func = NULL; /* We're good now */
     return(0);
   }
 
@@ -292,8 +292,8 @@ static void ndpi_int_ipsec_add_connection(struct ndpi_detection_module_struct * 
   
   if((flow->protos.ipsec.proposal[NDPI_IKEV2_REQUEST_PROPOSAL].proto_id == 0)
      || (flow->protos.ipsec.proposal[NDPI_IKEV2_RESPONSE_PROPOSAL].proto_id == 0)) {
-    flow->max_extra_packets_to_check = 6;
-    flow->extra_packets_func = search_ipsec_again;
+    flow->core.max_extra_packets_to_check = 6;
+    flow->core.extra_packets_func = search_ipsec_again;
   }
 
   ndpi_set_detected_protocol(ndpi_struct, flow,

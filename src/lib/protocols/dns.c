@@ -34,8 +34,8 @@
 #define DNS_TCP_MAX_MSG_LEN 65533
 
 
-static void search_dns(struct ndpi_detection_module_struct *ndpi_struct,
-		       struct ndpi_flow_struct *flow);
+static void search_dns_tcp_udp(struct ndpi_detection_module_struct *ndpi_struct,
+			       struct ndpi_flow_struct *flow);
 
 static int search_dns_again(struct ndpi_detection_module_struct *ndpi_struct,
 			    struct ndpi_flow_struct *flow);
@@ -95,7 +95,7 @@ static void ndpi_check_dns_type(struct ndpi_detection_module_struct *ndpi_struct
   case 106:
   case 107:
   case 259:
-    snprintf(str, sizeof(str), "Obsolete DNS record type: %d", dns_type); 
+    snprintf(str, sizeof(str), "Obsolete DNS record type: %d", dns_type);
     ndpi_set_risk(ndpi_struct, flow, NDPI_DNS_SUSPICIOUS_TRAFFIC, str);
     break;
   }
@@ -121,19 +121,19 @@ static u_int16_t checkPort(u_int16_t port) {
 static int isMDNSMulticastAddress(struct ndpi_packet_struct * const packet)
 {
   return (packet->iph && ntohl(packet->iph->daddr) == 0xE00000FB /* multicast: 224.0.0.251 */) ||
-         (packet->iphv6 && ntohl(packet->iphv6->ip6_dst.u6_addr.u6_addr32[0]) == 0xFF020000 &&
-                           ntohl(packet->iphv6->ip6_dst.u6_addr.u6_addr32[1]) == 0x00000000 &&
-                           ntohl(packet->iphv6->ip6_dst.u6_addr.u6_addr32[2]) == 0x00000000 &&
-                           ntohl(packet->iphv6->ip6_dst.u6_addr.u6_addr32[3]) == 0x000000FB /* multicast: FF02::FB */);
+    (packet->iphv6 && ntohl(packet->iphv6->ip6_dst.u6_addr.u6_addr32[0]) == 0xFF020000 &&
+     ntohl(packet->iphv6->ip6_dst.u6_addr.u6_addr32[1]) == 0x00000000 &&
+     ntohl(packet->iphv6->ip6_dst.u6_addr.u6_addr32[2]) == 0x00000000 &&
+     ntohl(packet->iphv6->ip6_dst.u6_addr.u6_addr32[3]) == 0x000000FB /* multicast: FF02::FB */);
 }
 
 static int isLLMNRMulticastAddress(struct ndpi_packet_struct *const packet)
 {
   return (packet->iph && ntohl(packet->iph->daddr) == 0xE00000FC /* multicast: 224.0.0.252 */) ||
-         (packet->iphv6 && ntohl(packet->iphv6->ip6_dst.u6_addr.u6_addr32[0]) == 0xFF020000 &&
-                           ntohl(packet->iphv6->ip6_dst.u6_addr.u6_addr32[1]) == 0x00000000 &&
-                           ntohl(packet->iphv6->ip6_dst.u6_addr.u6_addr32[2]) == 0x00000000 &&
-                           ntohl(packet->iphv6->ip6_dst.u6_addr.u6_addr32[3]) == 0x00010003 /* multicast: FF02::1:3 */);
+    (packet->iphv6 && ntohl(packet->iphv6->ip6_dst.u6_addr.u6_addr32[0]) == 0xFF020000 &&
+     ntohl(packet->iphv6->ip6_dst.u6_addr.u6_addr32[1]) == 0x00000000 &&
+     ntohl(packet->iphv6->ip6_dst.u6_addr.u6_addr32[2]) == 0x00000000 &&
+     ntohl(packet->iphv6->ip6_dst.u6_addr.u6_addr32[3]) == 0x00010003 /* multicast: FF02::1:3 */);
 }
 
 /* *********************************************** */
@@ -222,10 +222,10 @@ static char* dns_error_code2string(u_int16_t error_code, char *buf, u_int buf_le
 u_int64_t fpc_dns_cache_key_from_flow(struct ndpi_flow_struct *flow) {
   u_int64_t key;
 
-  if(flow->is_ipv6)
-    key = ndpi_quick_hash64((const char *)flow->s_address.v6.u6_addr.u6_addr8, 16);
+  if(flow->core.is_ipv6)
+    key = ndpi_quick_hash64((const char *)flow->core.s_address.v6.u6_addr.u6_addr8, 16);
   else
-    key = (u_int64_t)(flow->s_address.v4);
+    key = (u_int64_t)(flow->core.s_address.v4);
 
   return key;
 }
@@ -507,8 +507,8 @@ static int process_additionals(struct ndpi_detection_module_struct *ndpi_struct,
   /*
     Dissect the rest of the packet only if there are
     additional_rrs as we need to check for:
-     * EDNS(0)
-     * NSID
+    * EDNS(0)
+    * NSID
 
     In this case we need to go through the whole packet
     as we need to update the 'x' offset
@@ -691,7 +691,7 @@ static int is_valid_dns(struct ndpi_detection_module_struct *ndpi_struct,
     }
   } else {
     if(((dns_header->num_queries > 0 && dns_header->num_queries <= NDPI_MAX_DNS_REQUESTS) || /* Don't assume that num_queries must be zero */
-        (checkDNSSubprotocol(ndpi_struct, ntohs(flow->c_port), ntohs(flow->s_port)) == NDPI_PROTOCOL_MDNS && dns_header->num_queries == 0)) &&
+        (checkDNSSubprotocol(ndpi_struct, ntohs(flow->core.c_port), ntohs(flow->core.s_port)) == NDPI_PROTOCOL_MDNS && dns_header->num_queries == 0)) &&
        ((dns_header->num_answers > 0 && dns_header->num_answers <= NDPI_MAX_DNS_REQUESTS) ||
         (dns_header->authority_rrs > 0 && dns_header->authority_rrs <= NDPI_MAX_DNS_REQUESTS) ||
         (dns_header->additional_rrs > 0 && dns_header->additional_rrs <= NDPI_MAX_DNS_REQUESTS) ||
@@ -725,25 +725,25 @@ static void dns_tcp_reasm_free_dir(struct ndpi_dns_tcp_reasm *reasm)
 /* *********************************************** */
 
 /*
- * Schedule extra packets only after DNS is classified (see search_dns()).
+ * Schedule extra packets only after DNS is classified (see search_dns_tcp_udp()).
  * While UNKNOWN, ndpi_search_dns keeps running on later segments.
  */
 static void dns_tcp_reasm_enable_extra(struct ndpi_detection_module_struct *ndpi_struct,
 				       struct ndpi_flow_struct *flow)
 {
-  if(flow->extra_packets_func != NULL ||
-     flow->detected_protocol_stack[0] == NDPI_PROTOCOL_UNKNOWN)
+  if(flow->core.extra_packets_func != NULL ||
+     flow->core.detected_protocol_stack[0] == NDPI_PROTOCOL_UNKNOWN)
     return;
 
   if(!ndpi_struct->cfg.dns_parse_response_enabled)
     return;
 
-  if(flow->detected_protocol_stack[0] == NDPI_PROTOCOL_LLMNR ||
-     flow->detected_protocol_stack[1] == NDPI_PROTOCOL_LLMNR)
+  if(flow->core.detected_protocol_stack[0] == NDPI_PROTOCOL_LLMNR ||
+     flow->core.detected_protocol_stack[1] == NDPI_PROTOCOL_LLMNR)
     return;
 
-  flow->max_extra_packets_to_check = ndpi_struct->cfg.dns_max_packets_extra_dissection;
-  flow->extra_packets_func = search_dns_again;
+  flow->core.max_extra_packets_to_check = ndpi_struct->cfg.dns_max_packets_extra_dissection;
+  flow->core.extra_packets_func = search_dns_again;
 }
 
 /* *********************************************** */
@@ -841,7 +841,7 @@ static int dns_tcp_process(struct ndpi_detection_module_struct *ndpi_struct,
 
     packet->payload = (u_int8_t *)&original_payload[offset];
     packet->payload_packet_len = (u_int16_t)total_len;
-    search_dns(ndpi_struct, flow);
+    search_dns_tcp_udp(ndpi_struct, flow);
     processed = 1;
 
     packet->payload = original_payload;
@@ -873,7 +873,7 @@ static int dns_tcp_process(struct ndpi_detection_module_struct *ndpi_struct,
   dns_tcp_reasm_enable_extra(ndpi_struct, flow);
   return processed > 0 ? 1 : 0;
 
-append_and_reasm:
+ append_and_reasm:
   if(dns_tcp_reasm_append(reasm, packet->payload, packet->payload_packet_len) < 0) {
     dns_tcp_reasm_free_dir(reasm);
     return -1;
@@ -916,7 +916,7 @@ append_and_reasm:
 
     packet->payload = (u_int8_t *)reasm->buf;
     packet->payload_packet_len = (u_int16_t)total_len;
-    search_dns(ndpi_struct, flow);
+    search_dns_tcp_udp(ndpi_struct, flow);
     processed = 1;
 
     packet->payload = original_payload;
@@ -952,7 +952,7 @@ static int search_dns_again(struct ndpi_detection_module_struct *ndpi_struct, st
   }
 
   /* possibly dissect the DNS reply */
-  search_dns(ndpi_struct, flow);
+  search_dns_tcp_udp(ndpi_struct, flow);
 
   return keep_extra_dissection(flow);
 }
@@ -970,8 +970,8 @@ static int process_hostname(struct ndpi_detection_module_struct *ndpi_struct,
   u_int8_t hostname_is_valid;
   char invalid_character = 0;
 
-  proto->master_protocol = checkDNSSubprotocol(ndpi_struct, ntohs(flow->c_port), ntohs(flow->s_port));
-  proto->app_protocol = flow->detected_protocol_stack[1] != NDPI_PROTOCOL_UNKNOWN ? flow->detected_protocol_stack[0] : NDPI_PROTOCOL_UNKNOWN;
+  proto->master_protocol = checkDNSSubprotocol(ndpi_struct, ntohs(flow->core.c_port), ntohs(flow->core.s_port));
+  proto->app_protocol = flow->core.detected_protocol_stack[1] != NDPI_PROTOCOL_UNKNOWN ? flow->core.detected_protocol_stack[0] : NDPI_PROTOCOL_UNKNOWN;
 
   /* We try to get hostname only from "standard" query/answer */
   if(dns_header->num_queries == 0 && dns_header->num_answers == 0)
@@ -1031,7 +1031,7 @@ static int process_hostname(struct ndpi_detection_module_struct *ndpi_struct,
   if(strlen(flow->host_server_name) > 0) {
     ndpi_protocol_match_result ret_match;
 
-    if(flow->detected_protocol_stack[1] == NDPI_PROTOCOL_UNKNOWN) {
+    if(flow->core.detected_protocol_stack[1] == NDPI_PROTOCOL_UNKNOWN) {
       proto->app_protocol = ndpi_match_host_subprotocol(ndpi_struct, flow,
                                                         flow->host_server_name,
                                                         strlen(flow->host_server_name),
@@ -1047,7 +1047,7 @@ static int process_hostname(struct ndpi_detection_module_struct *ndpi_struct,
   return 0;
 }
 
-static void search_dns(struct ndpi_detection_module_struct *ndpi_struct, struct ndpi_flow_struct *flow) {
+static void search_dns_tcp_udp(struct ndpi_detection_module_struct *ndpi_struct, struct ndpi_flow_struct *flow) {
   struct ndpi_packet_struct *packet = &ndpi_struct->packet;
   int payload_offset = 0;
   u_int8_t is_query;
@@ -1066,7 +1066,7 @@ static void search_dns(struct ndpi_detection_module_struct *ndpi_struct, struct 
 #ifdef DNS_DEBUG
     printf("[DNS] invalid packet\n");
 #endif
-    if(flow->extra_packets_func == NULL) {
+    if(flow->core.extra_packets_func == NULL) {
       NDPI_EXCLUDE_DISSECTOR(ndpi_struct, flow);
     } else {
       ndpi_set_risk(ndpi_struct, flow, NDPI_MALFORMED_PACKET, "Invalid DNS Header");
@@ -1133,7 +1133,7 @@ static void search_dns(struct ndpi_detection_module_struct *ndpi_struct, struct 
     }
 
     if(proto.master_protocol == NDPI_PROTOCOL_DNS &&
-      /* TODO: add support to RFC6891 to avoid some false positives */
+       /* TODO: add support to RFC6891 to avoid some false positives */
        packet->udp &&
        packet->payload_packet_len > PKT_LEN_ALERT &&
        packet->payload_packet_len > flow->protos.dns.edns0_udp_payload_size) {
@@ -1152,7 +1152,7 @@ static void search_dns(struct ndpi_detection_module_struct *ndpi_struct, struct 
                   flow->protos.dns.reply_code, flow->protos.dns.rsp_type, flow->host_server_name);
   }
 
-  if(flow->detected_protocol_stack[0] == NDPI_PROTOCOL_UNKNOWN) {
+  if(flow->core.detected_protocol_stack[0] == NDPI_PROTOCOL_UNKNOWN) {
     if(ndpi_struct->cfg.dns_subclassification_enabled)
       ndpi_set_detected_protocol(ndpi_struct, flow, proto.app_protocol, proto.master_protocol, NDPI_CONFIDENCE_DPI);
     else
@@ -1161,25 +1161,25 @@ static void search_dns(struct ndpi_detection_module_struct *ndpi_struct, struct 
 				 NDPI_PROTOCOL_UNKNOWN, NDPI_CONFIDENCE_DPI);
   }
   /* Category is always NDPI_PROTOCOL_CATEGORY_NETWORK, regardless of the subprotocol. Same for the breed */
-  flow->category = NDPI_PROTOCOL_CATEGORY_NETWORK;
-  flow->breed = NDPI_PROTOCOL_ACCEPTABLE;
+  flow->core.category = NDPI_PROTOCOL_CATEGORY_NETWORK;
+  flow->core.breed = NDPI_PROTOCOL_ACCEPTABLE;
 
-  if(!flow->extra_packets_func &&
+  if(!flow->core.extra_packets_func &&
      ndpi_struct->cfg.dns_parse_response_enabled &&
      /* We have never triggered extra-dissection for LLMNR. Keep the old behavior */
-     flow->detected_protocol_stack[0] != NDPI_PROTOCOL_LLMNR &&
-     flow->detected_protocol_stack[1] != NDPI_PROTOCOL_LLMNR) {
+     flow->core.detected_protocol_stack[0] != NDPI_PROTOCOL_LLMNR &&
+     flow->core.detected_protocol_stack[1] != NDPI_PROTOCOL_LLMNR) {
     if(keep_extra_dissection(flow)) {
       NDPI_LOG_DBG(ndpi_struct, "Enabling extra dissection\n");
-      flow->max_extra_packets_to_check = ndpi_struct->cfg.dns_max_packets_extra_dissection;
-      flow->extra_packets_func = search_dns_again;
+      flow->core.max_extra_packets_to_check = ndpi_struct->cfg.dns_max_packets_extra_dissection;
+      flow->core.extra_packets_func = search_dns_again;
     }
   }
 
   /* The bigger packets are usually the replies, but it shouldn't harm
      to check the requests, too */
-  if((flow->detected_protocol_stack[0] == NDPI_PROTOCOL_DNS)
-     || (flow->detected_protocol_stack[1] == NDPI_PROTOCOL_DNS)) {
+  if((flow->core.detected_protocol_stack[0] == NDPI_PROTOCOL_DNS)
+     || (flow->core.detected_protocol_stack[1] == NDPI_PROTOCOL_DNS)) {
 
     if(packet->iph != NULL) {
       /* IPv4 */
@@ -1203,7 +1203,7 @@ static void search_dns(struct ndpi_detection_module_struct *ndpi_struct, struct 
 
 /* *********************************************** */
 
-void ndpi_search_dns(struct ndpi_detection_module_struct *ndpi_struct, struct ndpi_flow_struct *flow) {
+void ndpi_search_dns_tcp_udp(struct ndpi_detection_module_struct *ndpi_struct, struct ndpi_flow_struct *flow) {
   struct ndpi_packet_struct *packet = &ndpi_struct->packet;
   u_int16_t s_port = 0, d_port = 0;
 
@@ -1216,15 +1216,15 @@ void ndpi_search_dns(struct ndpi_detection_module_struct *ndpi_struct, struct nd
     /* For MDNS/LLMNR: If the packet is not a response, dest addr needs to be multicast. */
     if ((d_port == MDNS_PORT && isMDNSMulticastAddress(packet) == 0) ||
         (d_port == LLMNR_PORT && isLLMNRMulticastAddress(packet) == 0))
-    {
-      if (packet->payload_packet_len > 5 &&
-          ntohs(get_u_int16_t(packet->payload, 2)) != 0 &&
-          ntohs(get_u_int16_t(packet->payload, 4)) != 0)
       {
-        NDPI_EXCLUDE_DISSECTOR(ndpi_struct, flow);
-        return;
+	if (packet->payload_packet_len > 5 &&
+	    ntohs(get_u_int16_t(packet->payload, 2)) != 0 &&
+	    ntohs(get_u_int16_t(packet->payload, 4)) != 0)
+	  {
+	    NDPI_EXCLUDE_DISSECTOR(ndpi_struct, flow);
+	    return;
+	  }
       }
-    }
   } else if(packet->tcp != NULL) {
     s_port = ntohs(packet->tcp->source);
     d_port = ntohs(packet->tcp->dest);
@@ -1240,7 +1240,7 @@ void ndpi_search_dns(struct ndpi_detection_module_struct *ndpi_struct, struct nd
     /* Standard case, keep going */
   } else if(ndpi_struct->cfg.dns_custom_port == 0 &&
             !ndpi_is_multi_or_broadcast(flow) &&
-            flow->l4_proto == IPPROTO_UDP && /* No TCP to avoid too many false positives */
+            flow->core.l4_proto == IPPROTO_UDP && /* No TCP to avoid too many false positives */
             /* Avoid collision with other protocols requiring multiple pkts. */
             flow->rtp.rtp_stage == 0 &&
             flow->rtcp_stage == 0 &&
@@ -1255,25 +1255,25 @@ void ndpi_search_dns(struct ndpi_detection_module_struct *ndpi_struct, struct nd
   if(packet->tcp != NULL) {
     if(dns_tcp_process(ndpi_struct, flow) < 0)
       NDPI_EXCLUDE_DISSECTOR(ndpi_struct, flow);
-    return;
-  }
 
-  /* Since every UDP packet must contain a complete/valid DNS message,
-     we must be able to detect these protocols on the first packet */
-  if(packet->payload_packet_len < sizeof(struct ndpi_dns_packet_header)) {
-    NDPI_EXCLUDE_DISSECTOR(ndpi_struct, flow);
-    return;
-  }
+  } else {
+    /* Since every UDP packet must contain a complete/valid DNS message,
+       we must be able to detect these protocols on the first packet */
+    if(packet->payload_packet_len < sizeof(struct ndpi_dns_packet_header)) {
+      NDPI_EXCLUDE_DISSECTOR(ndpi_struct, flow);
+      return;
+    }
 
-  search_dns(ndpi_struct, flow);
+    search_dns_tcp_udp(ndpi_struct, flow);
+  }
 }
 
 /* *********************************************** */
 
 void init_dns_dissector(struct ndpi_detection_module_struct *ndpi_struct) {
   ndpi_register_dissector("DNS", ndpi_struct,
-                     ndpi_search_dns,
-                     NDPI_SELECTION_BITMASK_PROTOCOL_V4_V6_TCP_OR_UDP_WITH_PAYLOAD_WITHOUT_RETRANSMISSION,
-                     DISSECTOR_LICENSE_NTOP_DUAL_LICENSE,
-                     1, NDPI_PROTOCOL_DNS);
+			  ndpi_search_dns_tcp_udp,
+			  NDPI_SELECTION_BITMASK_PROTOCOL_V4_V6_TCP_OR_UDP_WITH_PAYLOAD_WITHOUT_RETRANSMISSION,
+			  DISSECTOR_LICENSE_NTOP_DUAL_LICENSE,
+			  1, NDPI_PROTOCOL_DNS);
 }

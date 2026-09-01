@@ -45,8 +45,8 @@ static void ndpi_int_wireguard_add_connection(struct ndpi_detection_module_struc
                                               u_int16_t app_protocol)
 {
   if(ndpi_struct->cfg.wireguard_subclassification_by_ip &&
-     ndpi_struct->proto_defaults[flow->guessed_protocol_id_by_ip].protoCategory == NDPI_PROTOCOL_CATEGORY_VPN) {
-    ndpi_set_detected_protocol(ndpi_struct, flow, flow->guessed_protocol_id_by_ip, NDPI_PROTOCOL_WIREGUARD, NDPI_CONFIDENCE_DPI);
+     ndpi_struct->proto_defaults[flow->core.guessed_protocol_id_by_ip].protoCategory == NDPI_PROTOCOL_CATEGORY_VPN) {
+    ndpi_set_detected_protocol(ndpi_struct, flow, flow->core.guessed_protocol_id_by_ip, NDPI_PROTOCOL_WIREGUARD, NDPI_CONFIDENCE_DPI);
   } else if(app_protocol != NDPI_PROTOCOL_UNKNOWN) {
     ndpi_set_detected_protocol(ndpi_struct, flow, app_protocol, NDPI_PROTOCOL_WIREGUARD, NDPI_CONFIDENCE_DPI);
   } else {
@@ -122,7 +122,7 @@ static void ndpi_search_wireguard(struct ndpi_detection_module_struct *ndpi_stru
     flow->l4.udp.wireguard_stage = 1 + packet->packet_direction;
     flow->l4.udp.wireguard_peer_index[packet->packet_direction] = sender_index;
 
-    if(flow->num_processed_pkts > 1) {
+    if(flow->core.num_processed_pkts > 1) {
       /* This looks like a retransmission and probably this communication is blocked hence let's stop here */
       ndpi_int_wireguard_add_connection(ndpi_struct, flow, NDPI_PROTOCOL_UNKNOWN);
       return;
@@ -175,7 +175,7 @@ static void ndpi_search_wireguard(struct ndpi_detection_module_struct *ndpi_stru
     u_int32_t receiver_index = get_u_int32_t(payload, 4);
 
     /* We speculate this is wireguard, so let's remember it */
-    flow->fast_callback_protocol_id = NDPI_PROTOCOL_WIREGUARD;
+    flow->core.fast_callback_protocol_id = NDPI_PROTOCOL_WIREGUARD;
     
     if (flow->l4.udp.wireguard_stage == 0) {
       flow->l4.udp.wireguard_stage = 3 + packet->packet_direction;

@@ -154,7 +154,7 @@ static void ndpi_search_mail_smtp_tcp(struct ndpi_detection_module_struct *ndpi_
             ndpi_match_hostname_protocol(ndpi_struct, flow, NDPI_PROTOCOL_MAIL_SMTP,
                                          flow->host_server_name,
                                          strlen(flow->host_server_name));
-            if(flow->detected_protocol_stack[0] != NDPI_PROTOCOL_UNKNOWN) {
+            if(flow->core.detected_protocol_stack[0] != NDPI_PROTOCOL_UNKNOWN) {
               NDPI_LOG_DBG(ndpi_struct, "SMTP: hostname matched\n");
               smtpInitExtraPacketProcessing(flow);
             }
@@ -297,20 +297,20 @@ static void ndpi_search_mail_smtp_tcp(struct ndpi_detection_module_struct *ndpi_
     printf("%s() [bit_count: %u][%s]\n", __FUNCTION__,
            bit_count, flow->l4.tcp.ftp_imap_pop_smtp.password);
 #endif
-    if(flow->detected_protocol_stack[0] == NDPI_PROTOCOL_UNKNOWN &&
-       flow->detected_protocol_stack[1] == NDPI_PROTOCOL_UNKNOWN) {
+    if(flow->core.detected_protocol_stack[0] == NDPI_PROTOCOL_UNKNOWN &&
+       flow->core.detected_protocol_stack[1] == NDPI_PROTOCOL_UNKNOWN) {
       smtp_set_detected(ndpi_struct, flow);
       smtpInitExtraPacketProcessing(flow);
     }
     return;
   }
 
-  if(bit_count >= 1 && flow->packet_counter < 12)
+  if(bit_count >= 1 && flow->core.packet_counter < 12)
     return;
 
  smtp_maybe_early:
   /* Tolerate the first few packets even without a proper CRLF terminator */
-  if(flow->packet_counter <= 4 &&
+  if(flow->core.packet_counter <= 4 &&
      packet->payload_packet_len >= 4 &&
      (ntohs(get_u_int16_t(packet->payload, packet->payload_packet_len - 2)) == 0x0d0a ||
       memcmp(packet->payload, "220", 3) == 0 ||
@@ -320,7 +320,7 @@ static void ndpi_search_mail_smtp_tcp(struct ndpi_detection_module_struct *ndpi_
   }
 
  smtp_exclude:
-  if((!flow->extra_packets_func) || (flow->packet_counter > 12))
+  if((!flow->core.extra_packets_func) || (flow->core.packet_counter > 12))
     NDPI_EXCLUDE_DISSECTOR(ndpi_struct, flow);
 }
 
@@ -341,10 +341,10 @@ int ndpi_extra_search_mail_smtp_tcp(struct ndpi_detection_module_struct *ndpi_st
     if(ndpi_struct->cfg.smtp_opportunistic_tls_enabled &&
        packet->payload_packet_len > 3 && memcmp(packet->payload, "220", 3) == 0) {
       rc = 1;
-      if(flow->detected_protocol_stack[0] != NDPI_PROTOCOL_UNKNOWN &&
-         flow->detected_protocol_stack[0] != NDPI_PROTOCOL_MAIL_SMTP) {
+      if(flow->core.detected_protocol_stack[0] != NDPI_PROTOCOL_UNKNOWN &&
+         flow->core.detected_protocol_stack[0] != NDPI_PROTOCOL_MAIL_SMTP) {
         ndpi_set_detected_protocol(ndpi_struct, flow,
-                                   flow->detected_protocol_stack[0],
+                                   flow->core.detected_protocol_stack[0],
                                    NDPI_PROTOCOL_MAIL_SMTPS, NDPI_CONFIDENCE_DPI);
         flow->protos.tls_quic.subprotocol_detected = 1;
       } else {
@@ -353,7 +353,7 @@ int ndpi_extra_search_mail_smtp_tcp(struct ndpi_detection_module_struct *ndpi_st
                                    NDPI_CONFIDENCE_DPI);
       }
       NDPI_LOG_DBG(ndpi_struct, "Switching to [%d/%d]\n",
-                   flow->detected_protocol_stack[0], flow->detected_protocol_stack[1]);
+                   flow->core.detected_protocol_stack[0], flow->core.detected_protocol_stack[1]);
       switch_extra_dissection_to_tls(ndpi_struct, flow);
     } else {
       rc = 0;
@@ -379,8 +379,8 @@ static void smtpInitExtraPacketProcessing(struct ndpi_flow_struct *flow) {
   static u_int num = 0;
   printf("**** %s(%u)\n", __FUNCTION__, ++num);
 #endif
-  flow->max_extra_packets_to_check = 12;
-  flow->extra_packets_func = ndpi_extra_search_mail_smtp_tcp;
+  flow->core.max_extra_packets_to_check = 12;
+  flow->core.extra_packets_func = ndpi_extra_search_mail_smtp_tcp;
 }
 
 /* **************************************** */

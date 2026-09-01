@@ -109,9 +109,9 @@ static void ndpi_check_tinc(struct ndpi_detection_module_struct *ndpi_struct, st
 	if(i < payload_len && packet_payload[i] == '\n') {
 	  if(++flow->tinc_state > 3) {
 	    struct tinc_cache_entry tinc_cache_entry = {
-	      .src_address = flow->c_address.v4,
-	      .dst_address = flow->s_address.v4,
-	      .dst_port = flow->s_port,
+	      .src_address = flow->core.c_address.v4,
+	      .dst_address = flow->core.s_address.v4,
+	      .dst_port = flow->core.s_port,
 	    };
 
 	    if(ndpi_struct->tinc_cache == NULL)
@@ -136,7 +136,7 @@ static void ndpi_check_tinc(struct ndpi_detection_module_struct *ndpi_struct, st
 static void ndpi_search_tinc(struct ndpi_detection_module_struct* ndpi_struct, struct ndpi_flow_struct* flow) {
   NDPI_LOG_DBG(ndpi_struct, "tinc detection\n");
 
-  if(flow->detected_protocol_stack[0] != NDPI_PROTOCOL_TINC) {
+  if(flow->core.detected_protocol_stack[0] != NDPI_PROTOCOL_TINC) {
     ndpi_check_tinc(ndpi_struct, flow);
   }
 }

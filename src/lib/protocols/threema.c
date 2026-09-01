@@ -47,7 +47,7 @@ static void ndpi_search_threema(struct ndpi_detection_module_struct *ndpi_struct
     return;
   }
 
-  switch (flow->packet_counter)
+  switch (flow->core.packet_counter)
   {
     case 1:
       if (packet->payload_packet_len != 48)

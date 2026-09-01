@@ -85,7 +85,7 @@ static void ndpi_search_teamspeak(struct ndpi_detection_module_struct *ndpi_stru
   return;
 
 ts3_license_weblist:
-  if (flow->packet_counter == 3)
+  if (flow->core.packet_counter == 3)
   {
     NDPI_LOG_INFO(ndpi_struct, "found TEAMSPEAK license/weblist\n");
     ndpi_int_teamspeak_add_connection(ndpi_struct, flow);

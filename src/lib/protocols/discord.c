@@ -52,14 +52,14 @@ static void ndpi_search_discord(struct ndpi_detection_module_struct *ndpi_struct
 
   if (packet->payload_packet_len == 74)
   {
-    if (flow->packet_counter == 1 &&
+    if (flow->core.packet_counter == 1 &&
         ntohl(get_u_int32_t(packet->payload, 0)) == 0x00010046)
     {
       /* Wait for the next packet, hopefully beeing able to dissect the client IP. */
       return;
     }
 
-    if (flow->packet_counter == 2 &&
+    if (flow->core.packet_counter == 2 &&
         ntohl(get_u_int32_t(packet->payload, 0)) == 0x00020046)
     {
       /* Dissect client IP. */
@@ -71,7 +71,7 @@ static void ndpi_search_discord(struct ndpi_detection_module_struct *ndpi_struct
     }
   }
 
-  if (flow->packet_counter >= 5)
+  if (flow->core.packet_counter >= 5)
     NDPI_EXCLUDE_DISSECTOR(ndpi_struct, flow);
 }
 

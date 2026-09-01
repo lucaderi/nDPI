@@ -40,7 +40,7 @@ static void ndpi_search_merakicloud(struct ndpi_detection_module_struct *ndpi_st
 
   NDPI_LOG_DBG(ndpi_struct, "search MerakiCloud\n");
 
-  if((flow->c_port == ntohs(7351) || flow->s_port == ntohs(7351)) &&
+  if((flow->core.c_port == ntohs(7351) || flow->core.s_port == ntohs(7351)) &&
      packet->payload_packet_len > 4 &&
      get_u_int32_t(packet->payload, 0) == ntohl(0xfef72891)) {
     ndpi_int_merakicloud_add_connection(ndpi_struct, flow);

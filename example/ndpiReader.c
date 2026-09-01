@@ -2949,7 +2949,7 @@ static void node_proto_guess_walker(const void *node, ndpi_VISIT which, int dept
                                                       flow->ndpi_flow);
       alloc_size_stats = 0;
 
-      if(flow->ndpi_flow->protocol_was_guessed) ndpi_thread_info[thread_id].workflow->stats.guessed_flow_protocols++;
+      if(flow->ndpi_flow->core.protocol_was_guessed) ndpi_thread_info[thread_id].workflow->stats.guessed_flow_protocols++;
     }
 
     process_ndpi_collected_info(ndpi_thread_info[thread_id].workflow, flow);
@@ -5764,8 +5764,6 @@ static void hash_walker(char *key, u_int64_t value, void *data) {
 int main(int argc, char **argv) {
   int i;
 
-  struct ndpi_flow_struct a;
-  printf("%lu\n", sizeof(a.protos)); exit(0);
 #ifdef DEBUG_TRACE
   trace = fopen("/tmp/ndpiReader.log", "a");
 

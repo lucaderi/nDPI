@@ -48,7 +48,7 @@ static void ndpi_search_rsh(struct ndpi_detection_module_struct * ndpi_struct,
   {
     if (packet->payload[packet->payload_packet_len - 1] == '\n')
     {
-      if (flow->packet_counter > 5)
+      if (flow->core.packet_counter > 5)
       {
         ndpi_int_rsh_add_connection(ndpi_struct, flow);
         flow->protos.rsh.client_username[0] = '\0';
@@ -59,7 +59,7 @@ static void ndpi_search_rsh(struct ndpi_detection_module_struct * ndpi_struct,
     }
   }
 
-  switch (flow->packet_counter)
+  switch (flow->core.packet_counter)
   {
     case 1:
       if (packet->payload_packet_len >= 2 &&

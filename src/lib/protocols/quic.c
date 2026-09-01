@@ -1415,7 +1415,7 @@ static int eval_extra_processing(struct ndpi_detection_module_struct *ndpi_struc
   }
 
   if(version == V_1 &&
-     flow->detected_protocol_stack[0] == NDPI_PROTOCOL_SNAPCHAT) {
+     flow->core.detected_protocol_stack[0] == NDPI_PROTOCOL_SNAPCHAT) {
     size_t sni_len = strlen(flow->host_server_name);
     if(sni_len > 11 &&
        strcmp(flow->host_server_name + sni_len - 11, ".addlive.io") == 0) {
@@ -1456,7 +1456,7 @@ static int ndpi_search_quic_extra(struct ndpi_detection_module_struct *ndpi_stru
     ndpi_search_quic(ndpi_struct, flow);
     if(quic_ch_reassembly_pending(flow))
       return 1;
-    flow->extra_packets_func = NULL;
+    flow->core.extra_packets_func = NULL;
     return 0;
   }
 
@@ -1469,7 +1469,7 @@ static int ndpi_search_quic_extra(struct ndpi_detection_module_struct *ndpi_stru
   }
 
   NDPI_LOG_DBG2(ndpi_struct, "No more QUIC: nothing to do on QUIC side\n");
-  flow->extra_packets_func = NULL;
+  flow->core.extra_packets_func = NULL;
 
   /* This might be a RTP/RTCP stream: let's check it */
   /* TODO: the cleanest solution should be triggering the rtp/rtcp dissector, but
@@ -1486,8 +1486,8 @@ static int ndpi_search_quic_extra(struct ndpi_detection_module_struct *ndpi_stru
     /* In "extra_eval" data path, if we change the classification, we need to update the category, too */
     proto.master_protocol = NDPI_PROTOCOL_QUIC;
     proto.app_protocol = NDPI_PROTOCOL_SNAPCHAT_CALL;
-    flow->category = get_proto_category(ndpi_struct, proto);
-    flow->breed = get_proto_breed(ndpi_struct, proto);
+    flow->core.category = get_proto_category(ndpi_struct, proto);
+    flow->core.breed = get_proto_breed(ndpi_struct, proto);
   } else {
     /* Unexpected traffic pattern: we should investigate it... */
     NDPI_LOG_INFO(ndpi_struct, "To investigate...\n");
@@ -1563,11 +1563,11 @@ static int ndpi_search_quic_extra_vn(struct ndpi_detection_module_struct *ndpi_s
       return 1;
     } else {
       NDPI_LOG_DBG(ndpi_struct, "Invalid reply to a Force VN. Stop\n");
-      flow->extra_packets_func = NULL;
+      flow->core.extra_packets_func = NULL;
       return 0; /* Stop */
     }
   } else {
-    flow->extra_packets_func = NULL;
+    flow->core.extra_packets_func = NULL;
     ndpi_search_quic(ndpi_struct, flow);
     return 0;
   }
@@ -1615,7 +1615,7 @@ static void ndpi_search_quic(struct ndpi_detection_module_struct *ndpi_struct,
       if(ret == 1) {
         NDPI_LOG_DBG(ndpi_struct, "Found 0-RTT, keep looking for Initial\n");
         flow->l4.udp.quic_0rtt_found = 1;
-        if(flow->packet_counter >= 3) {
+        if(flow->core.packet_counter >= 3) {
           /* We haven't still found an Initial.. give up */
           NDPI_LOG_INFO(ndpi_struct, "QUIC 0RTT\n");
           ndpi_set_detected_protocol(ndpi_struct, flow, NDPI_PROTOCOL_QUIC, NDPI_PROTOCOL_UNKNOWN, NDPI_CONFIDENCE_DPI);
@@ -1638,7 +1638,7 @@ static void ndpi_search_quic(struct ndpi_detection_module_struct *ndpi_struct,
       }
       if(ret == -1) {
         NDPI_LOG_DBG2(ndpi_struct, "Keep looking for SH by client\n");
-        if(flow->packet_counter > 10 /* TODO */)
+        if(flow->core.packet_counter > 10 /* TODO */)
           NDPI_EXCLUDE_DISSECTOR(ndpi_struct, flow);
 	return;
       }
@@ -1681,8 +1681,8 @@ static void ndpi_search_quic(struct ndpi_detection_module_struct *ndpi_struct,
    */
   if(is_version_forcing_vn(version)) {
     NDPI_LOG_DBG(ndpi_struct, "Forcing VN\n");
-    flow->max_extra_packets_to_check = 4; /* TODO */
-    flow->extra_packets_func = ndpi_search_quic_extra_vn;
+    flow->core.max_extra_packets_to_check = 4; /* TODO */
+    flow->core.extra_packets_func = ndpi_search_quic_extra_vn;
     return;
   }
 
@@ -1720,8 +1720,8 @@ static void ndpi_search_quic(struct ndpi_detection_module_struct *ndpi_struct,
    * 7) We need to process other packets than (the first) ClientHello/CHLO?
    */
   if(eval_extra_processing(ndpi_struct, flow)) {
-    flow->max_extra_packets_to_check = 24; /* TODO */
-    flow->extra_packets_func = ndpi_search_quic_extra;
+    flow->core.max_extra_packets_to_check = 24; /* TODO */
+    flow->core.extra_packets_func = ndpi_search_quic_extra;
   } else if(!crypto_data) {
     NDPI_EXCLUDE_DISSECTOR(ndpi_struct, flow);
   }

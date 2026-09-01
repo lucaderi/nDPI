@@ -113,23 +113,23 @@ static void ndpi_analyze_content_signature(struct ndpi_detection_module_struct *
     - ndpi_search_shellscript
   */
 
-  if((flow->initial_binary_bytes_len >= 2) && (flow->initial_binary_bytes[0] == 0x4D) && (flow->initial_binary_bytes[1] == 0x5A))
+  if((flow->core.initial_binary_bytes_len >= 2) && (flow->core.initial_binary_bytes[0] == 0x4D) && (flow->core.initial_binary_bytes[1] == 0x5A))
     set_risk = 1, msg = "Found DOS/Windows Exe"; /* Win executable */
-  else if((flow->initial_binary_bytes_len >= 4) && (flow->initial_binary_bytes[0] == 0x7F) && (flow->initial_binary_bytes[1] == 'E')
-	  && (flow->initial_binary_bytes[2] == 'L') && (flow->initial_binary_bytes[3] == 'F'))
+  else if((flow->core.initial_binary_bytes_len >= 4) && (flow->core.initial_binary_bytes[0] == 0x7F) && (flow->core.initial_binary_bytes[1] == 'E')
+	  && (flow->core.initial_binary_bytes[2] == 'L') && (flow->core.initial_binary_bytes[3] == 'F'))
     set_risk = 1, msg = "Found Linux Exe"; /* Linux ELF executable */
-  else if((flow->initial_binary_bytes_len >= 4) && (flow->initial_binary_bytes[0] == 0xCF) && (flow->initial_binary_bytes[1] == 0xFA)
-	  && (flow->initial_binary_bytes[2] == 0xED) && (flow->initial_binary_bytes[3] == 0xFE))
+  else if((flow->core.initial_binary_bytes_len >= 4) && (flow->core.initial_binary_bytes[0] == 0xCF) && (flow->core.initial_binary_bytes[1] == 0xFA)
+	  && (flow->core.initial_binary_bytes[2] == 0xED) && (flow->core.initial_binary_bytes[3] == 0xFE))
     set_risk = 1, msg = "Found Linux Exe"; /* Linux executable */
-  else if((flow->initial_binary_bytes_len >= 3)
-	  && (flow->initial_binary_bytes[0] == '#')
-	  && (flow->initial_binary_bytes[1] == '!')
-	  && (flow->initial_binary_bytes[2] == '/'))
+  else if((flow->core.initial_binary_bytes_len >= 3)
+	  && (flow->core.initial_binary_bytes[0] == '#')
+	  && (flow->core.initial_binary_bytes[1] == '!')
+	  && (flow->core.initial_binary_bytes[2] == '/'))
     set_risk = 1, msg = "Found Unix Script"; /* Unix script (e.g. #!/bin/sh) */
-  else if(flow->initial_binary_bytes_len >= 8) {
+  else if(flow->core.initial_binary_bytes_len >= 8) {
     u_int8_t exec_pattern[] = { 0x64, 0x65, 0x78, 0x0A, 0x30, 0x33, 0x35, 0x00 };
 
-    if(memcmp(flow->initial_binary_bytes, exec_pattern, 8) == 0)
+    if(memcmp(flow->core.initial_binary_bytes, exec_pattern, 8) == 0)
       set_risk = 1, msg = "Found Android Exe"; /* Dalvik Executable (Android) */
   }
 
@@ -154,7 +154,7 @@ static int ndpi_search_http_tcp_again(struct ndpi_detection_module_struct *ndpi_
   printf("=> %s()\n", __FUNCTION__);
 #endif
 
-  if(flow->extra_packets_func == NULL) {
+  if(flow->core.extra_packets_func == NULL) {
     /* HTTP stuff completed */
 
     /* Loook for TLS over websocket */
@@ -170,10 +170,10 @@ static int ndpi_search_http_tcp_again(struct ndpi_detection_module_struct *ndpi_
     return(0); /* We are good now */
   }
 
-  if (flow->detected_protocol_stack[1] == NDPI_PROTOCOL_UNKNOWN) {
+  if (flow->core.detected_protocol_stack[1] == NDPI_PROTOCOL_UNKNOWN) {
     ndpi_search_json(ndpi_struct, flow);
   }
-  if (flow->detected_protocol_stack[1] == NDPI_PROTOCOL_UNKNOWN) {
+  if (flow->core.detected_protocol_stack[1] == NDPI_PROTOCOL_UNKNOWN) {
     ndpi_search_msgpack(ndpi_struct, flow);
   }
 
@@ -255,7 +255,7 @@ static void ndpi_validate_http_content(struct ndpi_detection_module_struct *ndpi
 
 	ndpi_http_check_human_redeable_content(ndpi_struct, flow, double_ret, len);
 	if(ndpi_struct->cfg.compute_entropy &&
-	   flow->skip_entropy_check == 0) {
+	   flow->core.skip_entropy_check == 0) {
 	  flow->entropy = ndpi_entropy(double_ret, len);
 	}
       }
@@ -290,10 +290,10 @@ static void ndpi_validate_http_content(struct ndpi_detection_module_struct *ndpi
 static void update_category_and_breed(struct ndpi_detection_module_struct *ndpi_struct,
                                       struct ndpi_flow_struct *flow) {
   ndpi_master_app_protocol proto;
-  proto.master_protocol = flow->detected_protocol_stack[1];
-  proto.app_protocol = flow->detected_protocol_stack[0];
-  flow->category = get_proto_category(ndpi_struct, proto);
-  flow->breed = get_proto_breed(ndpi_struct, proto);
+  proto.master_protocol = flow->core.detected_protocol_stack[1];
+  proto.app_protocol = flow->core.detected_protocol_stack[0];
+  flow->core.category = get_proto_category(ndpi_struct, proto);
+  flow->core.breed = get_proto_breed(ndpi_struct, proto);
 }
 
 /* *********************************************** */
@@ -311,9 +311,9 @@ static ndpi_protocol_category_t ndpi_http_check_content(struct ndpi_detection_mo
       u_int app_len_avail = packet->content_line.len-app_len;
 
       if(strncasecmp(app, "mpeg", app_len_avail) == 0) {
-	flow->category = NDPI_PROTOCOL_CATEGORY_STREAMING;
-	return(flow->category);
-      } else if(flow->detected_protocol_stack[0] != NDPI_PROTOCOL_WINDOWS_UPDATE) {
+	flow->core.category = NDPI_PROTOCOL_CATEGORY_STREAMING;
+	return(flow->core.category);
+      } else if(flow->core.detected_protocol_stack[0] != NDPI_PROTOCOL_WINDOWS_UPDATE) {
 	if(app_len_avail > 3) {
 	  const char** cmp_mimes = NULL;
 	  bool found = false;
@@ -331,7 +331,7 @@ static ndpi_protocol_category_t ndpi_http_check_content(struct ndpi_detection_mo
 	      if(strncasecmp(app, cmp_mimes[i], app_len_avail) == 0) {
 		char str[64];
 
-		flow->category = NDPI_PROTOCOL_CATEGORY_DOWNLOAD_FT;
+		flow->core.category = NDPI_PROTOCOL_CATEGORY_DOWNLOAD_FT;
 		NDPI_LOG_INFO(ndpi_struct, "found HTTP file transfer\n");
 
 		snprintf(str, sizeof(str), "Found binary mime %s", cmp_mimes[i]);
@@ -360,7 +360,7 @@ static ndpi_protocol_category_t ndpi_http_check_content(struct ndpi_detection_mo
 		  char str[64];
 
 		  snprintf(str, sizeof(str), "Found mime exe %s", cmp_mimes[i]);
-		  flow->category = NDPI_PROTOCOL_CATEGORY_DOWNLOAD_FT;
+		  flow->core.category = NDPI_PROTOCOL_CATEGORY_DOWNLOAD_FT;
 		  ndpi_set_binary_application_transfer(ndpi_struct, flow, str);
 		  NDPI_LOG_INFO(ndpi_struct, "Found executable HTTP transfer");
 		}
@@ -424,10 +424,10 @@ static ndpi_protocol_category_t ndpi_http_check_content(struct ndpi_detection_mo
 			binary_exec_file_ext[i], ATTACHMENT_LEN) == 0) {
 
 		snprintf(str, sizeof(str), "Found file extn %s", binary_exec_file_ext[i]);
-		flow->category = NDPI_PROTOCOL_CATEGORY_DOWNLOAD_FT;
+		flow->core.category = NDPI_PROTOCOL_CATEGORY_DOWNLOAD_FT;
 		ndpi_set_binary_application_transfer(ndpi_struct, flow, str);
 		NDPI_LOG_INFO(ndpi_struct, "found executable HTTP transfer");
-		return(flow->category);
+		return(flow->core.category);
 	      }
 	    }
 
@@ -444,18 +444,18 @@ static ndpi_protocol_category_t ndpi_http_check_content(struct ndpi_detection_mo
     case 'a':
       if(strncasecmp((const char *)packet->content_line.ptr, "audio",
 		     ndpi_min(packet->content_line.len, 5)) == 0)
-	flow->category = NDPI_PROTOCOL_CATEGORY_MEDIA;
+	flow->core.category = NDPI_PROTOCOL_CATEGORY_MEDIA;
       break;
 
     case 'v':
       if(strncasecmp((const char *)packet->content_line.ptr, "video",
 		     ndpi_min(packet->content_line.len, 5)) == 0)
-	flow->category = NDPI_PROTOCOL_CATEGORY_MEDIA;
+	flow->core.category = NDPI_PROTOCOL_CATEGORY_MEDIA;
       break;
     }
   }
 
-  return(flow->category);
+  return(flow->core.category);
 }
 
 /* *********************************************** */
@@ -471,18 +471,18 @@ static void ndpi_int_http_add_connection(struct ndpi_detection_module_struct *nd
      for example don't change the protocols if we have already detected a
      sub-protocol via the (content-matched) subprotocols logic (i.e.
      MPEGDASH, SOAP, ....) */
-  if(flow->detected_protocol_stack[1] == NDPI_PROTOCOL_UNKNOWN) {
+  if(flow->core.detected_protocol_stack[1] == NDPI_PROTOCOL_UNKNOWN) {
     NDPI_LOG_DBG2(ndpi_struct, "Master: %d\n", master_protocol);
-    if(flow->detected_protocol_stack[0] != master_protocol) {
+    if(flow->core.detected_protocol_stack[0] != master_protocol) {
       NDPI_LOG_DBG2(ndpi_struct, "Previous master was different\n");
-      proto_stack_reset(&flow->protocol_stack);
+      proto_stack_reset(&flow->core.protocol_stack);
     }
     ndpi_set_detected_protocol(ndpi_struct, flow, NDPI_PROTOCOL_UNKNOWN,
 			       master_protocol, NDPI_CONFIDENCE_DPI);
   }
 
-  flow->max_extra_packets_to_check = 8;
-  flow->extra_packets_func = ndpi_search_http_tcp_again;
+  flow->core.max_extra_packets_to_check = 8;
+  flow->core.extra_packets_func = ndpi_search_http_tcp_again;
 }
 
 /* ************************************************************* */
@@ -519,11 +519,11 @@ static void ndpi_http_parse_subprotocol(struct ndpi_detection_module_struct *ndp
   }
 
   master_protocol = NDPI_PROTOCOL_HTTP;
-  if(flow->detected_protocol_stack[1] != NDPI_PROTOCOL_UNKNOWN)
-    master_protocol = flow->detected_protocol_stack[1];
-  else if(flow->detected_protocol_stack[0] == NDPI_PROTOCOL_HTTP_CONNECT ||
-          flow->detected_protocol_stack[0] == NDPI_PROTOCOL_HTTP_PROXY)
-    master_protocol = flow->detected_protocol_stack[0];
+  if(flow->core.detected_protocol_stack[1] != NDPI_PROTOCOL_UNKNOWN)
+    master_protocol = flow->core.detected_protocol_stack[1];
+  else if(flow->core.detected_protocol_stack[0] == NDPI_PROTOCOL_HTTP_CONNECT ||
+          flow->core.detected_protocol_stack[0] == NDPI_PROTOCOL_HTTP_PROXY)
+    master_protocol = flow->core.detected_protocol_stack[0];
 
   if(packet->server_line.len > 7 &&
      strncmp((const char *)packet->server_line.ptr, "ntopng ", 7) == 0) {
@@ -581,7 +581,7 @@ static void ndpi_http_parse_subprotocol(struct ndpi_detection_module_struct *ndp
       break;
   }
 
-  if(flow->detected_protocol_stack[1] == NDPI_PROTOCOL_UNKNOWN &&
+  if(flow->core.detected_protocol_stack[1] == NDPI_PROTOCOL_UNKNOWN &&
      hostname_just_set && flow->host_server_name[0] != '\0') {
     ndpi_match_hostname_protocol(ndpi_struct, flow,
 				 master_protocol,
@@ -589,7 +589,7 @@ static void ndpi_http_parse_subprotocol(struct ndpi_detection_module_struct *ndp
 				 strlen(flow->host_server_name));
   }
 
-  if(flow->detected_protocol_stack[1] == NDPI_PROTOCOL_UNKNOWN &&
+  if(flow->core.detected_protocol_stack[1] == NDPI_PROTOCOL_UNKNOWN &&
      packet->http_origin.len > 0) {
     ndpi_protocol_match_result ret_match;
     char *ptr, *origin_hostname;
@@ -622,7 +622,7 @@ static void ndpi_http_parse_subprotocol(struct ndpi_detection_module_struct *ndp
     }
   }
 
-  if(flow->detected_protocol_stack[1] == NDPI_PROTOCOL_UNKNOWN &&
+  if(flow->core.detected_protocol_stack[1] == NDPI_PROTOCOL_UNKNOWN &&
      flow->http.url &&
      ((strstr(flow->http.url, ":8080/downloading?n=0.") != NULL) ||
       (strstr(flow->http.url, ":8080/upload?n=0.") != NULL))) {
@@ -632,14 +632,14 @@ static void ndpi_http_parse_subprotocol(struct ndpi_detection_module_struct *ndp
     ookla_add_to_cache(ndpi_struct, flow);
   }
 
-  if(flow->detected_protocol_stack[1] == NDPI_PROTOCOL_UNKNOWN &&
+  if(flow->core.detected_protocol_stack[1] == NDPI_PROTOCOL_UNKNOWN &&
      flow->http.url != NULL &&
      strstr(flow->http.url, "micloud.xiaomi.net") != NULL) {
     ndpi_set_detected_protocol(ndpi_struct, flow, NDPI_PROTOCOL_XIAOMI, master_protocol, NDPI_CONFIDENCE_DPI);
     update_category_and_breed(ndpi_struct, flow);
   }
 
-  if(flow->detected_protocol_stack[1] == NDPI_PROTOCOL_UNKNOWN &&
+  if(flow->core.detected_protocol_stack[1] == NDPI_PROTOCOL_UNKNOWN &&
      packet->referer_line.len > 0 &&
      ndpi_strnstr((const char *)packet->referer_line.ptr, "www.speedtest.net", packet->referer_line.len)) {
     ndpi_set_detected_protocol(ndpi_struct, flow, NDPI_PROTOCOL_OOKLA, master_protocol, NDPI_CONFIDENCE_DPI);
@@ -648,7 +648,7 @@ static void ndpi_http_parse_subprotocol(struct ndpi_detection_module_struct *ndp
   }
 
   /* WindowsUpdate over some kind of CDN */
-  if(flow->detected_protocol_stack[1] == NDPI_PROTOCOL_UNKNOWN &&
+  if(flow->core.detected_protocol_stack[1] == NDPI_PROTOCOL_UNKNOWN &&
      flow->http.user_agent && flow->http.url &&
      (strstr(flow->http.url, "delivery.mp.microsoft.com/") ||
       strstr(flow->http.url, "download.windowsupdate.com/")) &&
@@ -658,7 +658,7 @@ static void ndpi_http_parse_subprotocol(struct ndpi_detection_module_struct *ndp
     update_category_and_breed(ndpi_struct, flow);
   }
 
-  if(flow->detected_protocol_stack[1] == NDPI_PROTOCOL_UNKNOWN &&
+  if(flow->core.detected_protocol_stack[1] == NDPI_PROTOCOL_UNKNOWN &&
      packet->payload_packet_len >= 23 &&
      memcmp(packet->payload, "<policy-file-request/>", 23) == 0) {
     /*
@@ -673,25 +673,25 @@ static void ndpi_http_parse_subprotocol(struct ndpi_detection_module_struct *ndp
     ookla_add_to_cache(ndpi_struct, flow);
   }
 
-  if ((flow->detected_protocol_stack[1] == NDPI_PROTOCOL_UNKNOWN) &&
+  if ((flow->core.detected_protocol_stack[1] == NDPI_PROTOCOL_UNKNOWN) &&
       flow->http.user_agent && strstr(flow->http.user_agent, "MSRPC")) {
     ndpi_set_detected_protocol(ndpi_struct, flow, NDPI_PROTOCOL_MS_RPCH, master_protocol, NDPI_CONFIDENCE_DPI);
     update_category_and_breed(ndpi_struct, flow);
   }
 
-  if ((flow->detected_protocol_stack[1] == NDPI_PROTOCOL_UNKNOWN) &&
+  if ((flow->core.detected_protocol_stack[1] == NDPI_PROTOCOL_UNKNOWN) &&
       flow->http.user_agent && strstr(flow->http.user_agent, "Valve/Steam HTTP Client")) {
     ndpi_set_detected_protocol(ndpi_struct, flow, NDPI_PROTOCOL_STEAM, master_protocol, NDPI_CONFIDENCE_DPI);
     update_category_and_breed(ndpi_struct, flow);
   }
 
-  if ((flow->detected_protocol_stack[1] == NDPI_PROTOCOL_UNKNOWN) &&
+  if ((flow->core.detected_protocol_stack[1] == NDPI_PROTOCOL_UNKNOWN) &&
       flow->http.user_agent && strstr(flow->http.user_agent, "AirControl Agent v1.0")) {
     ndpi_set_detected_protocol(ndpi_struct, flow, NDPI_PROTOCOL_UBNTAC2, master_protocol, NDPI_CONFIDENCE_DPI);
     update_category_and_breed(ndpi_struct, flow);
   }
 
-  if ((flow->detected_protocol_stack[1] == NDPI_PROTOCOL_UNKNOWN) &&
+  if ((flow->core.detected_protocol_stack[1] == NDPI_PROTOCOL_UNKNOWN) &&
       flow->http.user_agent && strstr(flow->http.user_agent, "gtk-gnutella")) {
     ndpi_set_detected_protocol(ndpi_struct, flow, NDPI_PROTOCOL_GNUTELLA, master_protocol, NDPI_CONFIDENCE_DPI);
     update_category_and_breed(ndpi_struct, flow);
@@ -994,8 +994,8 @@ static void ndpi_check_http_url_subprotocol(struct ndpi_detection_module_struct 
 	ndpi_set_detected_protocol(ndpi_struct, flow, proto,
 				   ndpi_get_master_proto(ndpi_struct, flow),
 				   NDPI_CONFIDENCE_CUSTOM_RULE);
-	flow->category = category;
-	flow->breed = breed;
+	flow->core.category = category;
+	flow->core.breed = breed;
       }
     }
   }
@@ -1085,7 +1085,7 @@ static void check_content_type_and_change_protocol(struct ndpi_detection_module_
     if(flow->http.url) {
       u_int offset = 0, host_end = 0;
 
-      if(flow->detected_protocol_stack[0] == NDPI_PROTOCOL_HTTP_CONNECT) {
+      if(flow->core.detected_protocol_stack[0] == NDPI_PROTOCOL_HTTP_CONNECT) {
 	strncpy(flow->http.url, (char*)packet->http_url_name.ptr,
 		packet->http_url_name.len);
 
@@ -1274,7 +1274,7 @@ static void check_content_type_and_change_protocol(struct ndpi_detection_module_
 	  }
         }
 
-	flow->category = ndpi_http_check_content(ndpi_struct, flow);
+	flow->core.category = ndpi_http_check_content(ndpi_struct, flow);
       }
     }
   }
@@ -1366,11 +1366,11 @@ static void check_content_type_and_change_protocol(struct ndpi_detection_module_
 
   /* At the very end: we want to override any previous category match
      (exception: custom rule via url matching) */
-  if(flow->confidence != NDPI_CONFIDENCE_CUSTOM_RULE) {
+  if(flow->core.confidence != NDPI_CONFIDENCE_CUSTOM_RULE) {
     if(flow->http.url) {
       if(ends_with(ndpi_struct, (char *)flow->http.url, "/generate_204") ||
          ends_with(ndpi_struct, (char *)flow->http.url, "/generate204")) {
-        flow->category = NDPI_PROTOCOL_CATEGORY_CONNECTIVITY_CHECK;
+        flow->core.category = NDPI_PROTOCOL_CATEGORY_CONNECTIVITY_CHECK;
       }
     }
   }
@@ -1770,7 +1770,7 @@ static void ndpi_check_http_tcp(struct ndpi_detection_module_struct *ndpi_struct
 void ndpi_search_http_tcp(struct ndpi_detection_module_struct *ndpi_struct,
 			  struct ndpi_flow_struct *flow) {
   /* Break after 20 packets. */
-  if(flow->packet_counter > 20) {
+  if(flow->core.packet_counter > 20) {
     NDPI_EXCLUDE_DISSECTOR(ndpi_struct, flow);
     return;
   }
@@ -1790,11 +1790,11 @@ void ndpi_search_http_tcp(struct ndpi_detection_module_struct *ndpi_struct,
         both the request and the reply. We wait for 3 events (instead of 2)
         to avoid false positives triggered by missing/dropped packets */
      (flow->l4.tcp.http_asymmetric_stage == 2 &&
-      (flow->packet_direction_complete_counter[0] == 0 ||
-       flow->packet_direction_complete_counter[1] == 0))) {
-    flow->extra_packets_func = NULL; /* We're good now */
+      (flow->core.packet_direction_complete_counter[0] == 0 ||
+       flow->core.packet_direction_complete_counter[1] == 0))) {
+    flow->core.extra_packets_func = NULL; /* We're good now */
 
-    if(flow->initial_binary_bytes_len) ndpi_analyze_content_signature(ndpi_struct, flow);
+    if(flow->core.initial_binary_bytes_len) ndpi_analyze_content_signature(ndpi_struct, flow);
   }
 }
 

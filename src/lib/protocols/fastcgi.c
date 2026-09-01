@@ -80,10 +80,10 @@ static void ndpi_int_fastcgi_add_connection(struct ndpi_detection_module_struct 
                              (match != NULL ? match->protocol_id : NDPI_PROTOCOL_UNKNOWN),
                              NDPI_CONFIDENCE_DPI);
 
-  if (flow->extra_packets_func == NULL)
+  if (flow->core.extra_packets_func == NULL)
   {
-    flow->max_extra_packets_to_check = 5;
-    flow->extra_packets_func = ndpi_search_fastcgi_extra;
+    flow->core.max_extra_packets_to_check = 5;
+    flow->core.extra_packets_func = ndpi_search_fastcgi_extra;
   }
 }
 
@@ -190,8 +190,8 @@ static void ndpi_search_fastcgi(struct ndpi_detection_module_struct *ndpi_struct
   {
     if (content_len == 0)
     {
-      flow->max_extra_packets_to_check = 0;
-      flow->extra_packets_func = NULL;
+      flow->core.max_extra_packets_to_check = 0;
+      flow->core.extra_packets_func = NULL;
       return;
     }
 
@@ -221,7 +221,7 @@ static void ndpi_search_fastcgi(struct ndpi_detection_module_struct *ndpi_struct
     return;
   }
 
-  if (flow->packet_counter > 2)
+  if (flow->core.packet_counter > 2)
   {
     ndpi_int_fastcgi_add_connection(ndpi_struct, flow, NULL);
   }
@@ -232,7 +232,7 @@ static int ndpi_search_fastcgi_extra(struct ndpi_detection_module_struct * ndpi_
 {
   ndpi_search_fastcgi(ndpi_struct, flow);
 
-  return flow->extra_packets_func != NULL;
+  return flow->core.extra_packets_func != NULL;
 }
 
 void init_fastcgi_dissector(struct ndpi_detection_module_struct *ndpi_struct)

@@ -118,7 +118,7 @@ static void ndpi_search_mail_pop_tcp(struct ndpi_detection_module_struct *ndpi_s
       pop_set_detected(ndpi_struct, flow, NDPI_PROTOCOL_MAIL_POPS);
       if(ndpi_struct->cfg.pop_opportunistic_tls_enabled) {
         NDPI_LOG_DBG(ndpi_struct, "Switching to [%d/%d]\n",
-                     flow->detected_protocol_stack[0], flow->detected_protocol_stack[1]);
+                     flow->core.detected_protocol_stack[0], flow->core.detected_protocol_stack[1]);
         switch_extra_dissection_to_tls(ndpi_struct, flow);
         return;
       }
@@ -169,7 +169,7 @@ static void ndpi_search_mail_pop_tcp(struct ndpi_detection_module_struct *ndpi_s
        ntohs(get_u_int16_t(packet->payload, packet->payload_packet_len - 2)) == 0x0d0a) ||
       flow->l4.tcp.pop_command_bitmask != 0 ||
       flow->l4.tcp.mail_pop_stage != 0) &&
-     flow->packet_counter < 12) {
+     flow->core.packet_counter < 12) {
     NDPI_LOG_DBG2(ndpi_struct, "maybe part of split mail_pop packet -> skip\n");
     return;
   }
@@ -199,8 +199,8 @@ static void popInitExtraPacketProcessing(struct ndpi_flow_struct *flow) {
 #ifdef POP_DEBUG
   printf("**** %s()\n", __FUNCTION__);
 #endif
-  flow->max_extra_packets_to_check = 7;
-  flow->extra_packets_func = ndpi_extra_search_mail_pop_tcp;
+  flow->core.max_extra_packets_to_check = 7;
+  flow->core.extra_packets_func = ndpi_extra_search_mail_pop_tcp;
 }
 
 /* **************************************** */

@@ -1651,7 +1651,7 @@ int ndpi_dpi2json(struct ndpi_detection_module_struct *ndpi_struct,
   if(flow == NULL) return(-1);
 
   ndpi_serialize_start_of_block(serializer, "ndpi");
-  ndpi_serialize_proto(ndpi_struct, serializer, flow->risk, flow->confidence, l7_protocol);
+  ndpi_serialize_proto(ndpi_struct, serializer, flow->core.risk, flow->core.confidence, l7_protocol);
 
   host_server_name = ndpi_get_flow_info(flow, &l7_protocol);
 
@@ -3548,7 +3548,7 @@ static u_int8_t ndpi_check_hostname_risk_exception(struct ndpi_detection_module_
       ac_input_text.option = 0;
 
       if(ac_automata_search(automa->ac_automa, &ac_input_text, &match) > 0) {
-	if(flow) flow->risk_mask &= match.number64;
+	if(flow) flow->core.risk_mask &= match.number64;
 	ret = 1;
       }
     }
@@ -3569,7 +3569,7 @@ static u_int8_t ndpi_check_ipv4_exception(struct ndpi_detection_module_struct *n
   pin.s_addr = addr;
   r = ndpi_host_ip_risk_ptree_match(ndpi_str, &pin);
 
-  if(flow) flow->risk_mask &= r;
+  if(flow) flow->core.risk_mask &= r;
 
   return((r != (u_int64_t)-1) ? 1 : 0);
 }
@@ -3583,7 +3583,7 @@ static u_int8_t ndpi_check_ipv6_exception(struct ndpi_detection_module_struct *n
 
   r = ndpi_host_ip_risk_ptree_match6(ndpi_str, addr);
 
-  if(flow) flow->risk_mask &= r;
+  if(flow) flow->core.risk_mask &= r;
 
   return((r != (u_int64_t)-1) ? 1 : 0);
 }
@@ -3610,55 +3610,55 @@ int is_flowrisk_info_enabled(struct ndpi_detection_module_struct *ndpi_str, ndpi
 
 void ndpi_handle_risk_exceptions(struct ndpi_detection_module_struct *ndpi_str,
 				 struct ndpi_flow_struct *flow) {
-  if(flow->risk == 0) return; /* Nothing to do */
+  if(flow->core.risk == 0) return; /* Nothing to do */
 
-  if((!flow->host_risk_mask_evaluated) && (!flow->ip_risk_mask_evaluated))
-    flow->risk_mask = (u_int64_t)-1; /* No mask */
+  if((!flow->core.host_risk_mask_evaluated) && (!flow->core.ip_risk_mask_evaluated))
+    flow->core.risk_mask = (u_int64_t)-1; /* No mask */
 
-  if(!flow->host_risk_mask_evaluated) {
+  if(!flow->core.host_risk_mask_evaluated) {
     char *host = ndpi_get_flow_name(flow);
 
     if(host && (host[0] != '\0')) {
       /* Check host exception */
       ndpi_check_hostname_risk_exception(ndpi_str, flow, host);
 
-      if(flow->risk_mask == 0) {
+      if(flow->core.risk_mask == 0) {
 	u_int i;
 
 	/*
 	  Might be that the exception applied when some risks
 	  were already triggered: we need to clean them up
 	*/
-	for(i=0; i<flow->num_risk_infos; i++) {
-	  if(flow->risk_infos[i].info != NULL) {
-	    ndpi_free(flow->risk_infos[i].info);
-	    flow->risk_infos[i].info = NULL;
+	for(i=0; i<flow->core.num_risk_infos; i++) {
+	  if(flow->core.risk_infos[i].info != NULL) {
+	    ndpi_free(flow->core.risk_infos[i].info);
+	    flow->core.risk_infos[i].info = NULL;
 	  }
 
-	  flow->risk_infos[i].id = NDPI_NO_RISK;
+	  flow->core.risk_infos[i].id = NDPI_NO_RISK;
 	}
 
-	flow->num_risk_infos = 0;
+	flow->core.num_risk_infos = 0;
       }
 
       /* Used to avoid double checks (e.g. in DNS req/rsp) */
-      flow->host_risk_mask_evaluated = 1;
+      flow->core.host_risk_mask_evaluated = 1;
     }
   }
 
-  if(!flow->ip_risk_mask_evaluated) {
-    if(flow->is_ipv6 == 0) {
-      ndpi_check_ipv4_exception(ndpi_str, flow, flow->c_address.v4 /* Client */);
-      ndpi_check_ipv4_exception(ndpi_str, flow, flow->s_address.v4 /* Server */);
+  if(!flow->core.ip_risk_mask_evaluated) {
+    if(flow->core.is_ipv6 == 0) {
+      ndpi_check_ipv4_exception(ndpi_str, flow, flow->core.c_address.v4 /* Client */);
+      ndpi_check_ipv4_exception(ndpi_str, flow, flow->core.s_address.v4 /* Server */);
     } else {
-      ndpi_check_ipv6_exception(ndpi_str, flow, (struct in6_addr *)&flow->c_address.v6 /* Client */);
-      ndpi_check_ipv6_exception(ndpi_str, flow, (struct in6_addr *)&flow->s_address.v6 /* Server */);
+      ndpi_check_ipv6_exception(ndpi_str, flow, (struct in6_addr *)&flow->core.c_address.v6 /* Client */);
+      ndpi_check_ipv6_exception(ndpi_str, flow, (struct in6_addr *)&flow->core.s_address.v6 /* Server */);
     }
 
-    flow->ip_risk_mask_evaluated = 1;
+    flow->core.ip_risk_mask_evaluated = 1;
   }
 
-  flow->risk &= flow->risk_mask;
+  flow->core.risk &= flow->core.risk_mask;
 }
 
 /* ******************************************************************** */
@@ -3676,25 +3676,25 @@ void ndpi_set_risk(struct ndpi_detection_module_struct *ndpi_str,
     ndpi_risk v = 1ull << r;
 
     /* In case there is an exception set, take it into account */
-    if(flow->host_risk_mask_evaluated)
-      v &= flow->risk_mask;
+    if(flow->core.host_risk_mask_evaluated)
+      v &= flow->core.risk_mask;
 
-    // NDPI_SET_BIT(flow->risk, (u_int32_t)r);
-    flow->risk |= v;
+    // NDPI_SET_BIT(flow->core.risk, (u_int32_t)r);
+    flow->core.risk |= v;
 
     /* Will be handled by ndpi_reconcile_protocols() */
     // ndpi_handle_risk_exceptions(ndpi_str, flow);
 
-    if(flow->risk != 0 /* check if it has been masked */) {
+    if(flow->core.risk != 0 /* check if it has been masked */) {
       if(is_flowrisk_info_enabled(ndpi_str, r) &&
          risk_message != NULL) {
-	if(flow->num_risk_infos < MAX_NUM_RISK_INFOS) {
+	if(flow->core.num_risk_infos < MAX_NUM_RISK_INFOS) {
 	  char *s = ndpi_strdup(risk_message);
 
 	  if(s != NULL) {
-	    flow->risk_infos[flow->num_risk_infos].id = r;
-	    flow->risk_infos[flow->num_risk_infos].info = s;
-	    flow->num_risk_infos++;
+	    flow->core.risk_infos[flow->core.num_risk_infos].id = r;
+	    flow->core.risk_infos[flow->core.num_risk_infos].info = s;
+	    flow->core.num_risk_infos++;
 	  }
 	}
       }
@@ -3702,22 +3702,22 @@ void ndpi_set_risk(struct ndpi_detection_module_struct *ndpi_str,
   } else if(is_flowrisk_info_enabled(ndpi_str, r) && risk_message) {
     u_int8_t i;
 
-    for(i = 0; i < flow->num_risk_infos; i++)
-      if(flow->risk_infos[i].id == r) {
-	if((flow->risk_infos[i].info != NULL)
+    for(i = 0; i < flow->core.num_risk_infos; i++)
+      if(flow->core.risk_infos[i].id == r) {
+	if((flow->core.risk_infos[i].info != NULL)
 	   && (r != NDPI_SUSPICIOUS_ENTROPY /* Entropy changes when recomputed, so let's keep only one message */)
 	   /* Messages are different */
-	   && strcmp(flow->risk_infos[i].info, risk_message)
-	   && (strstr(flow->risk_infos[i].info, risk_message) == NULL)
+	   && strcmp(flow->core.risk_infos[i].info, risk_message)
+	   && (strstr(flow->core.risk_infos[i].info, risk_message) == NULL)
 	   ) {
 	  char buf[1024];
 
 	  /* Concatenate risks info */
 	  snprintf(buf, sizeof(buf), "%s;%s",
-		   flow->risk_infos[i].info, risk_message);
+		   flow->core.risk_infos[i].info, risk_message);
 
-	  ndpi_free(flow->risk_infos[i].info);
-	  flow->risk_infos[i].info = ndpi_strdup(buf);
+	  ndpi_free(flow->core.risk_infos[i].info);
+	  flow->core.risk_infos[i].info = ndpi_strdup(buf);
 	}
 
         return;
@@ -3727,13 +3727,13 @@ void ndpi_set_risk(struct ndpi_detection_module_struct *ndpi_str,
        that we want to save.
        This might happen with NDPI_HTTP_CRAWLER_BOT which might have been set early via
        IP matching (no details) and now via UA matching (with message). */
-    if(flow->num_risk_infos < MAX_NUM_RISK_INFOS) {
+    if(flow->core.num_risk_infos < MAX_NUM_RISK_INFOS) {
       char *s = ndpi_strdup(risk_message);
 
       if(s != NULL) {
-        flow->risk_infos[flow->num_risk_infos].id = r;
-        flow->risk_infos[flow->num_risk_infos].info = s;
-        flow->num_risk_infos++;
+        flow->core.risk_infos[flow->core.num_risk_infos].id = r;
+        flow->core.risk_infos[flow->core.num_risk_infos].info = s;
+        flow->core.num_risk_infos++;
       }
     }
   }
@@ -3747,23 +3747,23 @@ void ndpi_unset_risk(struct ndpi_detection_module_struct *ndpi_str,
     u_int8_t i, j;
     ndpi_risk v = 1ull << r;
 
-    flow->risk &= ~v;
+    flow->core.risk &= ~v;
 
     if(!is_flowrisk_info_enabled(ndpi_str, r))
       return;
 
-    for(i = 0; i < flow->num_risk_infos; i++) {
-      if(flow->risk_infos[i].id == r) {
-        flow->risk_infos[i].id = 0;
-        if(flow->risk_infos[i].info) {
-          ndpi_free(flow->risk_infos[i].info);
-          flow->risk_infos[i].info = NULL;
+    for(i = 0; i < flow->core.num_risk_infos; i++) {
+      if(flow->core.risk_infos[i].id == r) {
+        flow->core.risk_infos[i].id = 0;
+        if(flow->core.risk_infos[i].info) {
+          ndpi_free(flow->core.risk_infos[i].info);
+          flow->core.risk_infos[i].info = NULL;
         }
-        for(j = i + 1; j < flow->num_risk_infos; j++) {
-          flow->risk_infos[j - 1].id = flow->risk_infos[j].id;
-          flow->risk_infos[j - 1].info = flow->risk_infos[j].info;
+        for(j = i + 1; j < flow->core.num_risk_infos; j++) {
+          flow->core.risk_infos[j - 1].id = flow->core.risk_infos[j].id;
+          flow->core.risk_infos[j - 1].info = flow->core.risk_infos[j].info;
         }
-        flow->num_risk_infos--;
+        flow->core.num_risk_infos--;
       }
     }
   }
@@ -3774,7 +3774,7 @@ void ndpi_unset_risk(struct ndpi_detection_module_struct *ndpi_str,
 int ndpi_isset_risk(struct ndpi_flow_struct *flow, ndpi_risk_enum r) {
   ndpi_risk v = 1ull << r;
 
-  return(((flow->risk & v) == v) ?  1 : 0);
+  return(((flow->core.risk & v) == v) ?  1 : 0);
 }
 
 /* ******************************************************************** */
@@ -3936,18 +3936,18 @@ void ndpi_entropy2risk(struct ndpi_detection_module_struct *ndpi_struct,
   if (NDPI_ENTROPY_PLAINTEXT(flow->entropy))
     goto reset_risk;
 
-  if (flow->detected_protocol_stack[0] == NDPI_PROTOCOL_TLS ||
-      flow->detected_protocol_stack[1] == NDPI_PROTOCOL_TLS ||
-      flow->detected_protocol_stack[0] == NDPI_PROTOCOL_QUIC ||
-      flow->detected_protocol_stack[1] == NDPI_PROTOCOL_QUIC ||
-      flow->detected_protocol_stack[0] == NDPI_PROTOCOL_DTLS ||
-      flow->detected_protocol_stack[1] == NDPI_PROTOCOL_DTLS) {
-    flow->skip_entropy_check = 1;
+  if (flow->core.detected_protocol_stack[0] == NDPI_PROTOCOL_TLS ||
+      flow->core.detected_protocol_stack[1] == NDPI_PROTOCOL_TLS ||
+      flow->core.detected_protocol_stack[0] == NDPI_PROTOCOL_QUIC ||
+      flow->core.detected_protocol_stack[1] == NDPI_PROTOCOL_QUIC ||
+      flow->core.detected_protocol_stack[0] == NDPI_PROTOCOL_DTLS ||
+      flow->core.detected_protocol_stack[1] == NDPI_PROTOCOL_DTLS) {
+    flow->core.skip_entropy_check = 1;
     goto reset_risk;
   }
 
-  if (flow->confidence != NDPI_CONFIDENCE_DPI &&
-      flow->confidence != NDPI_CONFIDENCE_DPI_CACHE) {
+  if (flow->core.confidence != NDPI_CONFIDENCE_DPI &&
+      flow->core.confidence != NDPI_CONFIDENCE_DPI_CACHE) {
     ndpi_set_risk(ndpi_struct, flow, NDPI_SUSPICIOUS_ENTROPY,
                   ndpi_entropy2str(flow->entropy, str, sizeof(str)));
     return;
@@ -3960,12 +3960,12 @@ void ndpi_entropy2risk(struct ndpi_detection_module_struct *ndpi_struct,
       ndpi_isset_risk(flow, NDPI_HTTP_SUSPICIOUS_CONTENT) ||
       ndpi_isset_risk(flow, NDPI_DNS_SUSPICIOUS_TRAFFIC) ||
       ndpi_isset_risk(flow, NDPI_MALFORMED_PACKET) ||
-      (flow->category == NDPI_PROTOCOL_CATEGORY_DOWNLOAD_FT &&
-       (flow->detected_protocol_stack[0] == NDPI_PROTOCOL_HTTP ||
-        flow->detected_protocol_stack[1] == NDPI_PROTOCOL_HTTP)) ||
-      flow->category == NDPI_PROTOCOL_CATEGORY_DATA_TRANSFER ||
-      flow->category == NDPI_PROTOCOL_CATEGORY_UNSPECIFIED ||
-      flow->category == NDPI_PROTOCOL_CATEGORY_WEB)
+      (flow->core.category == NDPI_PROTOCOL_CATEGORY_DOWNLOAD_FT &&
+       (flow->core.detected_protocol_stack[0] == NDPI_PROTOCOL_HTTP ||
+        flow->core.detected_protocol_stack[1] == NDPI_PROTOCOL_HTTP)) ||
+      flow->core.category == NDPI_PROTOCOL_CATEGORY_DATA_TRANSFER ||
+      flow->core.category == NDPI_PROTOCOL_CATEGORY_UNSPECIFIED ||
+      flow->core.category == NDPI_PROTOCOL_CATEGORY_WEB)
   {
     ndpi_set_risk(ndpi_struct, flow, NDPI_SUSPICIOUS_ENTROPY,
                   ndpi_entropy2str(flow->entropy, str, sizeof(str)));
@@ -4120,7 +4120,7 @@ u_int8_t ndpi_is_encrypted_proto(struct ndpi_detection_module_struct *ndpi_str,
 /* ******************************************* */
 
 u_int32_t ndpi_get_flow_error_code(struct ndpi_flow_struct *flow) {
-  switch(flow->detected_protocol_stack[0] /* proto.app_protocol */) {
+  switch(flow->core.detected_protocol_stack[0] /* proto.app_protocol */) {
   case NDPI_PROTOCOL_DNS:
     return(flow->protos.dns.reply_code);
 
@@ -4210,16 +4210,16 @@ char* ndpi_get_flow_risk_info(struct ndpi_flow_struct *flow,
 
   if((out == NULL)
      || (flow == NULL)
-     || (flow->num_risk_infos == 0))
+     || (flow->core.num_risk_infos == 0))
     return(NULL);
 
   /* Ordered list of flow risk infos */
-  ordered_risk_infos = ndpi_malloc(sizeof(flow->risk_infos));
+  ordered_risk_infos = ndpi_malloc(sizeof(flow->core.risk_infos));
   if(!ordered_risk_infos)
     return(NULL);
 
-  memcpy(ordered_risk_infos, flow->risk_infos, sizeof(flow->risk_infos));
-  qsort(ordered_risk_infos, flow->num_risk_infos,
+  memcpy(ordered_risk_infos, flow->core.risk_infos, sizeof(flow->core.risk_infos));
+  qsort(ordered_risk_infos, flow->core.num_risk_infos,
 	sizeof(struct ndpi_risk_information), risk_infos_pair_cmp);
 
   if(use_json) {
@@ -4232,7 +4232,7 @@ char* ndpi_get_flow_risk_info(struct ndpi_flow_struct *flow,
       return(NULL);
     }
 
-    for(i=0; i<flow->num_risk_infos; i++)
+    for(i=0; i<flow->core.num_risk_infos; i++)
       ndpi_serialize_uint32_string(&serializer,
                                    ordered_risk_infos[i].id,
                                    ordered_risk_infos[i].info);
@@ -4253,7 +4253,7 @@ char* ndpi_get_flow_risk_info(struct ndpi_flow_struct *flow,
   } else {
     out[0] = '\0', out_len--;
 
-    for(i=0; (i<flow->num_risk_infos) && (out_len > offset); i++) {
+    for(i=0; (i<flow->core.num_risk_infos) && (out_len > offset); i++) {
       int rc = snprintf(&out[offset], out_len-offset, "%s%s",
 			(i == 0) ? "" : ";",
 			ordered_risk_infos[i].info);
@@ -4680,8 +4680,8 @@ u_int ndpi_encode_domain(struct ndpi_detection_module_struct *ndpi_str,
 /* ****************************************************** */
 
 static u_int8_t is_ndpi_proto(struct ndpi_flow_struct *flow, u_int16_t id) {
-  if((flow->detected_protocol_stack[0] == id)
-     || (flow->detected_protocol_stack[1] == id))
+  if((flow->core.detected_protocol_stack[0] == id)
+     || (flow->core.detected_protocol_stack[1] == id))
     return(1);
   else
     return(0);
@@ -5222,10 +5222,10 @@ static u_int16_t ndpi_tls_refine_master_protocol(struct ndpi_detection_module_st
 
 u_int16_t ndpi_get_master_proto(struct ndpi_detection_module_struct *ndpi_struct,
 				struct ndpi_flow_struct *flow) {
-  if(flow->detected_protocol_stack[1] != NDPI_PROTOCOL_UNKNOWN)
-    return flow->detected_protocol_stack[1];
-  if(flow->detected_protocol_stack[0] != NDPI_PROTOCOL_UNKNOWN)
-    return flow->detected_protocol_stack[0];
+  if(flow->core.detected_protocol_stack[1] != NDPI_PROTOCOL_UNKNOWN)
+    return flow->core.detected_protocol_stack[1];
+  if(flow->core.detected_protocol_stack[0] != NDPI_PROTOCOL_UNKNOWN)
+    return flow->core.detected_protocol_stack[0];
 
   return ndpi_tls_refine_master_protocol(ndpi_struct, flow);
 }

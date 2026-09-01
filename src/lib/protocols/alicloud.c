@@ -62,7 +62,7 @@ static void ndpi_search_alicloud(struct ndpi_detection_module_struct *ndpi_struc
     }
   }
 
-  if (flow->packet_counter > 3)
+  if (flow->core.packet_counter > 3)
   {
     NDPI_EXCLUDE_DISSECTOR(ndpi_struct, flow);
   }

@@ -65,8 +65,8 @@ static void ndpi_int_openvpn_add_connection(struct ndpi_detection_module_struct 
                                             ndpi_confidence_t confidence)
 {
   if(ndpi_struct->cfg.openvpn_subclassification_by_ip &&
-     ndpi_struct->proto_defaults[flow->guessed_protocol_id_by_ip].protoCategory == NDPI_PROTOCOL_CATEGORY_VPN) {
-    ndpi_set_detected_protocol(ndpi_struct, flow, flow->guessed_protocol_id_by_ip, NDPI_PROTOCOL_OPENVPN, confidence);
+     ndpi_struct->proto_defaults[flow->core.guessed_protocol_id_by_ip].protoCategory == NDPI_PROTOCOL_CATEGORY_VPN) {
+    ndpi_set_detected_protocol(ndpi_struct, flow, flow->core.guessed_protocol_id_by_ip, NDPI_PROTOCOL_OPENVPN, confidence);
   } else {
     ndpi_set_detected_protocol(ndpi_struct, flow, NDPI_PROTOCOL_OPENVPN, NDPI_PROTOCOL_UNKNOWN, confidence);
   }
@@ -168,7 +168,7 @@ static int search_standard(struct ndpi_detection_module_struct* ndpi_struct,
     NDPI_LOG_DBG2(ndpi_struct, "Invalid key id\n");
     return 1; /* Exclude */
   }
-  if(flow->packet_direction_counter[dir] == 1 &&
+  if(flow->core.packet_direction_counter[dir] == 1 &&
      !(opcode == P_CONTROL_HARD_RESET_CLIENT_V1 ||
        opcode == P_CONTROL_HARD_RESET_CLIENT_V2 ||
        opcode == P_CONTROL_HARD_RESET_SERVER_V1 ||
@@ -187,7 +187,7 @@ static int search_standard(struct ndpi_detection_module_struct* ndpi_struct,
     NDPI_LOG_DBG2(ndpi_struct, "Invalid len first pkt (QUIC collision)\n");
     return 1; /* Exclude */
   }
-  if(flow->packet_direction_counter[dir] == 1 &&
+  if(flow->core.packet_direction_counter[dir] == 1 &&
      packet->tcp &&
      ntohs(*(u_int16_t *)(packet->payload)) != ovpn_payload_len) {
     NDPI_LOG_DBG2(ndpi_struct, "Invalid tcp len on reset\n");
@@ -195,23 +195,23 @@ static int search_standard(struct ndpi_detection_module_struct* ndpi_struct,
   }
 
   NDPI_LOG_DBG2(ndpi_struct, "[packets %d/%d][opcode: %u][len: %u]\n",
-                flow->packet_direction_counter[dir],
-                flow->packet_direction_counter[!dir],
+                flow->core.packet_direction_counter[dir],
+                flow->core.packet_direction_counter[!dir],
                 opcode, ovpn_payload_len);
 
-  if(flow->packet_direction_counter[dir] > 1) {
+  if(flow->core.packet_direction_counter[dir] > 1) {
     if(memcmp(flow->openvpn.ovpn_session_id[dir], ovpn_payload + 1, 8) != 0) {
       NDPI_LOG_DBG2(ndpi_struct, "Invalid session id on two consecutive pkts in the same dir\n");
       return 1; /* Exclude */
     }
-    if(flow->packet_direction_counter[dir] >= 2 &&
-       flow->packet_direction_counter[!dir] >= 2) {
+    if(flow->core.packet_direction_counter[dir] >= 2 &&
+       flow->core.packet_direction_counter[!dir] >= 2) {
       /* (2) */
       NDPI_LOG_INFO(ndpi_struct,"found openvpn (session ids match on both direction)\n");
       return 2; /* Found */
     }
-    if(flow->packet_direction_counter[dir] >= 4 &&
-       flow->packet_direction_counter[!dir] == 0) {
+    if(flow->core.packet_direction_counter[dir] >= 4 &&
+       flow->core.packet_direction_counter[!dir] == 0) {
       /* (3) */
       NDPI_LOG_INFO(ndpi_struct,"found openvpn (asymmetric)\n");
       return 2; /* Found */
@@ -223,7 +223,7 @@ static int search_standard(struct ndpi_detection_module_struct* ndpi_struct,
   }
 
   /* (1) */
-  if(flow->packet_direction_counter[!dir] > 0 &&
+  if(flow->core.packet_direction_counter[!dir] > 0 &&
      (opcode == P_CONTROL_HARD_RESET_SERVER_V1 ||
       opcode == P_CONTROL_HARD_RESET_SERVER_V2)) {
 
@@ -256,7 +256,7 @@ static int search_standard(struct ndpi_detection_module_struct* ndpi_struct,
     }
   }
 
-  if(failed || flow->packet_counter > 5)
+  if(failed || flow->core.packet_counter > 5)
     return 1; /* Exclude */
   return 0; /* Continue */
 }
@@ -289,16 +289,16 @@ static int search_heur_opcode_common(struct ndpi_detection_module_struct* ndpi_s
   */
 
   NDPI_LOG_DBG2(ndpi_struct, "Heur-opcode: [packets %d/%d msgs %d, dir %d][first byte 0x%x][opcode: 0x%x]\n",
-                flow->packet_direction_counter[0],
-                flow->packet_direction_counter[1],
+                flow->core.packet_direction_counter[0],
+                flow->core.packet_direction_counter[1],
                 flow->ovpn_heur_opcode__num_msgs,
                 dir, first_byte, opcode);
 
   flow->openvpn.ovpn_heur_opcode__num_msgs++;
 
-  if(flow->packet_direction_counter[dir] == 1) {
+  if(flow->core.packet_direction_counter[dir] == 1) {
     flow->openvpn.ovpn_heur_opcode__resets[dir] = opcode;
-    if(flow->packet_direction_counter[!dir] > 0 &&
+    if(flow->core.packet_direction_counter[!dir] > 0 &&
        opcode == flow->openvpn.ovpn_heur_opcode__resets[!dir]) {
       NDPI_LOG_DBG2(ndpi_struct, "Heur-opcode: same resets\n");
       return 1; /* Exclude */
@@ -313,13 +313,13 @@ static int search_heur_opcode_common(struct ndpi_detection_module_struct* ndpi_s
     }
     return 0; /* Continue */
   }
-  if(flow->packet_direction_counter[!dir] > 0 &&
+  if(flow->core.packet_direction_counter[!dir] > 0 &&
      opcode == flow->openvpn.ovpn_heur_opcode__resets[!dir]) {
     NDPI_LOG_DBG2(ndpi_struct, "Heur-opcode: same resets\n");
     return 1; /* Exclude */
   }
 
-  if(flow->packet_direction_counter[!dir] == 0) {
+  if(flow->core.packet_direction_counter[!dir] == 0) {
     NDPI_LOG_DBG2(ndpi_struct, "Heur-opcode: opcode different than reset but not reset in the other direction\n");
     return 1; /* Exclude */
   }
@@ -354,8 +354,8 @@ static int search_heur_opcode_common(struct ndpi_detection_module_struct* ndpi_s
 
   /* Done. Check what we have found...*/
 
-  if(flow->packet_direction_counter[0] == 0 ||
-     flow->packet_direction_counter[1] == 0) {
+  if(flow->core.packet_direction_counter[0] == 0 ||
+     flow->core.packet_direction_counter[1] == 0) {
     NDPI_LOG_DBG2(ndpi_struct, "Heur-opcode: excluded because asymmetric traffic\n");
     return 1; /* Exclude */
   }

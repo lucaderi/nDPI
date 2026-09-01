@@ -91,7 +91,7 @@ static void ndpi_search_iax(struct ndpi_detection_module_struct *ndpi_struct, st
   struct ndpi_packet_struct *packet = &ndpi_struct->packet;
 
   if(packet->udp 
-     && (flow->detected_protocol_stack[0] == NDPI_PROTOCOL_UNKNOWN))
+     && (flow->core.detected_protocol_stack[0] == NDPI_PROTOCOL_UNKNOWN))
     ndpi_search_setup_iax(ndpi_struct, flow);
 }
 

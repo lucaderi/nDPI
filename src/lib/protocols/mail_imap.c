@@ -117,7 +117,7 @@ static void ndpi_search_mail_imap_tcp(struct ndpi_detection_module_struct *ndpi_
         imap_set_detected(ndpi_struct, flow, NDPI_PROTOCOL_MAIL_IMAPS);
         if(ndpi_struct->cfg.imap_opportunistic_tls_enabled) {
           NDPI_LOG_DBG(ndpi_struct, "Switching to [%d/%d]\n",
-                       flow->detected_protocol_stack[0], flow->detected_protocol_stack[1]);
+                       flow->core.detected_protocol_stack[0], flow->core.detected_protocol_stack[1]);
           switch_extra_dissection_to_tls(ndpi_struct, flow);
           return;
         }
@@ -249,7 +249,7 @@ static void ndpi_search_mail_imap_tcp(struct ndpi_detection_module_struct *ndpi_
   /* Allow a few unrecognised packets if we have already seen at least one IMAP token */
   if(packet->payload_packet_len >= 2 &&
      ntohs(get_u_int16_t(packet->payload, packet->payload_packet_len - 2)) == 0x0d0a &&
-     flow->packet_counter < 8 &&
+     flow->core.packet_counter < 8 &&
      flow->l4.tcp.mail_imap_stage >= 1) {
     NDPI_LOG_DBG2(ndpi_struct,
                   "no imap command or response but packet count < 6 and imap stage >= 1 -> skip\n");

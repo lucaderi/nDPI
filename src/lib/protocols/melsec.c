@@ -49,7 +49,7 @@ static void ndpi_search_melsec(struct ndpi_detection_module_struct *ndpi_struct,
     }
   }
 
-  if (flow->packet_counter > 2) {
+  if (flow->core.packet_counter > 2) {
     NDPI_EXCLUDE_DISSECTOR(ndpi_struct, flow);
   }
 }

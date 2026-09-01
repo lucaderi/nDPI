@@ -88,7 +88,7 @@ static void ndpi_search_raft(struct ndpi_detection_module_struct *ndpi_struct,
     return;
   }
 
-  if (flow->packet_counter < 3)
+  if (flow->core.packet_counter < 3)
   {
     return;
   }

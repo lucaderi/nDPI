@@ -67,7 +67,7 @@ static void ndpi_search_iso9506_1_mms(struct ndpi_detection_module_struct *ndpi_
     }
   }
 
-  if (flow->packet_direction_counter[packet->packet_direction] > 2) {
+  if (flow->core.packet_direction_counter[packet->packet_direction] > 2) {
     NDPI_EXCLUDE_DISSECTOR(ndpi_struct, flow);
   }
 }

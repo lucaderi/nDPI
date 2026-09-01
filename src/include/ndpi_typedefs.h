@@ -1638,7 +1638,18 @@ struct ndpi_ipsec_details {
   struct ndpi_ipsec_proposal proposal[2];
 };
 
-struct ndpi_flow_struct {
+struct ndpi_flow_struct_dns {
+  u_int8_t num_queries, num_answers, reply_code, num_rsp_addr;
+  u_int8_t is_query:1, pad:7;
+  u_int16_t transaction_id, query_type, query_class, rsp_type, edns0_udp_payload_size;
+  u_int8_t is_rsp_addr_ipv6[MAX_NUM_DNS_RSP_ADDRESSES];
+  ndpi_ip_addr_t rsp_addr[MAX_NUM_DNS_RSP_ADDRESSES]; /* The first num_rsp_addr address in a DNS response packet (A and AAAA) */
+  u_int32_t rsp_addr_ttl[MAX_NUM_DNS_RSP_ADDRESSES];
+  char geolocation_iata_code[4];
+  char ptr_domain_name[64 /* large enough but smaller than { } tls */];
+};
+
+struct ndpi_flow_code_struct {
   u_int16_t detected_protocol_stack[NDPI_PROTOCOL_SIZE];
   struct ndpi_proto_stack protocol_stack;
   ndpi_classification_state state;
@@ -1658,10 +1669,11 @@ struct ndpi_flow_struct {
   /* First Packet Classification info */
   struct ndpi_fpc_info fpc;
 
-  /* Flow addresses (useful for LRU lookups in ndpi_detection_giveup())
-     and ports. All in *network* byte order.
-     Client and server.
-   */
+  /*
+    Flow addresses (useful for LRU lookups in ndpi_detection_giveup())
+    and ports. All in *network* byte order.
+    Client and server.
+  */
   union {
     u_int32_t v4;
     struct ndpi_in6_addr v6;
@@ -1688,6 +1700,18 @@ struct ndpi_flow_struct {
   u_int16_t all_packets_counter;
   u_int16_t packet_direction_complete_counter[2];
 
+  u_int8_t initial_binary_bytes[8], initial_binary_bytes_len;
+  u_int8_t ip_risk_mask_evaluated:1, host_risk_mask_evaluated:1, tree_risk_checked:1, _notused:5;
+  ndpi_risk risk_mask; /* Stores the flow risk mask for flow peers */
+  ndpi_risk risk, risk_shadow; /* Issues found with this flow [bitmask of ndpi_risk] */
+  struct ndpi_risk_information risk_infos[MAX_NUM_RISK_INFOS]; /* String that contains information about the risks found */
+  u_int8_t num_risk_infos;
+};
+
+
+struct ndpi_flow_struct {
+  struct ndpi_flow_code_struct core;
+  
   /*
     the tcp / udp / other l4 value union
     used to reduce the number of bytes for tcp or udp protocol states
@@ -1708,17 +1732,12 @@ struct ndpi_flow_struct {
    */
   char host_server_name[80];
 
-  u_int8_t initial_binary_bytes[8], initial_binary_bytes_len;
-  u_int8_t ip_risk_mask_evaluated:1, host_risk_mask_evaluated:1, tree_risk_checked:1, _notused:5;
-  ndpi_risk risk_mask; /* Stores the flow risk mask for flow peers */
-  ndpi_risk risk, risk_shadow; /* Issues found with this flow [bitmask of ndpi_risk] */
-  struct ndpi_risk_information risk_infos[MAX_NUM_RISK_INFOS]; /* String that contains information about the risks found */
-  u_int8_t num_risk_infos;
-
   struct {
     char *client_fingerprint, *server_fingerprint;
   } ndpi;
 
+  struct ndpi_dns_tcp_reasm_state *dns_tcp_reasm; /* TCP DNS reassembly */
+  
   /*
     This structure below will not not stay inside the protos
     structure below as HTTP is used by many subprotocols
@@ -1750,8 +1769,6 @@ struct ndpi_flow_struct {
     u_int16_t pktbuf_maxlen, pktbuf_currlen;
   } kerberos_buf;
 
-  struct ndpi_dns_tcp_reasm_state *dns_tcp_reasm;
-
   struct {
     u_int8_t maybe_dtls:1, rtcp_seen:1, is_turn : 1, is_client_controlling:1, pad : 4;
     ndpi_address_port mapped_address, peer_address, relayed_address, response_origin, other_address;
@@ -1776,29 +1793,10 @@ struct ndpi_flow_struct {
     u_int16_t rtp_seq[2];
   } rtp;
 
-  struct {
-    /* NDPI_PROTOCOL_OPENVPN */
-    u_int8_t ovpn_session_id[2][8];
-    u_int8_t ovpn_alg_standard_state:2, ovpn_alg_heur_opcode_state:2, ovpn_heur_opcode__codes_num:4;
-    u_int8_t ovpn_heur_opcode__num_msgs;
-    u_int8_t ovpn_heur_opcode__codes[OPENVPN_HEUR_MAX_NUM_OPCODES];
-    u_int8_t ovpn_heur_opcode__resets[2];
-    u_int16_t ovpn_heur_opcode__missing_bytes[2];
-  } openvpn;
-  
   union {
     /* the only fields useful for nDPI and ntopng */
-    struct {
-      u_int8_t num_queries, num_answers, reply_code, num_rsp_addr;
-      u_int8_t is_query:1, pad:7;
-      u_int16_t transaction_id, query_type, query_class, rsp_type, edns0_udp_payload_size;
-      u_int8_t is_rsp_addr_ipv6[MAX_NUM_DNS_RSP_ADDRESSES];
-      ndpi_ip_addr_t rsp_addr[MAX_NUM_DNS_RSP_ADDRESSES]; /* The first num_rsp_addr address in a DNS response packet (A and AAAA) */
-      u_int32_t rsp_addr_ttl[MAX_NUM_DNS_RSP_ADDRESSES];
-      char geolocation_iata_code[4];
-      char ptr_domain_name[64 /* large enough but smaller than { } tls */];
-    } dns;
-
+    struct ndpi_flow_struct_dns dns;
+    
     struct ntp_info {
       u_int8_t leap_indicator: 2, version: 3, mode: 3;
       u_int8_t stratum;
@@ -2002,9 +2000,19 @@ struct ndpi_flow_struct {
       u_int8_t num_other_funcs;     /* Other function codes */
     } s7comm;
 
-    struct ndpi_ipsec_details ipsec;
+    struct ndpi_ipsec_details ipsec;    
   } protos;
 
+  struct {
+    /* NDPI_PROTOCOL_OPENVPN */
+    u_int8_t ovpn_session_id[2][8];
+    u_int8_t ovpn_alg_standard_state:2, ovpn_alg_heur_opcode_state:2, ovpn_heur_opcode__codes_num:4;
+    u_int8_t ovpn_heur_opcode__num_msgs;
+    u_int8_t ovpn_heur_opcode__codes[OPENVPN_HEUR_MAX_NUM_OPCODES];
+    u_int8_t ovpn_heur_opcode__resets[2];
+    u_int16_t ovpn_heur_opcode__missing_bytes[2];
+  } openvpn;
+  
   struct {
     NDPIProtocolPluginEntryPoint *plugin;
     void *plugin_data;

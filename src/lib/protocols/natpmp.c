@@ -48,17 +48,17 @@ static void ndpi_int_natpmp_add_connection(struct ndpi_detection_module_struct *
                              NDPI_PROTOCOL_NATPMP,
                              NDPI_PROTOCOL_UNKNOWN,
                              NDPI_CONFIDENCE_DPI);
-  if (flow->extra_packets_func == NULL)
+  if (flow->core.extra_packets_func == NULL)
   {
-    flow->max_extra_packets_to_check = 5;
-    flow->extra_packets_func = ndpi_search_natpmp_extra;
+    flow->core.max_extra_packets_to_check = 5;
+    flow->core.extra_packets_func = ndpi_search_natpmp_extra;
   }
 }
 
 static void natpmp_disable_extra_dissection(struct ndpi_flow_struct * const flow)
 {
-  flow->max_extra_packets_to_check = 0;
-  flow->extra_packets_func = NULL;
+  flow->core.max_extra_packets_to_check = 0;
+  flow->core.extra_packets_func = NULL;
 }
 
 static int natpmp_is_common_header(struct ndpi_packet_struct const * const packet)
@@ -177,7 +177,7 @@ static void ndpi_search_natpmp(struct ndpi_detection_module_struct *ndpi_struct,
     return;
   }
 
-  if ((flow->packet_counter > 2 && natpmp_type != NATPMP_REQUEST_ADDRESS) ||
+  if ((flow->core.packet_counter > 2 && natpmp_type != NATPMP_REQUEST_ADDRESS) ||
       ntohs(packet->udp->source) == NATPMP_PORT || ntohs(packet->udp->dest) == NATPMP_PORT)
   {
     ndpi_int_natpmp_add_connection(ndpi_struct, flow);

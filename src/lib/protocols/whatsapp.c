@@ -91,7 +91,7 @@ static void ndpi_search_whatsapp(struct ndpi_detection_module_struct *ndpi_struc
 
   NDPI_LOG_DBG(ndpi_struct, "search WhatsApp\n");
 
-  if (flow->packet_counter > 3)
+  if (flow->core.packet_counter > 3)
   {
     NDPI_EXCLUDE_DISSECTOR(ndpi_struct, flow);
     return;

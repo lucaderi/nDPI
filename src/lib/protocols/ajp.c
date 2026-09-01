@@ -58,7 +58,7 @@ struct ajp_header {
 static void set_ajp_detected(struct ndpi_detection_module_struct *ndpi_struct,
 			     struct ndpi_flow_struct *flow) {
 
-  if(flow->detected_protocol_stack[0] == NDPI_PROTOCOL_UNKNOWN) {
+  if(flow->core.detected_protocol_stack[0] == NDPI_PROTOCOL_UNKNOWN) {
     ndpi_set_detected_protocol(ndpi_struct, flow, NDPI_PROTOCOL_AJP, NDPI_PROTOCOL_UNKNOWN, NDPI_CONFIDENCE_DPI);
   }
 }

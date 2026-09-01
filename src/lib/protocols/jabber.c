@@ -75,7 +75,7 @@ static void ndpi_search_jabber_tcp(struct ndpi_detection_module_struct *ndpi_str
       packet->payload[1] == 0x00 && packet->payload[2] == packet->payload_packet_len)
   {
     /* Old style Jabber/XMPP SSL. */
-    if (flow->packet_counter > max_packets - 1)
+    if (flow->core.packet_counter > max_packets - 1)
     {
       ndpi_int_jabber_add_connection(ndpi_struct, flow, NDPI_PROTOCOL_UNKNOWN, NDPI_PROTOCOL_JABBER, NDPI_CONFIDENCE_DPI);
       return;

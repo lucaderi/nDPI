@@ -31,7 +31,7 @@ u_int ndpi_search_tcp_or_udp_raw(struct ndpi_detection_module_struct *ndpi_struc
   struct in_addr host;
 
   if(flow)
-    return(flow->guessed_protocol_id_by_ip);
+    return(flow->core.guessed_protocol_id_by_ip);
   else {
     host.s_addr = htonl(saddr);
     if((rc = ndpi_network_ptree_match(ndpi_struct, &host)) != NDPI_PROTOCOL_UNKNOWN)

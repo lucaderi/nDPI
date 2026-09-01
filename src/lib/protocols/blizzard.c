@@ -37,8 +37,8 @@ static void search_blizzard_tcp(struct ndpi_detection_module_struct* ndpi_struct
   NDPI_LOG_DBG(ndpi_struct, "search Blizzard\n");
 
   /* Generic Battle.net traffic */
-  if(flow->guessed_protocol_id_by_ip == NDPI_PROTOCOL_BLIZZARD &&
-     flow->s_port == htons(1119)) {
+  if(flow->core.guessed_protocol_id_by_ip == NDPI_PROTOCOL_BLIZZARD &&
+     flow->core.s_port == htons(1119)) {
     /* Looking for the first pkt sent by the server */
     if(current_pkt_from_server_to_client(ndpi_struct, flow) &&
        packet->payload_packet_len == 2 &&
@@ -46,7 +46,7 @@ static void search_blizzard_tcp(struct ndpi_detection_module_struct* ndpi_struct
       NDPI_LOG_INFO(ndpi_struct, "Found Blizzard (battle.net)\n");
       ndpi_set_detected_protocol(ndpi_struct, flow, NDPI_PROTOCOL_BLIZZARD, NDPI_PROTOCOL_UNKNOWN, NDPI_CONFIDENCE_DPI);
       return;
-    } else if(flow->packet_direction_counter[packet->packet_direction] == 1) {
+    } else if(flow->core.packet_direction_counter[packet->packet_direction] == 1) {
       return;
     }
   }
@@ -113,14 +113,14 @@ static void search_blizzard_udp(struct ndpi_detection_module_struct* ndpi_struct
 
   /* Patterns found on Overwatch2 */
   /* Some kind of ping */
-  if(flow->guessed_protocol_id_by_ip == NDPI_PROTOCOL_BLIZZARD &&
+  if(flow->core.guessed_protocol_id_by_ip == NDPI_PROTOCOL_BLIZZARD &&
      packet->payload_packet_len == 40 &&
      *(uint32_t *)&packet->payload[17] == 0 /* Seq number starting from 0 */) {
     NDPI_LOG_INFO(ndpi_struct, "Found Blizzard (overwatch2; pattern 1)\n");
     ndpi_set_detected_protocol(ndpi_struct, flow, NDPI_PROTOCOL_BLIZZARD, NDPI_PROTOCOL_UNKNOWN, NDPI_CONFIDENCE_DPI);
     return;
   }
-  if(flow->guessed_protocol_id_by_ip == NDPI_PROTOCOL_BLIZZARD &&
+  if(flow->core.guessed_protocol_id_by_ip == NDPI_PROTOCOL_BLIZZARD &&
      packet->payload_packet_len == 50 &&
      ((*(uint64_t *)&packet->payload[32] == 0 && *(uint64_t *)&packet->payload[40] == 0) /* First pkt from client */ ||
       (*(uint64_t *)&packet->payload[0] == 0 && *(uint64_t *)&packet->payload[8] == 0)) /* First pkt from server */) {
@@ -136,7 +136,7 @@ static void search_blizzard_udp(struct ndpi_detection_module_struct* ndpi_struct
 
 static void ndpi_search_blizzard(struct ndpi_detection_module_struct* ndpi_struct, struct ndpi_flow_struct* flow)
 {
-  if(flow->l4_proto == IPPROTO_TCP)
+  if(flow->core.l4_proto == IPPROTO_TCP)
     search_blizzard_tcp(ndpi_struct, flow);
   else
     search_blizzard_udp(ndpi_struct, flow);

@@ -232,7 +232,7 @@ static int search_ssh_again(struct ndpi_detection_module_struct *ndpi_struct, st
   if((flow->protos.ssh.hassh_client[0] != '\0')
      && (flow->protos.ssh.hassh_server[0] != '\0')) {
     /* stop extra processing */
-    flow->extra_packets_func = NULL; /* We're good now */
+    flow->core.extra_packets_func = NULL; /* We're good now */
     return(0);
   }
 
@@ -244,13 +244,13 @@ static int search_ssh_again(struct ndpi_detection_module_struct *ndpi_struct, st
 
 static void ndpi_int_ssh_add_connection(struct ndpi_detection_module_struct
 					*ndpi_struct, struct ndpi_flow_struct *flow) {
-  if(flow->extra_packets_func != NULL)
+  if(flow->core.extra_packets_func != NULL)
     return;
 
   NDPI_LOG_INFO(ndpi_struct, "Found SSH\n");
 
-  flow->max_extra_packets_to_check = 12;
-  flow->extra_packets_func = search_ssh_again;
+  flow->core.max_extra_packets_to_check = 12;
+  flow->core.extra_packets_func = search_ssh_again;
   
   ndpi_set_detected_protocol(ndpi_struct, flow, NDPI_PROTOCOL_SSH, NDPI_PROTOCOL_UNKNOWN, NDPI_CONFIDENCE_DPI);
 }
@@ -657,7 +657,7 @@ static void ndpi_search_ssh_tcp(struct ndpi_detection_module_struct *ndpi_struct
       /* Unexpected msg. Check if this is an unidirectional flow with
        * banner + key exchange only in one direction */
       if(flow->l4.tcp.ssh_stage == 1 &&
-         (flow->packet_direction_counter[0] == 0 || flow->packet_direction_counter[1] == 0)) {
+         (flow->core.packet_direction_counter[0] == 0 || flow->core.packet_direction_counter[1] == 0)) {
 #ifdef SSH_DEBUG
         printf("[SSH] Check if this is an unidirectional flow\n");
 #endif
@@ -742,7 +742,7 @@ static void ndpi_search_ssh_tcp(struct ndpi_detection_module_struct *ndpi_struct
 #ifdef SSH_DEBUG
       printf("[SSH] Dissection completed\n");
 #endif
-      flow->extra_packets_func = NULL; /* We're good now */
+      flow->core.extra_packets_func = NULL; /* We're good now */
     }
 
     return;

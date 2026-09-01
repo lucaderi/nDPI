@@ -36,8 +36,8 @@ static void ndpi_search_json_rpc(struct ndpi_detection_module_struct *ndpi_struc
 
   NDPI_LOG_DBG(ndpi_struct, "search JSON-RPC\n");
 
-  if (flow->detected_protocol_stack[0] == NDPI_PROTOCOL_HTTP ||
-      flow->detected_protocol_stack[1] == NDPI_PROTOCOL_HTTP)
+  if (flow->core.detected_protocol_stack[0] == NDPI_PROTOCOL_HTTP ||
+      flow->core.detected_protocol_stack[1] == NDPI_PROTOCOL_HTTP)
   {
     if ((packet->content_line.ptr != NULL) &&
         (LINE_ENDS(packet->content_line, "application/json-rpc") != 0))

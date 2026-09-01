@@ -124,7 +124,7 @@ static int tls_keep_extra_dissection_tcp(struct ndpi_detection_module_struct *nd
   /* Are we interested only in the (sub)-classification? */
 
   if(/* Subclassification */
-     flow->detected_protocol_stack[1] != NDPI_PROTOCOL_UNKNOWN &&
+     flow->core.detected_protocol_stack[1] != NDPI_PROTOCOL_UNKNOWN &&
      /* No metadata from SH or certificate */
      !ndpi_struct->cfg.tls_alpn_negotiated_enabled &&
      !ndpi_struct->cfg.tls_cipher_enabled &&
@@ -268,9 +268,9 @@ static int tls_obfuscated_heur_search(struct ndpi_detection_module_struct* ndpi_
 
   NDPI_LOG_DBG2(ndpi_struct, "TLS-Obf-Heur: num_pkts %d\n", state->num_pkts);
 
-  if(flow->extra_packets_func &&
-     (flow->detected_protocol_stack[0] == NDPI_PROTOCOL_TLS ||
-      flow->detected_protocol_stack[1] == NDPI_PROTOCOL_TLS)) /* TLS-in-TLS heuristic */
+  if(flow->core.extra_packets_func &&
+     (flow->core.detected_protocol_stack[0] == NDPI_PROTOCOL_TLS ||
+      flow->core.detected_protocol_stack[1] == NDPI_PROTOCOL_TLS)) /* TLS-in-TLS heuristic */
     is_tls_in_tls_heur = 1;
 
   /* We try to keep into account the overhead (header/padding/mac/iv/nonce) of the
@@ -420,13 +420,13 @@ static int tls_obfuscated_heur_search_again(struct ndpi_detection_module_struct*
           before to start marking the flows to that address
         * consider the number of burst after TLS handshake (see Fig 8 paper) */
 
-    if(flow->detected_protocol_stack[0] == NDPI_PROTOCOL_UNKNOWN) {
+    if(flow->core.detected_protocol_stack[0] == NDPI_PROTOCOL_UNKNOWN) {
       ndpi_set_detected_protocol(ndpi_struct, flow, NDPI_PROTOCOL_TLS, NDPI_PROTOCOL_UNKNOWN, NDPI_CONFIDENCE_DPI_AGGRESSIVE);
       ndpi_set_risk(ndpi_struct, flow, NDPI_OBFUSCATED_TRAFFIC, "Obfuscated TLS traffic");
     } else {
-      flow->confidence = NDPI_CONFIDENCE_DPI_AGGRESSIVE; /* Update the value */
-      if(flow->detected_protocol_stack[0] == NDPI_PROTOCOL_TLS ||
-         flow->detected_protocol_stack[1] == NDPI_PROTOCOL_TLS)
+      flow->core.confidence = NDPI_CONFIDENCE_DPI_AGGRESSIVE; /* Update the value */
+      if(flow->core.detected_protocol_stack[0] == NDPI_PROTOCOL_TLS ||
+         flow->core.detected_protocol_stack[1] == NDPI_PROTOCOL_TLS)
         ndpi_set_risk(ndpi_struct, flow, NDPI_OBFUSCATED_TRAFFIC, "Obfuscated TLS-in-TLS traffic");
       else
         ndpi_set_risk(ndpi_struct, flow, NDPI_OBFUSCATED_TRAFFIC, "Obfuscated TLS-in-HTTP-WebSocket traffic");
@@ -435,8 +435,8 @@ static int tls_obfuscated_heur_search_again(struct ndpi_detection_module_struct*
     ndpi_master_app_protocol proto;
     proto.master_protocol = ndpi_get_master_proto(ndpi_struct, flow);
     proto.app_protocol = NDPI_PROTOCOL_UNKNOWN;
-    flow->category = get_proto_category(ndpi_struct, proto);
-    flow->breed = get_proto_breed(ndpi_struct, proto);
+    flow->core.category = get_proto_category(ndpi_struct, proto);
+    flow->core.breed = get_proto_breed(ndpi_struct, proto);
   }
 
   NDPI_EXCLUDE_DISSECTOR(ndpi_struct, flow); /* Not necessary in extra-dissection data path,
@@ -458,8 +458,8 @@ void switch_extra_dissection_to_tls_obfuscated_heur(struct ndpi_detection_module
 
   /* "* 2" to take into account ACKs. The "real" check is performend against
      "tls_heuristics_max_packets" in tls_obfuscated_heur_search, as expected */
-  flow->max_extra_packets_to_check = ndpi_struct->cfg.tls_heuristics_max_packets * 2;
-  flow->extra_packets_func = tls_obfuscated_heur_search_again;
+  flow->core.max_extra_packets_to_check = ndpi_struct->cfg.tls_heuristics_max_packets * 2;
+  flow->core.extra_packets_func = tls_obfuscated_heur_search_again;
 }
 
 /* **************************************** */
@@ -643,7 +643,7 @@ static void checkTLSSubprotocol(struct ndpi_detection_module_struct *ndpi_struct
   struct ndpi_packet_struct *packet = &ndpi_struct->packet;
 
   if(ndpi_struct->cfg.tls_subclassification_enabled &&
-     flow->detected_protocol_stack[1] == NDPI_PROTOCOL_UNKNOWN) {
+     flow->core.detected_protocol_stack[1] == NDPI_PROTOCOL_UNKNOWN) {
     /* Subprotocol not yet set */
 
     if(ndpi_struct->tls_cert_cache) {
@@ -660,8 +660,8 @@ static void checkTLSSubprotocol(struct ndpi_detection_module_struct *ndpi_struct
 	ndpi_set_detected_protocol(ndpi_struct, flow, cached_proto, ndpi_get_master_proto(ndpi_struct, flow), NDPI_CONFIDENCE_DPI_CACHE);
 	proto.master_protocol = ndpi_get_master_proto(ndpi_struct, flow);
 	proto.app_protocol = cached_proto;
-	flow->category = get_proto_category(ndpi_struct, proto);
-	flow->breed = get_proto_breed(ndpi_struct, proto);
+	flow->core.category = get_proto_category(ndpi_struct, proto);
+	flow->core.breed = get_proto_breed(ndpi_struct, proto);
 	ndpi_check_subprotocol_risk(ndpi_struct, flow, cached_proto);
 	ndpi_unset_risk(ndpi_struct, flow, NDPI_NUMERIC_IP_HOST);
       }
@@ -1068,7 +1068,7 @@ void processCertificateElements(struct ndpi_detection_module_struct *ndpi_struct
       flow->protos.tls_quic.subjectDN = ndpi_strdup(rdnSeqBuf);
 
     if(ndpi_struct->cfg.tls_subclassification_enabled &&
-       flow->detected_protocol_stack[1] == NDPI_PROTOCOL_UNKNOWN) {
+       flow->core.detected_protocol_stack[1] == NDPI_PROTOCOL_UNKNOWN) {
       /* No idea what is happening behind the scenes: let's check the certificate */
       u_int32_t val;
       int rc = ndpi_match_string_value(ndpi_struct->tls_cert_subject_automa.ac_automa,
@@ -1082,8 +1082,8 @@ void processCertificateElements(struct ndpi_detection_module_struct *ndpi_struct
 	ndpi_set_detected_protocol(ndpi_struct, flow, proto_id, ndpi_get_master_proto(ndpi_struct, flow), NDPI_CONFIDENCE_DPI);
 	proto.master_protocol = ndpi_get_master_proto(ndpi_struct, flow);
 	proto.app_protocol = proto_id;
-	flow->category = get_proto_category(ndpi_struct, proto);
-	flow->breed = get_proto_breed(ndpi_struct, proto);
+	flow->core.category = get_proto_category(ndpi_struct, proto);
+	flow->core.breed = get_proto_breed(ndpi_struct, proto);
 	ndpi_check_subprotocol_risk(ndpi_struct, flow, proto_id);
 	ndpi_unset_risk(ndpi_struct, flow, NDPI_NUMERIC_IP_HOST);
 
@@ -1274,7 +1274,7 @@ static void handleTLSBlockStat(struct ndpi_detection_module_struct *ndpi_struct,
 			       u_int16_t block_len) {
   struct ndpi_packet_struct *packet = &ndpi_struct->packet;
 
-  if(flow->l4_proto == IPPROTO_TCP &&
+  if(flow->core.l4_proto == IPPROTO_TCP &&
      ndpi_struct->cfg.tls_max_num_blocks_to_analyze != 0) {
     if(flow->l4.tcp.tls.tls_blocks == NULL) {
       u_int len = sizeof(struct ndpi_tls_block) * ndpi_struct->cfg.tls_max_num_blocks_to_analyze;
@@ -1401,8 +1401,8 @@ static int processHandshakeTLSBlock(struct ndpi_detection_module_struct *ndpi_st
 
 static void ndpi_looks_like_tls(struct ndpi_detection_module_struct *ndpi_struct,
                                 struct ndpi_flow_struct *flow) {
-  if(flow->fast_callback_protocol_id == NDPI_PROTOCOL_UNKNOWN)
-    flow->fast_callback_protocol_id = ndpi_get_master_proto(ndpi_struct, flow);
+  if(flow->core.fast_callback_protocol_id == NDPI_PROTOCOL_UNKNOWN)
+    flow->core.fast_callback_protocol_id = ndpi_get_master_proto(ndpi_struct, flow);
 }
 
 /* **************************************** */
@@ -1647,7 +1647,7 @@ int ndpi_search_tls_tcp(struct ndpi_detection_module_struct *ndpi_struct,
 
 #ifdef DEBUG_TLS_MEMORY
   printf("[TLS] Eval if keep going [%p][blocks:%d/%d][wrong:%d]\n",
-         flow->extra_packets_func,
+         flow->core.extra_packets_func,
          flow->l4.tcp.tls.num_tls_blocks, ndpi_struct->cfg.tls_max_num_blocks_to_analyze,
          something_went_wrong);
 #endif
@@ -1668,9 +1668,9 @@ int ndpi_search_tls_tcp(struct ndpi_detection_module_struct *ndpi_struct,
         flow->tls_quic.certificate_processed == 1 &&
         flow->protos.tls_quic.client_hello_processed == 1 &&
         flow->protos.tls_quic.server_hello_processed == 1) && /* TLS handshake found without errors */
-       flow->detected_protocol_stack[0] == NDPI_PROTOCOL_TLS && /* No IMAPS/FTPS/... */
-       flow->detected_protocol_stack[1] == NDPI_PROTOCOL_UNKNOWN && /* No sub-classification */
-       ntohs(flow->s_port) == 8080 && /* Ookla port */
+       flow->core.detected_protocol_stack[0] == NDPI_PROTOCOL_TLS && /* No IMAPS/FTPS/... */
+       flow->core.detected_protocol_stack[1] == NDPI_PROTOCOL_UNKNOWN && /* No sub-classification */
+       ntohs(flow->core.s_port) == 8080 && /* Ookla port */
        ookla_search_into_cache(ndpi_struct, flow)) {
       NDPI_LOG_INFO(ndpi_struct, "found ookla (cache over TLS)\n");
       /* Even if a LRU cache is involved, NDPI_CONFIDENCE_DPI_AGGRESSIVE seems more
@@ -1678,7 +1678,7 @@ int ndpi_search_tls_tcp(struct ndpi_detection_module_struct *ndpi_struct,
       ndpi_set_detected_protocol(ndpi_struct, flow, NDPI_PROTOCOL_OOKLA, NDPI_PROTOCOL_TLS, NDPI_CONFIDENCE_DPI_AGGRESSIVE);
 
       tls_match_ja4(ndpi_struct, flow);
-      flow->extra_packets_func = NULL;
+      flow->core.extra_packets_func = NULL;
 
       return(0); /* That's all */
     /* Loook for TLS-in-TLS */
@@ -1694,7 +1694,7 @@ int ndpi_search_tls_tcp(struct ndpi_detection_module_struct *ndpi_struct,
     } else {
       tls_match_ja4(ndpi_struct, flow);
 
-      flow->extra_packets_func = NULL;
+      flow->core.extra_packets_func = NULL;
       return(0); /* That's all */
     }
   } else
@@ -1871,8 +1871,8 @@ static int ndpi_search_dtls(struct ndpi_detection_module_struct *ndpi_struct,
       ndpi_master_app_protocol proto;
       proto.master_protocol = ndpi_get_master_proto(ndpi_struct, flow);
       proto.app_protocol = NDPI_PROTOCOL_UNKNOWN;
-      flow->category = get_proto_category(ndpi_struct, proto);
-      flow->breed = get_proto_breed(ndpi_struct, proto);
+      flow->core.category = get_proto_category(ndpi_struct, proto);
+      flow->core.breed = get_proto_breed(ndpi_struct, proto);
 
       flow->tls_quic.certificate_processed = 1; /* Fake, to avoid extra dissection */
       break;
@@ -1907,8 +1907,8 @@ static void tlsInitExtraPacketProcessing(struct ndpi_detection_module_struct *nd
 
   /* At most 12 packets should almost always be enough to find the server certificate if it's there.
      Exception: DTLS traffic with fragments, retransmissions and STUN packets */
-  flow->max_extra_packets_to_check = ((packet->udp != NULL) ? 20 : 12) + (ndpi_struct->cfg.tls_max_num_blocks_to_analyze*4);
-  flow->extra_packets_func = (packet->udp != NULL) ? ndpi_search_dtls : ndpi_search_tls_tcp;
+  flow->core.max_extra_packets_to_check = ((packet->udp != NULL) ? 20 : 12) + (ndpi_struct->cfg.tls_max_num_blocks_to_analyze*4);
+  flow->core.extra_packets_func = (packet->udp != NULL) ? ndpi_search_dtls : ndpi_search_tls_tcp;
 }
 
 /* **************************************** */
@@ -2046,16 +2046,16 @@ static void ndpi_int_tls_add_connection(struct ndpi_detection_module_struct *ndp
   printf("[TLS] %s()\n", __FUNCTION__);
 #endif
 
-  if(flow->detected_protocol_stack[0] == NDPI_PROTOCOL_RDP) {
+  if(flow->core.detected_protocol_stack[0] == NDPI_PROTOCOL_RDP) {
     /* RDP over TLS */
     ndpi_set_detected_protocol(ndpi_struct, flow,
 			       NDPI_PROTOCOL_RDP, NDPI_PROTOCOL_TLS, NDPI_CONFIDENCE_DPI);
     return;
   }
 
-  if((flow->detected_protocol_stack[0] != NDPI_PROTOCOL_UNKNOWN) ||
-     (flow->detected_protocol_stack[1] != NDPI_PROTOCOL_UNKNOWN)) {
-    if(!flow->extra_packets_func)
+  if((flow->core.detected_protocol_stack[0] != NDPI_PROTOCOL_UNKNOWN) ||
+     (flow->core.detected_protocol_stack[1] != NDPI_PROTOCOL_UNKNOWN)) {
+    if(!flow->core.extra_packets_func)
       tlsInitExtraPacketProcessing(ndpi_struct, flow);
 
     return;
@@ -2065,7 +2065,7 @@ static void ndpi_int_tls_add_connection(struct ndpi_detection_module_struct *ndp
 
   ndpi_set_detected_protocol(ndpi_struct, flow, protocol, protocol, NDPI_CONFIDENCE_DPI);
   /* We don't want to ovewrite STUN extra dissection, if enabled */
-  if(!flow->extra_packets_func)
+  if(!flow->core.extra_packets_func)
     tlsInitExtraPacketProcessing(ndpi_struct, flow);
 }
 
@@ -2278,7 +2278,7 @@ static void ndpi_compute_ja4(struct ndpi_detection_module_struct *ndpi_struct,
   char * const ja_str = &flow->protos.tls_quic.ja4_client[0];
   char * const ja_ndpi_str = &flow->protos.tls_quic.ja4_ndpi_client[0];
   const u_int16_t ja_max_len = sizeof(flow->protos.tls_quic.ja4_client);
-  bool is_dtls = ((flow->l4_proto == IPPROTO_UDP) && (quic_version == 0)) || flow->stun.maybe_dtls;
+  bool is_dtls = ((flow->core.l4_proto == IPPROTO_UDP) && (quic_version == 0)) || flow->stun.maybe_dtls;
   int ja4_r_len = 0;
   char ja4_r[1024];
 
@@ -3116,7 +3116,7 @@ int processClientServerHello(struct ndpi_detection_module_struct *ndpi_struct,
 
 		if(ja.client.num_tls_extensions < MAX_NUM_JA) {
 		  if(((extension_id == 0xFE0D /* ECHO */) || skipTLSextension(ndpi_struct, extension_id))
-		     && (flow->l4_proto == IPPROTO_TCP)
+		     && (flow->core.l4_proto == IPPROTO_TCP)
 		     && (ndpi_struct->cfg.tls_max_num_blocks_to_analyze > 0)
 		     && (flow->l4.tcp.tls.tls_blocks != NULL)
 		     && (flow->l4.tcp.tls.num_tls_blocks > 0) /* It should always be like that */) {
@@ -3157,7 +3157,7 @@ int processClientServerHello(struct ndpi_detection_module_struct *ndpi_struct,
 		    printf("[TLS] SNI: [%s]\n", sni);
 #endif
 		    if(sni /* It should always be like that */
-		       && (flow->l4_proto == IPPROTO_TCP)
+		       && (flow->core.l4_proto == IPPROTO_TCP)
 		       && (ndpi_struct->cfg.tls_max_num_blocks_to_analyze > 0)
 		       && (flow->l4.tcp.tls.tls_blocks != NULL)
 		       && (flow->l4.tcp.tls.num_tls_blocks > 0) /* It should always be like that */
@@ -3443,7 +3443,7 @@ int processClientServerHello(struct ndpi_detection_module_struct *ndpi_struct,
 #endif
 	      } else if(extension_id == 14 /* use_srtp */) {
                 /* This is likely a werbrtc flow */
-                if(flow->stun.maybe_dtls || flow->detected_protocol_stack[0] == NDPI_PROTOCOL_DTLS)
+                if(flow->stun.maybe_dtls || flow->core.detected_protocol_stack[0] == NDPI_PROTOCOL_DTLS)
 	          flow->protos.tls_quic.webrtc = 1;
 #ifdef DEBUG_TLS
                 printf("Client TLS: use_srtp\n");
@@ -3823,8 +3823,8 @@ static void ndpi_search_tls_wrapper(struct ndpi_detection_module_struct *ndpi_st
        (ndpi_struct->cfg.tls_heuristics & NDPI_HEURISTICS_TLS_OBFUSCATED_PLAIN) &&
        flow->stun.maybe_dtls == 0 &&
        flow->tls_quic.from_opportunistic_tls == 0 &&
-       ((flow->l4_proto == IPPROTO_TCP && ndpi_seen_flow_beginning(flow)) ||
-        flow->l4_proto == IPPROTO_UDP) &&
+       ((flow->core.l4_proto == IPPROTO_TCP && ndpi_seen_flow_beginning(flow)) ||
+        flow->core.l4_proto == IPPROTO_UDP) &&
        !is_flow_addr_informative(flow) /* The proxy server is likely hosted on some cloud providers */ ) {
       flow->tls_quic.obfuscated_heur_state = ndpi_calloc(1, sizeof(struct tls_obfuscated_heuristic_state));
     }

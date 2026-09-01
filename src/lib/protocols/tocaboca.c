@@ -51,7 +51,7 @@ static void ndpi_search_toca_boca(struct ndpi_detection_module_struct *ndpi_stru
       return;
     }
 
-    if (flow->packet_counter == 1
+    if (flow->core.packet_counter == 1
         && payload_len >= 24
         && ntohl(get_u_int32_t(packet->payload, 0)) == 0xffff0001
         && ntohl(get_u_int32_t(packet->payload, 12)) == 0x02ff0104)

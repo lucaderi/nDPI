@@ -111,14 +111,14 @@ static void ndpi_search_socks(struct ndpi_detection_module_struct *ndpi_struct, 
 {
   NDPI_LOG_DBG(ndpi_struct, "search SOCKS\n");
 
-  if(flow->packet_counter >= 10) {
+  if(flow->core.packet_counter >= 10) {
     NDPI_EXCLUDE_DISSECTOR(ndpi_struct, flow);
     return;
   }
 
   ndpi_check_socks4(ndpi_struct, flow);
 
-  if(flow->detected_protocol_stack[0] != NDPI_PROTOCOL_SOCKS)
+  if(flow->core.detected_protocol_stack[0] != NDPI_PROTOCOL_SOCKS)
     ndpi_check_socks5(ndpi_struct, flow);
 }
 

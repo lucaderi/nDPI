@@ -53,7 +53,7 @@ static void ndpi_search_rsync(struct ndpi_detection_module_struct *ndpi_struct, 
       return;
     }
   }
-  if(flow->packet_counter > 5)
+  if(flow->core.packet_counter > 5)
     NDPI_EXCLUDE_DISSECTOR(ndpi_struct, flow);
 }
 

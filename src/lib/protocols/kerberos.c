@@ -569,14 +569,14 @@ static void ndpi_search_kerberos(struct ndpi_detection_module_struct *ndpi_struc
 #ifdef KERBEROS_DEBUG
 	      printf("[Kerberos] Setting extra func from AS-REQ\n");
 #endif
-	      flow->max_extra_packets_to_check = 5; /* Reply may be split into multiple segments */
-	      flow->extra_packets_func = ndpi_search_kerberos_extra;
+	      flow->core.max_extra_packets_to_check = 5; /* Reply may be split into multiple segments */
+	      flow->core.extra_packets_func = ndpi_search_kerberos_extra;
 	    } else if(msg_type == 0x0e) /* AS-REQ */ {
 #ifdef KERBEROS_DEBUG
 	      printf("[Kerberos] Processing AS-REQ\n");
 #endif
 	      /* Nothing specific to do; stop dissecting this flow */
-	      flow->extra_packets_func = NULL;
+	      flow->core.extra_packets_func = NULL;
 
 	    } else if(msg_type == 0x0c) /* TGS-REQ */ {
 #ifdef KERBEROS_DEBUG
@@ -624,8 +624,8 @@ static void ndpi_search_kerberos(struct ndpi_detection_module_struct *ndpi_struc
 	      printf("[Kerberos] Setting extra func from TGS-REQ\n");
 #endif
 	      if(!packet->udp) {
-	        flow->max_extra_packets_to_check = 5; /* Reply may be split into multiple segments */
-	        flow->extra_packets_func = ndpi_search_kerberos_extra;
+	        flow->core.max_extra_packets_to_check = 5; /* Reply may be split into multiple segments */
+	        flow->core.extra_packets_func = ndpi_search_kerberos_extra;
 	      }
 
 	      if(flow->kerberos_buf.pktbuf != NULL) {
@@ -648,13 +648,13 @@ static void ndpi_search_kerberos(struct ndpi_detection_module_struct *ndpi_struc
 	                   "[TGS-REP][s/dport: %u/%u][Kerberos Hostname,Domain,Username][%s,%s,%s]\n",
 	                   sport, dport, flow->protos.kerberos.hostname, flow->protos.kerberos.domain,
 	                   flow->protos.kerberos.username);
-	      flow->extra_packets_func = NULL;
+	      flow->core.extra_packets_func = NULL;
 	    } else if(msg_type == 0x1e) /* Error */ {
 #ifdef KERBEROS_DEBUG
 	      printf("[Kerberos] Processing KRB-Error\n");
 #endif
 	      /* Nothing specific to do; stop dissecting this flow */
-	      flow->extra_packets_func = NULL;
+	      flow->core.extra_packets_func = NULL;
 	    }
 
 	    return;
@@ -694,7 +694,7 @@ static int ndpi_search_kerberos_extra(struct ndpi_detection_module_struct *ndpi_
   ndpi_search_kerberos(ndpi_struct, flow);
 
   /* Possibly more processing */
-  return flow->extra_packets_func != NULL;
+  return flow->core.extra_packets_func != NULL;
 }
 
 void init_kerberos_dissector(struct ndpi_detection_module_struct *ndpi_struct) {

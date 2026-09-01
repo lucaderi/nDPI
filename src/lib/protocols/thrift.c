@@ -208,8 +208,8 @@ static void ndpi_search_thrift_tcp_udp(struct ndpi_detection_module_struct *ndpi
 
   NDPI_LOG_DBG(ndpi_struct, "search Apache Thrift\n");
 
-  if (flow->detected_protocol_stack[0] == NDPI_PROTOCOL_HTTP ||
-      flow->detected_protocol_stack[1] == NDPI_PROTOCOL_HTTP)
+  if (flow->core.detected_protocol_stack[0] == NDPI_PROTOCOL_HTTP ||
+      flow->core.detected_protocol_stack[1] == NDPI_PROTOCOL_HTTP)
   {
     /* Check Thrift over HTTP */
     if (packet->content_line.ptr != NULL)

@@ -85,7 +85,7 @@ static void ndpi_search_nebula(struct ndpi_detection_module_struct *ndpi_struct,
     return;
   }
 
-  if (flow->packet_counter != message_counter) {
+  if (flow->core.packet_counter != message_counter) {
     NDPI_EXCLUDE_DISSECTOR(ndpi_struct, flow);
     return;
   }

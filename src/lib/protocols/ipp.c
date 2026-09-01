@@ -44,7 +44,7 @@ static void ndpi_search_ipp(struct ndpi_detection_module_struct *ndpi_struct, st
 
   /* Treat IPP as a HTTP sub-protocol */
 
-  if(flow->detected_protocol_stack[0] == NDPI_PROTOCOL_HTTP &&
+  if(flow->core.detected_protocol_stack[0] == NDPI_PROTOCOL_HTTP &&
      flow->http.method == NDPI_HTTP_METHOD_POST &&
      LINE_STARTS(packet->http_url_name, "/ipp/") == 1) {
     NDPI_LOG_INFO(ndpi_struct, "found ipp\n");

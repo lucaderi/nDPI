@@ -55,9 +55,9 @@ static void ndpi_search_dnscrypt(struct ndpi_detection_module_struct *ndpi_struc
     return;
   }
 
-  if ((flow->packet_direction_counter[packet->packet_direction] >= 1 &&
-       flow->packet_direction_counter[1 - packet->packet_direction] >= 1) ||
-      flow->packet_counter >= 8) {
+  if ((flow->core.packet_direction_counter[packet->packet_direction] >= 1 &&
+       flow->core.packet_direction_counter[1 - packet->packet_direction] >= 1) ||
+      flow->core.packet_counter >= 8) {
     /*
      * Wait for at least one packet per direction, up to a max
      * Required as we need to wait for the server response which contains the ASCII pattern below.

@@ -44,7 +44,7 @@ static void ndpi_search_epicgames(struct ndpi_detection_module_struct *ndpi_stru
   NDPI_LOG_DBG(ndpi_struct, "searching EpicGames (stage %d dir %d)\n",
                flow->l4.udp.epicgames_stage, packet->packet_direction);
 
-  if(flow->packet_counter == 1) {
+  if(flow->core.packet_counter == 1) {
     if(packet->payload_packet_len >= 34 &&
        ((ntohl(get_u_int32_t(packet->payload, 0)) & 0x08) == 0) &&
        get_u_int64_t(packet->payload, 10) == 0 &&
@@ -68,7 +68,7 @@ static void ndpi_search_epicgames(struct ndpi_detection_module_struct *ndpi_stru
     }
   }
 
-  if(flow->packet_counter >= 4) {
+  if(flow->core.packet_counter >= 4) {
     NDPI_EXCLUDE_DISSECTOR(ndpi_struct, flow);
     return;
   }

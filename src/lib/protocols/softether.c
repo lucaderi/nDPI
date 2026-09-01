@@ -60,8 +60,8 @@ static void ndpi_int_softether_add_connection(struct ndpi_detection_module_struc
 					      struct ndpi_flow_struct * const flow) {
   NDPI_LOG_INFO(ndpi_struct, "found softether\n");
 
-  flow->max_extra_packets_to_check = 15;
-  flow->extra_packets_func = ndpi_search_softether_again;
+  flow->core.max_extra_packets_to_check = 15;
+  flow->core.extra_packets_func = ndpi_search_softether_again;
 
   ndpi_set_detected_protocol(ndpi_struct, flow,
                              NDPI_PROTOCOL_SOFTETHER,
@@ -303,7 +303,7 @@ static void ndpi_search_softether(struct ndpi_detection_module_struct *ndpi_stru
 
   if(packet->payload_packet_len == 1) {
 
-    if((packet->payload[0] != 0x41) || (flow->packet_counter > 2))	
+    if((packet->payload[0] != 0x41) || (flow->core.packet_counter > 2))	
       NDPI_EXCLUDE_DISSECTOR(ndpi_struct, flow);	
 
     return;
@@ -336,7 +336,7 @@ static int ndpi_search_softether_again(struct ndpi_detection_module_struct *ndpi
        && (flow->protos.softether.port[0] != '\0')
        && (flow->protos.softether.hostname[0] != '\0')
        && (flow->protos.softether.fqdn[0] != '\0')) {
-      flow->extra_packets_func = NULL;
+      flow->core.extra_packets_func = NULL;
 
       return 0;
     }

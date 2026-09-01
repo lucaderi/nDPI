@@ -101,7 +101,7 @@ static void ndpi_search_raknet(struct ndpi_detection_module_struct *ndpi_struct,
      Solution: check for the custoom/encrypted version, cache the result and use it only if/when the
      standard detection ends.
   */
-  if (flow->packet_counter == 1)
+  if (flow->core.packet_counter == 1)
   {
     flow->l4.udp.raknet_custom = is_custom_version(ndpi_struct);
   }
@@ -383,7 +383,7 @@ static void ndpi_search_raknet(struct ndpi_detection_module_struct *ndpi_struct,
       return;
   }
 
-  if (flow->packet_counter < required_packets)
+  if (flow->core.packet_counter < required_packets)
   {
     return;
   }

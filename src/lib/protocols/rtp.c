@@ -371,17 +371,17 @@ static void ndpi_int_rtp_add_connection(struct ndpi_detection_module_struct *ndp
   if(ndpi_struct->cfg.rtp_search_for_stun) {
     /* It makes sense to look for STUN only if we didn't capture the entire flow,
        from the beginning */
-    if(!(flow->l4_proto == IPPROTO_TCP && ndpi_seen_flow_beginning(flow))) {
+    if(!(flow->core.l4_proto == IPPROTO_TCP && ndpi_seen_flow_beginning(flow))) {
       NDPI_LOG_DBG(ndpi_struct, "Enabling (STUN) extra dissection\n");
       switch_extra_dissection_to_stun(ndpi_struct, flow, 1);
     }
   } else if(proto == NDPI_PROTOCOL_RTP) {
-    if(!flow->extra_packets_func &&
+    if(!flow->core.extra_packets_func &&
        keep_extra_dissection(flow) &&
        ndpi_struct->cfg.rtp_max_packets_extra_dissection > 0) {
       NDPI_LOG_DBG(ndpi_struct, "Enabling extra dissection\n");
-      flow->max_extra_packets_to_check = ndpi_struct->cfg.rtp_max_packets_extra_dissection;
-      flow->extra_packets_func = rtp_search_again;
+      flow->core.max_extra_packets_to_check = ndpi_struct->cfg.rtp_max_packets_extra_dissection;
+      flow->core.extra_packets_func = rtp_search_again;
     }
   }
 }
@@ -414,7 +414,7 @@ static void ndpi_rtp_search(struct ndpi_detection_module_struct *ndpi_struct,
    * Wait a little longer (4 vs 3 pkts) for RTCP to try to tell if there are only
    * RTCP packets in the flow or if RTP/RTCP are multiplexed together */
 
-  if(flow->packet_counter > 3 &&
+  if(flow->core.packet_counter > 3 &&
      flow->rtp.rtp_stage == 0 &&
      flow->rtcp_stage == 0) {
     NDPI_EXCLUDE_DISSECTOR(ndpi_struct, flow);
@@ -425,10 +425,10 @@ static void ndpi_rtp_search(struct ndpi_detection_module_struct *ndpi_struct,
 
   if(is_rtp == IS_RTP) {
     if(flow->rtp.rtp_stage == 2) {
-      if(flow->l4_proto == IPPROTO_UDP &&
+      if(flow->core.l4_proto == IPPROTO_UDP &&
          flow->l4.udp.line_pkts[0] >= 2 && flow->l4.udp.line_pkts[1] >= 2) {
         /* It seems that it is a LINE stuff; let its dissector to evaluate */
-      } else if(flow->l4_proto == IPPROTO_UDP && flow->l4.udp.epicgames_stage > 0) {
+      } else if(flow->core.l4_proto == IPPROTO_UDP && flow->l4.udp.epicgames_stage > 0) {
         /* It seems that it is a EpicGames stuff; let its dissector to evaluate */
       } else if(flow->rtp.rtp_seq_set[packet->packet_direction] &&
                 flow->rtp.rtp_seq[packet->packet_direction] == seq) {

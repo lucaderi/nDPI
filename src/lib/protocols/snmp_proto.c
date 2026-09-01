@@ -50,7 +50,7 @@ static int ndpi_search_snmp_again(struct ndpi_detection_module_struct *ndpi_stru
   printf("=> %s()\n", __FUNCTION__);
 #endif
 
-  return((flow->extra_packets_func == NULL) /* We're good now */ ? 0 : 1);
+  return((flow->core.extra_packets_func == NULL) /* We're good now */ ? 0 : 1);
 }
 
 /* *************************************************************** */
@@ -80,7 +80,7 @@ static void ndpi_search_snmp(struct ndpi_detection_module_struct *ndpi_struct,
         packet->payload[1 + len_length + 2] == 1 /* SNMPv2c */ ||
         packet->payload[1 + len_length + 2] == 3 /* SNMPv3 */)) {
 
-      if(flow->extra_packets_func == NULL) {
+      if(flow->core.extra_packets_func == NULL) {
         ndpi_int_snmp_add_connection(ndpi_struct, flow);
         flow->protos.snmp.version = packet->payload[1 + len_length + 2];
       }
@@ -90,9 +90,9 @@ static void ndpi_search_snmp(struct ndpi_detection_module_struct *ndpi_struct,
           packet->payload[offset] == 1 /* SNMPv2c */) &&
 	 (offset + 2 < packet->payload_packet_len)) {
 
-        if(flow->extra_packets_func == NULL) {
-          flow->max_extra_packets_to_check = 8;
-          flow->extra_packets_func = ndpi_search_snmp_again;
+        if(flow->core.extra_packets_func == NULL) {
+          flow->core.max_extra_packets_to_check = 8;
+          flow->core.extra_packets_func = ndpi_search_snmp_again;
         }
 
         u_int8_t community_len = packet->payload[offset + 2];
@@ -121,7 +121,7 @@ static void ndpi_search_snmp(struct ndpi_detection_module_struct *ndpi_struct,
                        error_status, error_status_offset, snmp_primitive);
 #endif
 
-                flow->extra_packets_func = NULL; /* We're good now */
+                flow->core.extra_packets_func = NULL; /* We're good now */
 
 		flow->protos.snmp.error_status = error_status;
 

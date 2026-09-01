@@ -91,7 +91,7 @@ static void ndpi_search_mqtt(struct ndpi_detection_module_struct *ndpi_struct,
 
 	NDPI_LOG_DBG(ndpi_struct, "search Mqtt\n");
 	struct ndpi_packet_struct *packet = &ndpi_struct->packet;
-	if (flow->packet_counter > 10) {
+	if (flow->core.packet_counter > 10) {
 		NDPI_LOG_DBG(ndpi_struct, "Excluding Mqtt .. mandatory header not found!\n");
 		NDPI_EXCLUDE_DISSECTOR(ndpi_struct, flow);
 		return;
