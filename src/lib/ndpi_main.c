@@ -592,7 +592,7 @@ void exclude_dissector(struct ndpi_detection_module_struct *ndpi_str, struct ndp
   __ndpi_unused_param(_func);
   __ndpi_unused_param(_line);
 #endif
-  dissector_bitmask_set(&flow->excluded_dissectors_bitmask, dissector_idx);
+  dissector_bitmask_set(&flow->core.excluded_dissectors_bitmask, dissector_idx);
 }
 
 /* ********************************************************************************** */
@@ -8017,113 +8017,113 @@ void ndpi_free_flow_data_protos(struct ndpi_flow_struct* flow) {
        flow_is_proto(flow, NDPI_PROTOCOL_MAIL_POPS) ||
        flow_is_proto(flow, NDPI_PROTOCOL_MAIL_IMAPS) ||
        flow_is_proto(flow, NDPI_PROTOCOL_FTPS)) {
-      if(flow->protos.tls_quic.server_names)
-	ndpi_free(flow->protos.tls_quic.server_names);
+      if(flow->metadata.protos.tls_quic.server_names)
+	ndpi_free(flow->metadata.protos.tls_quic.server_names);
 
-      if(flow->protos.tls_quic.advertised_alpns)
-	ndpi_free(flow->protos.tls_quic.advertised_alpns);
+      if(flow->metadata.protos.tls_quic.advertised_alpns)
+	ndpi_free(flow->metadata.protos.tls_quic.advertised_alpns);
 
-      if(flow->protos.tls_quic.negotiated_alpn)
-	ndpi_free(flow->protos.tls_quic.negotiated_alpn);
+      if(flow->metadata.protos.tls_quic.negotiated_alpn)
+	ndpi_free(flow->metadata.protos.tls_quic.negotiated_alpn);
 
-      if(flow->protos.tls_quic.tls_supported_versions)
-	ndpi_free(flow->protos.tls_quic.tls_supported_versions);
+      if(flow->metadata.protos.tls_quic.tls_supported_versions)
+	ndpi_free(flow->metadata.protos.tls_quic.tls_supported_versions);
 
-      if(flow->protos.tls_quic.issuerDN)
-	ndpi_free(flow->protos.tls_quic.issuerDN);
+      if(flow->metadata.protos.tls_quic.issuerDN)
+	ndpi_free(flow->metadata.protos.tls_quic.issuerDN);
 
-      if(flow->protos.tls_quic.subjectDN)
-	ndpi_free(flow->protos.tls_quic.subjectDN);
+      if(flow->metadata.protos.tls_quic.subjectDN)
+	ndpi_free(flow->metadata.protos.tls_quic.subjectDN);
 
-      if(flow->protos.tls_quic.ja4_client_raw)
-	ndpi_free(flow->protos.tls_quic.ja4_client_raw);
+      if(flow->metadata.protos.tls_quic.ja4_client_raw)
+	ndpi_free(flow->metadata.protos.tls_quic.ja4_client_raw);
 
-      if(flow->protos.tls_quic.ja_client)
-	ndpi_free(flow->protos.tls_quic.ja_client);
+      if(flow->metadata.protos.tls_quic.ja_client)
+	ndpi_free(flow->metadata.protos.tls_quic.ja_client);
 
-      if(flow->protos.tls_quic.ja_server)
-	ndpi_free(flow->protos.tls_quic.ja_server);
+      if(flow->metadata.protos.tls_quic.ja_server)
+	ndpi_free(flow->metadata.protos.tls_quic.ja_server);
     }
 
     if(flow_is_proto(flow, NDPI_PROTOCOL_SSH)) {
-      if(flow->protos.ssh.client_key_exchange_algorithms)
-	ndpi_free(flow->protos.ssh.client_key_exchange_algorithms);
+      if(flow->metadata.protos.ssh.client_key_exchange_algorithms)
+	ndpi_free(flow->metadata.protos.ssh.client_key_exchange_algorithms);
 
-      if(flow->protos.ssh.server_key_exchange_algorithms)
-	ndpi_free(flow->protos.ssh.server_key_exchange_algorithms);
+      if(flow->metadata.protos.ssh.server_key_exchange_algorithms)
+	ndpi_free(flow->metadata.protos.ssh.server_key_exchange_algorithms);
 
-      if(flow->protos.ssh.key_exchange_method)
-	ndpi_free(flow->protos.ssh.key_exchange_method);
+      if(flow->metadata.protos.ssh.key_exchange_method)
+	ndpi_free(flow->metadata.protos.ssh.key_exchange_method);
 
-      if(flow->protos.ssh.client_hostkey_algorithms)
-	ndpi_free(flow->protos.ssh.client_hostkey_algorithms);
-      if(flow->protos.ssh.client_cipher_c2s)
-	ndpi_free(flow->protos.ssh.client_cipher_c2s);
-      if(flow->protos.ssh.client_cipher_s2c)
-	ndpi_free(flow->protos.ssh.client_cipher_s2c);
-      if(flow->protos.ssh.client_mac_c2s)
-	ndpi_free(flow->protos.ssh.client_mac_c2s);
-      if(flow->protos.ssh.client_mac_s2c)
-	ndpi_free(flow->protos.ssh.client_mac_s2c);
+      if(flow->metadata.protos.ssh.client_hostkey_algorithms)
+	ndpi_free(flow->metadata.protos.ssh.client_hostkey_algorithms);
+      if(flow->metadata.protos.ssh.client_cipher_c2s)
+	ndpi_free(flow->metadata.protos.ssh.client_cipher_c2s);
+      if(flow->metadata.protos.ssh.client_cipher_s2c)
+	ndpi_free(flow->metadata.protos.ssh.client_cipher_s2c);
+      if(flow->metadata.protos.ssh.client_mac_c2s)
+	ndpi_free(flow->metadata.protos.ssh.client_mac_c2s);
+      if(flow->metadata.protos.ssh.client_mac_s2c)
+	ndpi_free(flow->metadata.protos.ssh.client_mac_s2c);
 
-      if(flow->protos.ssh.negotiated_hostkey_alg)
-	ndpi_free(flow->protos.ssh.negotiated_hostkey_alg);
-      if(flow->protos.ssh.negotiated_cipher_c2s)
-	ndpi_free(flow->protos.ssh.negotiated_cipher_c2s);
-      if(flow->protos.ssh.negotiated_cipher_s2c)
-	ndpi_free(flow->protos.ssh.negotiated_cipher_s2c);
-      if(flow->protos.ssh.negotiated_mac_c2s)
-	ndpi_free(flow->protos.ssh.negotiated_mac_c2s);
-      if(flow->protos.ssh.negotiated_mac_s2c)
-	ndpi_free(flow->protos.ssh.negotiated_mac_s2c);
+      if(flow->metadata.protos.ssh.negotiated_hostkey_alg)
+	ndpi_free(flow->metadata.protos.ssh.negotiated_hostkey_alg);
+      if(flow->metadata.protos.ssh.negotiated_cipher_c2s)
+	ndpi_free(flow->metadata.protos.ssh.negotiated_cipher_c2s);
+      if(flow->metadata.protos.ssh.negotiated_cipher_s2c)
+	ndpi_free(flow->metadata.protos.ssh.negotiated_cipher_s2c);
+      if(flow->metadata.protos.ssh.negotiated_mac_c2s)
+	ndpi_free(flow->metadata.protos.ssh.negotiated_mac_c2s);
+      if(flow->metadata.protos.ssh.negotiated_mac_s2c)
+	ndpi_free(flow->metadata.protos.ssh.negotiated_mac_s2c);
     }
 
     if(flow_is_proto(flow, NDPI_PROTOCOL_SIP)) {
-      if(flow->protos.sip.from)
-        ndpi_free(flow->protos.sip.from);
-      if(flow->protos.sip.to)
-        ndpi_free(flow->protos.sip.to);
+      if(flow->metadata.protos.sip.from)
+        ndpi_free(flow->metadata.protos.sip.from);
+      if(flow->metadata.protos.sip.to)
+        ndpi_free(flow->metadata.protos.sip.to);
     }
 
     if (flow_is_proto(flow, NDPI_PROTOCOL_SSDP)) {
-      if(flow->protos.ssdp.bootid)
-      ndpi_free(flow->protos.ssdp.bootid);
+      if(flow->metadata.protos.ssdp.bootid)
+      ndpi_free(flow->metadata.protos.ssdp.bootid);
 
-      if(flow->protos.ssdp.usn)
-        ndpi_free(flow->protos.ssdp.usn);
+      if(flow->metadata.protos.ssdp.usn)
+        ndpi_free(flow->metadata.protos.ssdp.usn);
 
-      if(flow->protos.ssdp.cache_controle)
-        ndpi_free(flow->protos.ssdp.cache_controle);
+      if(flow->metadata.protos.ssdp.cache_controle)
+        ndpi_free(flow->metadata.protos.ssdp.cache_controle);
 
-      if(flow->protos.ssdp.location)
-        ndpi_free(flow->protos.ssdp.location);
+      if(flow->metadata.protos.ssdp.location)
+        ndpi_free(flow->metadata.protos.ssdp.location);
 
-      if(flow->protos.ssdp.securelocation_upnp)
-        ndpi_free(flow->protos.ssdp.securelocation_upnp);
+      if(flow->metadata.protos.ssdp.securelocation_upnp)
+        ndpi_free(flow->metadata.protos.ssdp.securelocation_upnp);
 
-      if(flow->protos.ssdp.nt)
-        ndpi_free(flow->protos.ssdp.nt);
+      if(flow->metadata.protos.ssdp.nt)
+        ndpi_free(flow->metadata.protos.ssdp.nt);
 
-      if(flow->protos.ssdp.nts)
-        ndpi_free(flow->protos.ssdp.nts);
+      if(flow->metadata.protos.ssdp.nts)
+        ndpi_free(flow->metadata.protos.ssdp.nts);
 
-      if(flow->protos.ssdp.server)
-        ndpi_free(flow->protos.ssdp.server);
+      if(flow->metadata.protos.ssdp.server)
+        ndpi_free(flow->metadata.protos.ssdp.server);
 
-      if(flow->protos.ssdp.method)
-        ndpi_free(flow->protos.ssdp.method);
+      if(flow->metadata.protos.ssdp.method)
+        ndpi_free(flow->metadata.protos.ssdp.method);
 
-      if(flow->protos.ssdp.man)
-        ndpi_free(flow->protos.ssdp.man);
+      if(flow->metadata.protos.ssdp.man)
+        ndpi_free(flow->metadata.protos.ssdp.man);
 
-      if(flow->protos.ssdp.mx)
-        ndpi_free(flow->protos.ssdp.mx);
+      if(flow->metadata.protos.ssdp.mx)
+        ndpi_free(flow->metadata.protos.ssdp.mx);
 
-      if(flow->protos.ssdp.st)
-        ndpi_free(flow->protos.ssdp.st);
+      if(flow->metadata.protos.ssdp.st)
+        ndpi_free(flow->metadata.protos.ssdp.st);
 
-      if(flow->protos.ssdp.user_agent)
-        ndpi_free(flow->protos.ssdp.user_agent);
+      if(flow->metadata.protos.ssdp.user_agent)
+        ndpi_free(flow->metadata.protos.ssdp.user_agent);
     }
   }
 }
@@ -8139,94 +8139,94 @@ void ndpi_free_flow_data(struct ndpi_flow_struct* flow) {
 	ndpi_free(flow->core.risk_infos[i].info);
     }
 
-    if(flow->l4.tcp.fingerprint)
-      ndpi_free(flow->l4.tcp.fingerprint);
+    if(flow->metadata.l4.tcp.fingerprint)
+      ndpi_free(flow->metadata.l4.tcp.fingerprint);
 
-    if((flow->core.l4_proto == IPPROTO_TCP) && flow->l4.tcp.tls.tls_blocks)
-      ndpi_free(flow->l4.tcp.tls.tls_blocks);
+    if((flow->core.l4_proto == IPPROTO_TCP) && flow->metadata.l4.tcp.tls.tls_blocks)
+      ndpi_free(flow->metadata.l4.tcp.tls.tls_blocks);
 
-    if(flow->l4.tcp.fingerprint_raw)
-      ndpi_free(flow->l4.tcp.fingerprint_raw);
+    if(flow->metadata.l4.tcp.fingerprint_raw)
+      ndpi_free(flow->metadata.l4.tcp.fingerprint_raw);
 
-    if(flow->ndpi.client_fingerprint)
-      ndpi_free(flow->ndpi.client_fingerprint);
+    if(flow->metadata.ndpi.client_fingerprint)
+      ndpi_free(flow->metadata.ndpi.client_fingerprint);
 
-    if(flow->ndpi.server_fingerprint)
-      ndpi_free(flow->ndpi.server_fingerprint);
+    if(flow->metadata.ndpi.server_fingerprint)
+      ndpi_free(flow->metadata.ndpi.server_fingerprint);
 
-    if(flow->http.url)
-      ndpi_free(flow->http.url);
+    if(flow->metadata.http.url)
+      ndpi_free(flow->metadata.http.url);
 
-    if(flow->http.content_type)
-      ndpi_free(flow->http.content_type);
+    if(flow->metadata.http.content_type)
+      ndpi_free(flow->metadata.http.content_type);
 
-    if(flow->http.request_content_type)
-      ndpi_free(flow->http.request_content_type);
+    if(flow->metadata.http.request_content_type)
+      ndpi_free(flow->metadata.http.request_content_type);
 
-    if(flow->http.referer)
-      ndpi_free(flow->http.referer);
+    if(flow->metadata.http.referer)
+      ndpi_free(flow->metadata.http.referer);
 
-    if(flow->http.host)
-      ndpi_free(flow->http.host);
+    if(flow->metadata.http.host)
+      ndpi_free(flow->metadata.http.host);
 
-    if(flow->http.user_agent)
-      ndpi_free(flow->http.user_agent);
+    if(flow->metadata.http.user_agent)
+      ndpi_free(flow->metadata.http.user_agent);
 
-    if(flow->http.nat_ip)
-      ndpi_free(flow->http.nat_ip);
+    if(flow->metadata.http.nat_ip)
+      ndpi_free(flow->metadata.http.nat_ip);
 
-    if(flow->http.detected_os)
-      ndpi_free(flow->http.detected_os);
+    if(flow->metadata.http.detected_os)
+      ndpi_free(flow->metadata.http.detected_os);
 
-    if(flow->http.server)
-      ndpi_free(flow->http.server);
+    if(flow->metadata.http.server)
+      ndpi_free(flow->metadata.http.server);
 
-    if(flow->http.filename)
-      ndpi_free(flow->http.filename);
+    if(flow->metadata.http.filename)
+      ndpi_free(flow->metadata.http.filename);
 
-    if(flow->http.username)
-      ndpi_free(flow->http.username);
+    if(flow->metadata.http.username)
+      ndpi_free(flow->metadata.http.username);
 
-    if(flow->http.password)
-      ndpi_free(flow->http.password);
+    if(flow->metadata.http.password)
+      ndpi_free(flow->metadata.http.password);
 
-    if(flow->kerberos_buf.pktbuf)
-      ndpi_free(flow->kerberos_buf.pktbuf);
+    if(flow->metadata.kerberos_buf.pktbuf)
+      ndpi_free(flow->metadata.kerberos_buf.pktbuf);
 
-    if(flow->dns_tcp_reasm) {
+    if(flow->metadata.dns_tcp_reasm) {
       u_int i;
 
       for(i = 0; i < 2; i++) {
-	      if(flow->dns_tcp_reasm->dir[i].buf)
-	        ndpi_free(flow->dns_tcp_reasm->dir[i].buf);
+	      if(flow->metadata.dns_tcp_reasm->dir[i].buf)
+	        ndpi_free(flow->metadata.dns_tcp_reasm->dir[i].buf);
       }
 
-      ndpi_free(flow->dns_tcp_reasm);
-      flow->dns_tcp_reasm = NULL;
+      ndpi_free(flow->metadata.dns_tcp_reasm);
+      flow->metadata.dns_tcp_reasm = NULL;
     }
 
-    if(flow->monit)
-      ndpi_free(flow->monit);
+    if(flow->metadata.monit)
+      ndpi_free(flow->metadata.monit);
 
     ndpi_free_flow_data_protos(flow);
 
-    if(flow->tls_quic.message[0].buffer)
-      ndpi_free(flow->tls_quic.message[0].buffer);
-    if(flow->tls_quic.message[1].buffer)
-      ndpi_free(flow->tls_quic.message[1].buffer);
+    if(flow->metadata.tls_quic.message[0].buffer)
+      ndpi_free(flow->metadata.tls_quic.message[0].buffer);
+    if(flow->metadata.tls_quic.message[1].buffer)
+      ndpi_free(flow->metadata.tls_quic.message[1].buffer);
 
     if(flow->core.l4_proto == IPPROTO_UDP) {
-      if(flow->l4.udp.quic_reasm_buf)
-        ndpi_free(flow->l4.udp.quic_reasm_buf);
-      if(flow->l4.udp.quic_reasm_buf_bitmap)
-        ndpi_free(flow->l4.udp.quic_reasm_buf_bitmap);
+      if(flow->metadata.l4.udp.quic_reasm_buf)
+        ndpi_free(flow->metadata.l4.udp.quic_reasm_buf);
+      if(flow->metadata.l4.udp.quic_reasm_buf_bitmap)
+        ndpi_free(flow->metadata.l4.udp.quic_reasm_buf_bitmap);
     }
 
-    if(flow->flow_payload != NULL)
-      ndpi_free(flow->flow_payload);
+    if(flow->core.flow_payload != NULL)
+      ndpi_free(flow->core.flow_payload);
 
-    if(flow->tls_quic.obfuscated_heur_state)
-      ndpi_free(flow->tls_quic.obfuscated_heur_state);
+    if(flow->metadata.tls_quic.obfuscated_heur_state)
+      ndpi_free(flow->metadata.tls_quic.obfuscated_heur_state);
   }
 }
 
@@ -8307,7 +8307,7 @@ static int ndpi_init_packet(struct ndpi_detection_module_struct *ndpi_str,
 
     if(transport_len >= tcp_header_len) {
       if(ndpi_str->cfg.tcp_fingerprint_enabled &&
-         flow->l4.tcp.fingerprint == NULL) {
+         flow->metadata.l4.tcp.fingerprint == NULL) {
 	u_int8_t *t = (u_int8_t*)packet->tcp;
 	u_int16_t flags = ntohs(*((u_int16_t*)&t[12])) & 0xFFF;
 	u_int16_t syn_mask = TH_SYN | TH_ECE | TH_CWR;
@@ -8510,12 +8510,12 @@ static int ndpi_init_packet(struct ndpi_detection_module_struct *ndpi_str,
 	      break;
 	    }
 
-	    flow->l4.tcp.fingerprint = ndpi_strdup(fingerprint);
+	    flow->metadata.l4.tcp.fingerprint = ndpi_strdup(fingerprint);
 
 	    if(ndpi_str->cfg.tcp_fingerprint_raw_enabled && options_fp_len)
-	      flow->l4.tcp.fingerprint_raw = ndpi_strdup(options_fp);
+	      flow->metadata.l4.tcp.fingerprint_raw = ndpi_strdup(options_fp);
 
-	    flow->l4.tcp.os_hint = ndpi_get_os_from_tcp_fingerprint(ndpi_str, flow->l4.tcp.fingerprint);
+	    flow->metadata.l4.tcp.os_hint = ndpi_get_os_from_tcp_fingerprint(ndpi_str, flow->metadata.l4.tcp.fingerprint);
 	  }
 	}
       }
@@ -8672,15 +8672,15 @@ static void ndpi_connection_tracking(struct ndpi_detection_module_struct *ndpi_s
   if(ndpi_str->max_payload_track_len > 0 && packet->payload_packet_len > 0) {
     /* printf("LEN: %u [%s]\n", packet->payload_packet_len, packet->payload); */
 
-    if(flow->flow_payload == NULL)
-      flow->flow_payload = (char*)ndpi_malloc(ndpi_str->max_payload_track_len + 1);
+    if(flow->core.flow_payload == NULL)
+      flow->core.flow_payload = (char*)ndpi_malloc(ndpi_str->max_payload_track_len + 1);
 
-    if(flow->flow_payload != NULL)  {
+    if(flow->core.flow_payload != NULL)  {
       u_int i;
 
       for(i=0; (i<packet->payload_packet_len)
-	    && (flow->flow_payload_len < ndpi_str->max_payload_track_len); i++) {
-	flow->flow_payload[flow->flow_payload_len++] =
+	    && (flow->core.flow_payload_len < ndpi_str->max_payload_track_len); i++) {
+	flow->core.flow_payload[flow->core.flow_payload_len++] =
 	  (ndpi_isprint(packet->payload[i])
 	   || ndpi_isspace(packet->payload[i])) ? packet->payload[i] : '.';
       }
@@ -8704,12 +8704,12 @@ static void ndpi_connection_tracking(struct ndpi_detection_module_struct *ndpi_s
     u_int8_t flags_3wh = flags & syn_mask;
 
     if((flags_3wh & (TH_SYN|TH_ACK)) == (TH_SYN|TH_ACK))
-      flow->l4.tcp.three_way_handshake.syn_ack_time = packet->current_time_ms;
+      flow->metadata.l4.tcp.three_way_handshake.syn_ack_time = packet->current_time_ms;
     else if((flags_3wh & TH_SYN) == TH_SYN)
-      flow->l4.tcp.three_way_handshake.syn_time = packet->current_time_ms;
+      flow->metadata.l4.tcp.three_way_handshake.syn_time = packet->current_time_ms;
     else if(((flags_3wh & TH_ACK) == TH_ACK)
-	    && (flow->l4.tcp.three_way_handshake.ack_time == 0))
-      flow->l4.tcp.three_way_handshake.ack_time = packet->current_time_ms;
+	    && (flow->metadata.l4.tcp.three_way_handshake.ack_time == 0))
+      flow->metadata.l4.tcp.three_way_handshake.ack_time = packet->current_time_ms;
 
     if(flags == 0)
       ndpi_set_risk(ndpi_str, flow, NDPI_TCP_ISSUES, "TCP NULL scan");
@@ -8723,25 +8723,25 @@ static void ndpi_connection_tracking(struct ndpi_detection_module_struct *ndpi_s
       if(flags == TH_FIN)
 	ndpi_set_risk(ndpi_str, flow, NDPI_TCP_ISSUES, "TCP FIN scan");
 
-      flow->l4.tcp.cli2srv_tcp_flags |= flags;
+      flow->metadata.l4.tcp.cli2srv_tcp_flags |= flags;
     } else
-      flow->l4.tcp.srv2cli_tcp_flags |= flags;
+      flow->metadata.l4.tcp.srv2cli_tcp_flags |= flags;
 
     if((ndpi_str->input_info == NULL)
        || ndpi_str->input_info->seen_flow_beginning == NDPI_FLOW_BEGINNING_UNKNOWN) {
-      if(tcph->syn != 0 && tcph->ack == 0 && flow->l4.tcp.seen_syn == 0
-	 && flow->l4.tcp.seen_syn_ack == 0 &&
-	 flow->l4.tcp.seen_ack == 0) {
-	flow->l4.tcp.seen_syn = 1;
+      if(tcph->syn != 0 && tcph->ack == 0 && flow->metadata.l4.tcp.seen_syn == 0
+	 && flow->metadata.l4.tcp.seen_syn_ack == 0 &&
+	 flow->metadata.l4.tcp.seen_ack == 0) {
+	flow->metadata.l4.tcp.seen_syn = 1;
       } else {
-	if(tcph->syn != 0 && tcph->ack != 0 && flow->l4.tcp.seen_syn == 1
-	   && flow->l4.tcp.seen_syn_ack == 0 &&
-	   flow->l4.tcp.seen_ack == 0) {
-	  flow->l4.tcp.seen_syn_ack = 1;
+	if(tcph->syn != 0 && tcph->ack != 0 && flow->metadata.l4.tcp.seen_syn == 1
+	   && flow->metadata.l4.tcp.seen_syn_ack == 0 &&
+	   flow->metadata.l4.tcp.seen_ack == 0) {
+	  flow->metadata.l4.tcp.seen_syn_ack = 1;
 	} else {
-	  if(tcph->syn == 0 && tcph->ack == 1 && flow->l4.tcp.seen_syn == 1 && flow->l4.tcp.seen_syn_ack == 1 &&
-	     flow->l4.tcp.seen_ack == 0) {
-	    flow->l4.tcp.seen_ack = 1;
+	  if(tcph->syn == 0 && tcph->ack == 1 && flow->metadata.l4.tcp.seen_syn == 1 && flow->metadata.l4.tcp.seen_syn_ack == 1 &&
+	     flow->metadata.l4.tcp.seen_ack == 0) {
+	    flow->metadata.l4.tcp.seen_ack = 1;
 	  }
 	}
       }
@@ -8750,11 +8750,11 @@ static void ndpi_connection_tracking(struct ndpi_detection_module_struct *ndpi_s
     if(ndpi_str->cfg.tcp_ack_paylod_heuristic && tcp_ack_padding(packet)) {
       NDPI_LOG_DBG2(ndpi_str, "TCP ACK with zero padding. Ignoring\n");
       packet->tcp_retransmission = 1;
-    } else if(flow->l4.tcp.next_tcp_seq_nr[0] == 0 || flow->l4.tcp.next_tcp_seq_nr[1] == 0 ||
+    } else if(flow->metadata.l4.tcp.next_tcp_seq_nr[0] == 0 || flow->metadata.l4.tcp.next_tcp_seq_nr[1] == 0 ||
 	      tcph->syn) {
       /* Initialize tcp sequence counters */
       /* If we receive multiple syn(-ack), keep the last one */
-      flow->l4.tcp.next_tcp_seq_nr[packet->packet_direction] =
+      flow->metadata.l4.tcp.next_tcp_seq_nr[packet->packet_direction] =
 	  ntohl(tcph->seq) + (tcph->syn ? 1 : packet->payload_packet_len);
 
       /*
@@ -8762,33 +8762,33 @@ static void ndpi_connection_tracking(struct ndpi_detection_module_struct *ndpi_s
 	but that is already started when nDPI being to process it. See also (***) below
        */
       if(tcph->ack != 0)
-        flow->l4.tcp.next_tcp_seq_nr[1 - packet->packet_direction] = ntohl(tcph->ack_seq);
+        flow->metadata.l4.tcp.next_tcp_seq_nr[1 - packet->packet_direction] = ntohl(tcph->ack_seq);
     } else if(packet->payload_packet_len > 0) {
       /* check tcp sequence counters */
-      if(((u_int32_t)(ntohl(tcph->seq) - flow->l4.tcp.next_tcp_seq_nr[packet->packet_direction])) >
+      if(((u_int32_t)(ntohl(tcph->seq) - flow->metadata.l4.tcp.next_tcp_seq_nr[packet->packet_direction])) >
 	 ndpi_str->tcp_max_retransmission_window_size) {
-	if(flow->l4.tcp.last_tcp_pkt_payload_len > 0) {
+	if(flow->metadata.l4.tcp.last_tcp_pkt_payload_len > 0) {
           NDPI_LOG_DBG2(ndpi_str, "TCP Retransmission\n");
 	  packet->tcp_retransmission = 1;
 	}
 
-	if((flow->l4.tcp.next_tcp_seq_nr[packet->packet_direction] - ntohl(tcph->seq) <
+	if((flow->metadata.l4.tcp.next_tcp_seq_nr[packet->packet_direction] - ntohl(tcph->seq) <
 	    packet->payload_packet_len)) {
 	  if(flow->core.num_processed_pkts > 1) /* See also (***) above */
-	    flow->l4.tcp.next_tcp_seq_nr[packet->packet_direction] = ntohl(tcph->seq) + packet->payload_packet_len;
+	    flow->metadata.l4.tcp.next_tcp_seq_nr[packet->packet_direction] = ntohl(tcph->seq) + packet->payload_packet_len;
 	}
       }
       else {
-	flow->l4.tcp.next_tcp_seq_nr[packet->packet_direction] = ntohl(tcph->seq) + packet->payload_packet_len;
+	flow->metadata.l4.tcp.next_tcp_seq_nr[packet->packet_direction] = ntohl(tcph->seq) + packet->payload_packet_len;
       }
     }
 
     if(tcph->rst) {
-      flow->l4.tcp.next_tcp_seq_nr[0] = 0;
-      flow->l4.tcp.next_tcp_seq_nr[1] = 0;
+      flow->metadata.l4.tcp.next_tcp_seq_nr[0] = 0;
+      flow->metadata.l4.tcp.next_tcp_seq_nr[1] = 0;
     }
 
-    flow->l4.tcp.last_tcp_pkt_payload_len = packet->payload_packet_len;
+    flow->metadata.l4.tcp.last_tcp_pkt_payload_len = packet->payload_packet_len;
   } else if(udph != NULL) {
     if(udph->source != udph->dest)
       packet->packet_direction = (htons(udph->source) < htons(udph->dest)) ? 1 : 0;
@@ -8802,9 +8802,9 @@ static void ndpi_connection_tracking(struct ndpi_detection_module_struct *ndpi_s
     if(tcph != NULL) {
       if(ndpi_str->input_info &&
 	 ndpi_str->input_info->seen_flow_beginning == NDPI_FLOW_BEGINNING_SEEN) {
-	flow->l4.tcp.seen_syn = 1;
-	flow->l4.tcp.seen_syn_ack = 1;
-	flow->l4.tcp.seen_ack = 1;
+	flow->metadata.l4.tcp.seen_syn = 1;
+	flow->metadata.l4.tcp.seen_syn_ack = 1;
+	flow->metadata.l4.tcp.seen_ack = 1;
       }
 
       s_port = tcph->source, d_port = tcph->dest;
@@ -8915,7 +8915,7 @@ static u_int32_t check_ndpi_subprotocols(struct ndpi_detection_module_struct * c
     if(subproto_index > 0 &&
        (ndpi_str->callback_buffer[subproto_index].ndpi_selection_bitmask & ndpi_selection_packet) ==
        ndpi_str->callback_buffer[subproto_index].ndpi_selection_bitmask &&
-       !dissector_bitmask_is_set(&flow->excluded_dissectors_bitmask, subproto_index)) {
+       !dissector_bitmask_is_set(&flow->core.excluded_dissectors_bitmask, subproto_index)) {
       ndpi_str->current_dissector_idx = subproto_index;
       ndpi_str->callback_buffer[subproto_index].func(ndpi_str, flow);
       num_calls++;
@@ -8942,7 +8942,7 @@ static u_int32_t check_ndpi_detection_func(struct ndpi_detection_module_struct *
 
   if(fast_callback_protocol_id != NDPI_PROTOCOL_UNKNOWN &&
      ndpi_str->callback_buffer[dissector_idx].func &&
-     !dissector_bitmask_is_set(&flow->excluded_dissectors_bitmask, dissector_idx) &&
+     !dissector_bitmask_is_set(&flow->core.excluded_dissectors_bitmask, dissector_idx) &&
      (ndpi_str->callback_buffer[dissector_idx].ndpi_selection_bitmask & ndpi_selection_packet) ==
      ndpi_str->callback_buffer[dissector_idx].ndpi_selection_bitmask) {
 
@@ -8962,7 +8962,7 @@ static u_int32_t check_ndpi_detection_func(struct ndpi_detection_module_struct *
         if((func != callback_buffer[a].func) &&
 	   (callback_buffer[a].ndpi_selection_bitmask & ndpi_selection_packet) ==
 	   callback_buffer[a].ndpi_selection_bitmask &&
-	   !dissector_bitmask_is_set(&flow->excluded_dissectors_bitmask, dissector_idx)) {
+	   !dissector_bitmask_is_set(&flow->core.excluded_dissectors_bitmask, dissector_idx)) {
             ndpi_str->current_dissector_idx = dissector_idx;
 	    callback_buffer[a].func(ndpi_str, flow);
 	    num_calls++;
@@ -9132,13 +9132,13 @@ static int ndpi_reconcile_msteams_call_udp_port(struct ndpi_flow_struct *flow,
   */
 
   if((dport == 3478) || (dport == 3479) || ((sport >= 50000) && (sport <= 50019)))
-    flow->flow_multimedia_types |= ndpi_multimedia_audio_flow;
+    flow->metadata.flow_multimedia_types |= ndpi_multimedia_audio_flow;
   else if((dport == 3480) || ((sport >= 50020) && (sport <= 50039)))
-    flow->flow_multimedia_types |= ndpi_multimedia_video_flow;
+    flow->metadata.flow_multimedia_types |= ndpi_multimedia_video_flow;
   else if((dport == 3481) || ((sport >= 50040) && (sport <= 50059)))
-    flow->flow_multimedia_types |= ndpi_multimedia_screen_sharing_flow;
+    flow->metadata.flow_multimedia_types |= ndpi_multimedia_screen_sharing_flow;
   else {
-    flow->flow_multimedia_types = ndpi_multimedia_unknown_flow;
+    flow->metadata.flow_multimedia_types = ndpi_multimedia_unknown_flow;
     return(0);
   }
 
@@ -9312,7 +9312,7 @@ int search_into_bittorrent_cache(struct ndpi_detection_module_struct *ndpi_struc
 	 flow->bt_check_performed);
 #endif
 
-  if(flow->bt_check_performed /* Do the check once */)
+  if(flow->metadata.bt_check_performed /* Do the check once */)
     return(0);
 
   if(ndpi_struct->bittorrent_cache) {
@@ -9320,7 +9320,7 @@ int search_into_bittorrent_cache(struct ndpi_detection_module_struct *ndpi_struc
     u_int8_t found = 0;
     u_int64_t key, key1, key2;
 
-    flow->bt_check_performed = 1;
+    flow->metadata.bt_check_performed = 1;
 
     /* Check cached communications */
     key = make_bittorrent_peers_key(flow);
@@ -9350,15 +9350,15 @@ static void check_tcp_flags(struct ndpi_detection_module_struct *ndpi_struct, st
   // printf("[TOTAL] %u / %u [tot: %u]\n", flow->core.packet_direction_complete_counter[0], flow->core.packet_direction_complete_counter[1], flow->core.all_packets_counter);
   bool is_probing = false;
 
-  if((flow->l4.tcp.cli2srv_tcp_flags & TH_SYN)
-     && (flow->l4.tcp.srv2cli_tcp_flags & TH_RST)
+  if((flow->metadata.l4.tcp.cli2srv_tcp_flags & TH_SYN)
+     && (flow->metadata.l4.tcp.srv2cli_tcp_flags & TH_RST)
      && (flow->core.packet_counter == 0 /* Ignore connections terminated by RST but that exchanged data (3WH + RST) */))
     ndpi_set_risk(ndpi_struct, flow, NDPI_TCP_ISSUES, "Connection refused (server)"), is_probing = true;
-  else if((flow->l4.tcp.cli2srv_tcp_flags & TH_SYN)
-	  && (flow->l4.tcp.cli2srv_tcp_flags & TH_RST)
+  else if((flow->metadata.l4.tcp.cli2srv_tcp_flags & TH_SYN)
+	  && (flow->metadata.l4.tcp.cli2srv_tcp_flags & TH_RST)
 	  && (flow->core.packet_counter == 0 /* Ignore connections terminated by RST but that exchanged data (3WH + RST) */))
     ndpi_set_risk(ndpi_struct, flow, NDPI_TCP_ISSUES, "Connection refused (client)"), is_probing = true;
-  else if((flow->l4.tcp.srv2cli_tcp_flags & TH_RST) && (flow->core.packet_direction_complete_counter[1 /* server -> client */] == 1))
+  else if((flow->metadata.l4.tcp.srv2cli_tcp_flags & TH_RST) && (flow->core.packet_direction_complete_counter[1 /* server -> client */] == 1))
     ndpi_set_risk(ndpi_struct, flow, NDPI_TCP_ISSUES, "Connection refused"), is_probing = true;
 
   if(is_probing)
@@ -9374,11 +9374,11 @@ static void check_probing_attempt(struct ndpi_detection_module_struct *ndpi_str,
   if(flow->core.l4_proto == IPPROTO_TCP) {
     u_int64_t tdiff_ms;
 
-    if(flow->l4.tcp.three_way_handshake.syn_ack_time && flow->l4.tcp.three_way_handshake.syn_time) {
-      if(flow->l4.tcp.three_way_handshake.syn_ack_time > flow->l4.tcp.three_way_handshake.syn_time)
-	tdiff_ms = flow->l4.tcp.three_way_handshake.syn_ack_time - flow->l4.tcp.three_way_handshake.syn_time;
+    if(flow->metadata.l4.tcp.three_way_handshake.syn_ack_time && flow->metadata.l4.tcp.three_way_handshake.syn_time) {
+      if(flow->metadata.l4.tcp.three_way_handshake.syn_ack_time > flow->metadata.l4.tcp.three_way_handshake.syn_time)
+	tdiff_ms = flow->metadata.l4.tcp.three_way_handshake.syn_ack_time - flow->metadata.l4.tcp.three_way_handshake.syn_time;
       else /* out of order */
-	tdiff_ms = flow->l4.tcp.three_way_handshake.syn_time - flow->l4.tcp.three_way_handshake.syn_ack_time;
+	tdiff_ms = flow->metadata.l4.tcp.three_way_handshake.syn_time - flow->metadata.l4.tcp.three_way_handshake.syn_ack_time;
 
       if(tdiff_ms > 1500 /* 1.5 sec */) {
 	char buf[64];
@@ -9388,11 +9388,11 @@ static void check_probing_attempt(struct ndpi_detection_module_struct *ndpi_str,
       }
     }
 
-    if(flow->l4.tcp.three_way_handshake.ack_time && flow->l4.tcp.three_way_handshake.syn_ack_time) {
-      if(flow->l4.tcp.three_way_handshake.ack_time > flow->l4.tcp.three_way_handshake.syn_ack_time)
-	tdiff_ms = flow->l4.tcp.three_way_handshake.ack_time - flow->l4.tcp.three_way_handshake.syn_ack_time;
+    if(flow->metadata.l4.tcp.three_way_handshake.ack_time && flow->metadata.l4.tcp.three_way_handshake.syn_ack_time) {
+      if(flow->metadata.l4.tcp.three_way_handshake.ack_time > flow->metadata.l4.tcp.three_way_handshake.syn_ack_time)
+	tdiff_ms = flow->metadata.l4.tcp.three_way_handshake.ack_time - flow->metadata.l4.tcp.three_way_handshake.syn_ack_time;
       else
-	tdiff_ms = flow->l4.tcp.three_way_handshake.syn_ack_time - flow->l4.tcp.three_way_handshake.ack_time;
+	tdiff_ms = flow->metadata.l4.tcp.three_way_handshake.syn_ack_time - flow->metadata.l4.tcp.three_way_handshake.ack_time;
 
       if(tdiff_ms > 1500 /* 1.5 sec */) {
 	char buf[64];
@@ -9404,8 +9404,8 @@ static void check_probing_attempt(struct ndpi_detection_module_struct *ndpi_str,
   }
 
   if((flow->core.l4_proto == IPPROTO_TCP)
-     && (flow->l4.tcp.cli2srv_tcp_flags & TH_PUSH)
-     && (flow->l4.tcp.srv2cli_tcp_flags & TH_PUSH)) {
+     && (flow->metadata.l4.tcp.cli2srv_tcp_flags & TH_PUSH)
+     && (flow->metadata.l4.tcp.srv2cli_tcp_flags & TH_PUSH)) {
     if(flow->core.packet_direction_counter[0]
        && flow->core.packet_direction_counter[1]) {
       /* Both directions observed */
@@ -9415,7 +9415,7 @@ static void check_probing_attempt(struct ndpi_detection_module_struct *ndpi_str,
       if(flow->core.confidence == NDPI_CONFIDENCE_DPI) {
 	switch(flow->core.detected_protocol_stack[0]) {
 	case NDPI_PROTOCOL_SSH:
-	  if(flow->protos.ssh.hassh_server[0] == '\0')
+	  if(flow->metadata.protos.ssh.hassh_server[0] == '\0')
 	    ndpi_set_risk(ndpi_str, flow, NDPI_PROBING_ATTEMPT, "SSH Probing");
 	  break;
 
@@ -9424,7 +9424,7 @@ static void check_probing_attempt(struct ndpi_detection_module_struct *ndpi_str,
 	case NDPI_PROTOCOL_MAIL_POPS:
 	case NDPI_PROTOCOL_MAIL_IMAPS:
 	case NDPI_PROTOCOL_DTLS:
-	  if(flow->host_server_name[0] == '\0')
+	  if(flow->metadata.host_server_name[0] == '\0')
 	    ndpi_set_risk(ndpi_str, flow, NDPI_PROBING_ATTEMPT, "TLS Probing");
 	  break;
 	}
@@ -10138,11 +10138,11 @@ void fill_protocol_category_and_breed(struct ndpi_detection_module_struct *ndpi_
       return;
     }
 
-    if(flow->host_server_name[0] != '\0') {
+    if(flow->metadata.host_server_name[0] != '\0') {
       ndpi_protocol_category_t category;
       ndpi_protocol_breed_t breed;
-      int rc = ndpi_match_custom_category(ndpi_str, flow->host_server_name,
-					  strlen(flow->host_server_name), &category, &breed);
+      int rc = ndpi_match_custom_category(ndpi_str, flow->metadata.host_server_name,
+					  strlen(flow->metadata.host_server_name), &category, &breed);
       if(rc == 0) {
 	flow->core.category = category;
 	flow->core.breed = breed;
@@ -10614,8 +10614,8 @@ static void ndpi_internal_detection_process_packet(struct ndpi_detection_module_
 	       flow->core.detected_protocol_stack[1],
 	       flow->core.category, flow->core.breed);
 
-  if(flow->monit)
-    memset(flow->monit, '\0', sizeof(*flow->monit));
+  if(flow->metadata.monit)
+    memset(flow->metadata.monit, '\0', sizeof(*flow->metadata.monit));
 
   if(ndpi_init_packet(ndpi_str, flow, current_time_ms, packet_data, packetlen, input_info) != 0)
     return;
@@ -10808,7 +10808,7 @@ ret_protocols:
         !ndpi_stack_is_tls_like(&flow->core.protocol_stack) &&
         flow->core.detected_protocol_stack[0] != NDPI_PROTOCOL_HTTP &&
         flow->core.detected_protocol_stack[1] != NDPI_PROTOCOL_HTTP) {
-      flow->entropy = ndpi_entropy(packet->payload, packet->payload_packet_len);
+      flow->metadata.entropy = ndpi_entropy(packet->payload, packet->payload_packet_len);
     }
 
     ndpi_entropy2risk(ndpi_str, flow);
@@ -11045,13 +11045,13 @@ void ndpi_parse_packet_line_info(struct ndpi_detection_module_struct *ndpi_str, 
    * Trigger when: the TCP 3-way handshake was fully observed, the flow is HTTP,
    * a request method has been seen, and no response has arrived yet.
    */
-  if(flow->l4.tcp.three_way_handshake.syn_time != 0 /* 3WH was observed */
-     && flow->l4.tcp.three_way_handshake.ack_time != 0
+  if(flow->metadata.l4.tcp.three_way_handshake.syn_time != 0 /* 3WH was observed */
+     && flow->metadata.l4.tcp.three_way_handshake.ack_time != 0
      && (flow->core.detected_protocol_stack[0] == NDPI_PROTOCOL_HTTP
          || flow->core.detected_protocol_stack[1] == NDPI_PROTOCOL_HTTP)
-     && flow->http.method != NDPI_HTTP_METHOD_UNKNOWN
-     && flow->http.response_status_code == 0 /* no response seen yet */) {
-    u_int64_t elapsed_ms = packet->current_time_ms - flow->l4.tcp.three_way_handshake.ack_time;
+     && flow->metadata.http.method != NDPI_HTTP_METHOD_UNKNOWN
+     && flow->metadata.http.response_status_code == 0 /* no response seen yet */) {
+    u_int64_t elapsed_ms = packet->current_time_ms - flow->metadata.l4.tcp.three_way_handshake.ack_time;
 
     if(elapsed_ms > 3000 /* 3 sec */ && !ndpi_isset_risk(flow, NDPI_SLOW_DOS)) {
       char msg[64];
@@ -11076,7 +11076,7 @@ void ndpi_parse_packet_line_info(struct ndpi_detection_module_struct *ndpi_str, 
       continue;
 
     /* Found a CR+LF — the current line ends here */
-    flow->http.request_header_observed = 1;
+    flow->metadata.http.request_header_observed = 1;
 
     /* Double CR+LF (\r\n\r\n) signals the end of HTTP headers;
      * snapshot whatever body bytes are immediately available. */
@@ -11419,13 +11419,13 @@ static void ndpi_int_change_flow_protocol(struct ndpi_flow_struct *flow,
     /*
       When the protocol is totally different this can be an indication
       that something went wrong so better start over and clanup things
-      as flow->protos is an union and this can lead to inconsistencies.
+      as flow->metadata.protos.is an union and this can lead to inconsistencies.
 
       TODO
       In the future we should handle protocol reconfiguration better
     */
     ndpi_free_flow_data_protos(flow);
-    memset(&flow->protos, 0, sizeof(flow->protos));
+    memset(&flow->metadata.protos. 0, sizeof(flow->metadata.protos.);
   }
 #endif
 
@@ -12476,14 +12476,14 @@ void ndpi_free_flow(struct ndpi_flow_struct *flow) {
   if(flow) {
     ndpi_free_flow_data(flow);
 
-    if((flow->custom.plugin != NULL)
-       && (flow->custom.plugin->freeFlowFctn != NULL)
-       && (flow->custom.plugin_data != NULL)
+    if((flow->metadata.custom.plugin != NULL)
+       && (flow->metadata.custom.plugin->freeFlowFctn != NULL)
+       && (flow->metadata.custom.plugin_data != NULL)
        )
-      flow->custom.plugin->freeFlowFctn(flow->custom.plugin_data);
+      flow->metadata.custom.plugin->freeFlowFctn(flow->metadata.custom.plugin_data);
 
     /* Custom storage */
-    if(flow->tls_quic.opaque) ndpi_free(flow->tls_quic.opaque);
+    if(flow->metadata.tls_quic.opaque) ndpi_free(flow->metadata.tls_quic.opaque);
     
     ndpi_free(flow);
   }
@@ -13352,8 +13352,8 @@ char *ndpi_hostname_sni_set(struct ndpi_flow_struct *flow,
   char *dst, *double_column;
   size_t len, i;
 
-  len = ndpi_min(value_len, sizeof(flow->host_server_name) - 1);
-  dst = flow->host_server_name;
+  len = ndpi_min(value_len, sizeof(flow->metadata.host_server_name) - 1);
+  dst = flow->metadata.host_server_name;
 
   if(!normalize) {
     memcpy(dst,&value[value_len - len],len);
@@ -13410,7 +13410,7 @@ char *ndpi_hostname_sni_set(struct ndpi_flow_struct *flow,
 
 char *ndpi_user_agent_set(struct ndpi_flow_struct *flow,
 			  const u_int8_t *value, size_t value_len) {
-  if(flow->http.user_agent != NULL) {
+  if(flow->metadata.http.user_agent != NULL) {
     /* Already set: ignore double set */
     return NULL;
   }
@@ -13418,13 +13418,13 @@ char *ndpi_user_agent_set(struct ndpi_flow_struct *flow,
     return NULL;
   }
 
-  flow->http.user_agent = ndpi_malloc(value_len + 1);
-  if(flow->http.user_agent != NULL) {
-    memcpy(flow->http.user_agent, value, value_len);
-    flow->http.user_agent[value_len] = '\0';
+  flow->metadata.http.user_agent = ndpi_malloc(value_len + 1);
+  if(flow->metadata.http.user_agent != NULL) {
+    memcpy(flow->metadata.http.user_agent, value, value_len);
+    flow->metadata.http.user_agent[value_len] = '\0';
   }
 
-  return flow->http.user_agent;
+  return flow->metadata.http.user_agent;
 }
 
 /* ******************************************************************** */
@@ -13432,8 +13432,8 @@ char *ndpi_user_agent_set(struct ndpi_flow_struct *flow,
 int ndpi_seen_flow_beginning(const struct ndpi_flow_struct *flow)
 {
   if(flow->core.l4_proto == IPPROTO_TCP &&
-     (flow->l4.tcp.seen_syn == 0 || flow->l4.tcp.seen_syn_ack == 0 ||
-      flow->l4.tcp.seen_ack == 0))
+     (flow->metadata.l4.tcp.seen_syn == 0 || flow->metadata.l4.tcp.seen_syn_ack == 0 ||
+      flow->metadata.l4.tcp.seen_ack == 0))
     return 0;
   return 1;
 }

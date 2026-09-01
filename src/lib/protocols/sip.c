@@ -184,20 +184,20 @@ static void search_metadata(struct ndpi_detection_module_struct *ndpi_struct, st
   for(a = 0; a < packet->parsed_lines; a++) {
     /* From */
     if(ndpi_struct->cfg.sip_attribute_from_enabled &&
-       flow->protos.sip.from == NULL &&
+       flow->metadata.protos.sip.from == NULL &&
        packet->line[a].len >= 5 &&
        memcmp(packet->line[a].ptr, "From:", 5) == 0) {
       str_len = packet->line[a].len - 5;
       str = ndpi_strip_leading_trailing_spaces((char *)packet->line[a].ptr + 5, &str_len);
       if(str) {
         NDPI_LOG_DBG2(ndpi_struct, "Found From: %.*s\n", str_len, str);
-        flow->protos.sip.from = ndpi_strndup(str, str_len);
+        flow->metadata.protos.sip.from = ndpi_strndup(str, str_len);
         if(ndpi_struct->cfg.sip_attribute_from_imsi_enabled &&
-           flow->protos.sip.from) {
-          imsi = get_imsi(flow->protos.sip.from, &imsi_len);
+           flow->metadata.protos.sip.from) {
+          imsi = get_imsi(flow->metadata.protos.sip.from, &imsi_len);
           if(imsi) {
             NDPI_LOG_DBG2(ndpi_struct, "Found From IMSI: %.*s\n", imsi_len, imsi);
-            memcpy(flow->protos.sip.from_imsi, imsi, imsi_len);
+            memcpy(flow->metadata.protos.sip.from_imsi, imsi, imsi_len);
           }
         }
       }
@@ -205,20 +205,20 @@ static void search_metadata(struct ndpi_detection_module_struct *ndpi_struct, st
 
     /* To */
     if(ndpi_struct->cfg.sip_attribute_to_enabled &&
-       flow->protos.sip.to == NULL &&
+       flow->metadata.protos.sip.to == NULL &&
        packet->line[a].len >= 3 &&
        memcmp(packet->line[a].ptr, "To:", 3) == 0) {
       str_len = packet->line[a].len - 3;
       str = ndpi_strip_leading_trailing_spaces((char *)packet->line[a].ptr + 3, &str_len);
       if(str) {
         NDPI_LOG_DBG2(ndpi_struct, "Found To: %.*s\n", str_len, str);
-        flow->protos.sip.to = ndpi_strndup(str, str_len);
+        flow->metadata.protos.sip.to = ndpi_strndup(str, str_len);
         if(ndpi_struct->cfg.sip_attribute_to_imsi_enabled &&
-           flow->protos.sip.to) {
-          imsi = get_imsi(flow->protos.sip.to, &imsi_len);
+           flow->metadata.protos.sip.to) {
+          imsi = get_imsi(flow->metadata.protos.sip.to, &imsi_len);
           if(imsi) {
             NDPI_LOG_DBG2(ndpi_struct, "Found To IMSI: %.*s\n", imsi_len, imsi);
-            memcpy(flow->protos.sip.to_imsi, imsi, imsi_len);
+            memcpy(flow->metadata.protos.sip.to_imsi, imsi, imsi_len);
           }
         }
       }

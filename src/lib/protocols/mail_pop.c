@@ -59,40 +59,40 @@ static int pop_check_client_command(struct ndpi_detection_module_struct *ndpi_st
     return 0;
 
   if(ndpi_memcasecmp(packet->payload, "AUTH", 4) == 0) {
-    flow->l4.tcp.pop_command_bitmask |= POP_BIT_AUTH;
+    flow->metadata.l4.tcp.pop_command_bitmask |= POP_BIT_AUTH;
   } else if(ndpi_memcasecmp(packet->payload, "APOP", 4) == 0) {
-    flow->l4.tcp.pop_command_bitmask |= POP_BIT_APOP;
+    flow->metadata.l4.tcp.pop_command_bitmask |= POP_BIT_APOP;
   } else if(ndpi_memcasecmp(packet->payload, "USER", 4) == 0) {
     char buf[64];
 
-    ndpi_user_pwd_payload_copy((u_int8_t *)flow->l4.tcp.ftp_imap_pop_smtp.username,
-                                sizeof(flow->l4.tcp.ftp_imap_pop_smtp.username),
+    ndpi_user_pwd_payload_copy((u_int8_t *)flow->metadata.l4.tcp.ftp_imap_pop_smtp.username,
+                                sizeof(flow->metadata.l4.tcp.ftp_imap_pop_smtp.username),
                                 5, packet->payload, packet->payload_packet_len);
     snprintf(buf, sizeof(buf), "Found username (%s)",
-             flow->l4.tcp.ftp_imap_pop_smtp.username);
+             flow->metadata.l4.tcp.ftp_imap_pop_smtp.username);
     ndpi_set_risk(ndpi_struct, flow, NDPI_CLEAR_TEXT_CREDENTIALS, buf);
-    flow->l4.tcp.pop_command_bitmask |= POP_BIT_USER;
+    flow->metadata.l4.tcp.pop_command_bitmask |= POP_BIT_USER;
   } else if(ndpi_memcasecmp(packet->payload, "PASS", 4) == 0) {
-    ndpi_user_pwd_payload_copy((u_int8_t *)flow->l4.tcp.ftp_imap_pop_smtp.password,
-                                sizeof(flow->l4.tcp.ftp_imap_pop_smtp.password),
+    ndpi_user_pwd_payload_copy((u_int8_t *)flow->metadata.l4.tcp.ftp_imap_pop_smtp.password,
+                                sizeof(flow->metadata.l4.tcp.ftp_imap_pop_smtp.password),
                                 5, packet->payload, packet->payload_packet_len);
     ndpi_set_risk(ndpi_struct, flow, NDPI_CLEAR_TEXT_CREDENTIALS, "Found password");
-    flow->l4.tcp.pop_command_bitmask |= POP_BIT_PASS;
+    flow->metadata.l4.tcp.pop_command_bitmask |= POP_BIT_PASS;
   } else if(ndpi_memcasecmp(packet->payload, "CAPA", 4) == 0) {
-    flow->l4.tcp.pop_command_bitmask |= POP_BIT_CAPA;
+    flow->metadata.l4.tcp.pop_command_bitmask |= POP_BIT_CAPA;
   } else if(ndpi_memcasecmp(packet->payload, "LIST", 4) == 0) {
-    flow->l4.tcp.pop_command_bitmask |= POP_BIT_LIST;
+    flow->metadata.l4.tcp.pop_command_bitmask |= POP_BIT_LIST;
   } else if(ndpi_memcasecmp(packet->payload, "STAT", 4) == 0) {
-    flow->l4.tcp.pop_command_bitmask |= POP_BIT_STAT;
+    flow->metadata.l4.tcp.pop_command_bitmask |= POP_BIT_STAT;
   } else if(ndpi_memcasecmp(packet->payload, "UIDL", 4) == 0) {
-    flow->l4.tcp.pop_command_bitmask |= POP_BIT_UIDL;
+    flow->metadata.l4.tcp.pop_command_bitmask |= POP_BIT_UIDL;
   } else if(ndpi_memcasecmp(packet->payload, "RETR", 4) == 0) {
-    flow->l4.tcp.pop_command_bitmask |= POP_BIT_RETR;
+    flow->metadata.l4.tcp.pop_command_bitmask |= POP_BIT_RETR;
   } else if(ndpi_memcasecmp(packet->payload, "DELE", 4) == 0) {
-    flow->l4.tcp.pop_command_bitmask |= POP_BIT_DELE;
+    flow->metadata.l4.tcp.pop_command_bitmask |= POP_BIT_DELE;
   } else if(ndpi_memcasecmp(packet->payload, "STLS", 4) == 0) {
-    flow->l4.tcp.pop_command_bitmask |= POP_BIT_STLS;
-    flow->l4.tcp.mail_imap_starttls = 1;
+    flow->metadata.l4.tcp.pop_command_bitmask |= POP_BIT_STLS;
+    flow->metadata.l4.tcp.mail_imap_starttls = 1;
   } else {
     return 0;
   }
@@ -112,8 +112,8 @@ static void ndpi_search_mail_pop_tcp(struct ndpi_detection_module_struct *ndpi_s
   if(packet->payload_packet_len > 3 &&
      ndpi_memcasecmp(packet->payload, "+OK", 3) == 0) {
     /* Server positive response */
-    flow->l4.tcp.mail_pop_stage += 1;
-    if(flow->l4.tcp.mail_imap_starttls == 1) {
+    flow->metadata.l4.tcp.mail_pop_stage += 1;
+    if(flow->metadata.l4.tcp.mail_imap_starttls == 1) {
       NDPI_LOG_DBG2(ndpi_struct, "starttls detected\n");
       pop_set_detected(ndpi_struct, flow, NDPI_PROTOCOL_MAIL_POPS);
       if(ndpi_struct->cfg.pop_opportunistic_tls_enabled) {
@@ -126,17 +126,17 @@ static void ndpi_search_mail_pop_tcp(struct ndpi_detection_module_struct *ndpi_s
   } else if(packet->payload_packet_len > 4 &&
             ndpi_memcasecmp(packet->payload, "-ERR", 4) == 0) {
     /* Server error response */
-    flow->l4.tcp.mail_pop_stage += 1;
-    if(flow->l4.tcp.mail_imap_starttls == 1)
-      flow->l4.tcp.mail_imap_starttls = 0;
+    flow->metadata.l4.tcp.mail_pop_stage += 1;
+    if(flow->metadata.l4.tcp.mail_imap_starttls == 1)
+      flow->metadata.l4.tcp.mail_imap_starttls = 0;
   } else if(!pop_check_client_command(ndpi_struct, flow)) {
     goto maybe_split_pop;
   }
 
   if(packet->payload_packet_len > 2 &&
      ntohs(get_u_int16_t(packet->payload, packet->payload_packet_len - 2)) == 0x0d0a) {
-    if(flow->l4.tcp.pop_command_bitmask != 0) {
-      u_int16_t mask = flow->l4.tcp.pop_command_bitmask;
+    if(flow->metadata.l4.tcp.pop_command_bitmask != 0) {
+      u_int16_t mask = flow->metadata.l4.tcp.pop_command_bitmask;
       while(mask) {
         bit_count += mask & 1;
         mask >>= 1;
@@ -145,14 +145,14 @@ static void ndpi_search_mail_pop_tcp(struct ndpi_detection_module_struct *ndpi_s
 
     NDPI_LOG_DBG2(ndpi_struct,
                   "mail_pop +OK/-ERR responses: %u, unique commands: %u\n",
-                  flow->l4.tcp.mail_pop_stage, bit_count);
+                  flow->metadata.l4.tcp.mail_pop_stage, bit_count);
 
-    if((bit_count + flow->l4.tcp.mail_pop_stage) >= 3) {
-      if(flow->l4.tcp.mail_pop_stage > 0) {
-        if(flow->l4.tcp.ftp_imap_pop_smtp.password[0] != '\0' ||
-           flow->l4.tcp.mail_pop_stage >= 3) {
+    if((bit_count + flow->metadata.l4.tcp.mail_pop_stage) >= 3) {
+      if(flow->metadata.l4.tcp.mail_pop_stage > 0) {
+        if(flow->metadata.l4.tcp.ftp_imap_pop_smtp.password[0] != '\0' ||
+           flow->metadata.l4.tcp.mail_pop_stage >= 3) {
           pop_set_detected(ndpi_struct, flow, NDPI_PROTOCOL_MAIL_POP);
-          if(flow->l4.tcp.ftp_imap_pop_smtp.password[0] == '\0')
+          if(flow->metadata.l4.tcp.ftp_imap_pop_smtp.password[0] == '\0')
             popInitExtraPacketProcessing(flow);
         }
       }
@@ -167,8 +167,8 @@ static void ndpi_search_mail_pop_tcp(struct ndpi_detection_module_struct *ndpi_s
  maybe_split_pop:
   if(((packet->payload_packet_len > 2 &&
        ntohs(get_u_int16_t(packet->payload, packet->payload_packet_len - 2)) == 0x0d0a) ||
-      flow->l4.tcp.pop_command_bitmask != 0 ||
-      flow->l4.tcp.mail_pop_stage != 0) &&
+      flow->metadata.l4.tcp.pop_command_bitmask != 0 ||
+      flow->metadata.l4.tcp.mail_pop_stage != 0) &&
      flow->core.packet_counter < 12) {
     NDPI_LOG_DBG2(ndpi_struct, "maybe part of split mail_pop packet -> skip\n");
     return;
@@ -184,7 +184,7 @@ int ndpi_extra_search_mail_pop_tcp(struct ndpi_detection_module_struct *ndpi_str
   int rc;
 
   ndpi_search_mail_pop_tcp(ndpi_struct, flow);
-  rc = (flow->l4.tcp.ftp_imap_pop_smtp.password[0] == '\0') ? 1 : 0;
+  rc = (flow->metadata.l4.tcp.ftp_imap_pop_smtp.password[0] == '\0') ? 1 : 0;
 
 #ifdef POP_DEBUG
   printf("**** %s() [rc: %d]\n", __FUNCTION__, rc);

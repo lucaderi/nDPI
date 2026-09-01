@@ -69,14 +69,14 @@ static void ndpi_check_tinc(struct ndpi_detection_module_struct *ndpi_struct, st
     return;
   } else if(packet->tcp != NULL) {
 
-    switch(flow->tinc_state) {
+    switch(flow->metadata.tinc_state) {
     case 0:
     case 1:
       if(payload_len > 6 && memcmp(packet_payload, "0 ", 2) == 0 && packet_payload[2] != ' ') {
 	u_int32_t i = 3;
 	while(i < payload_len && packet_payload[i++] != ' ');
 	if(i+3 == payload_len && memcmp((packet_payload+i), "17\n", 3) == 0) {
-	  flow->tinc_state++;
+	  flow->metadata.tinc_state++;
 	  return;
 	}
       }
@@ -107,7 +107,7 @@ static void ndpi_check_tinc(struct ndpi_detection_module_struct *ndpi_struct, st
 	}
           
 	if(i < payload_len && packet_payload[i] == '\n') {
-	  if(++flow->tinc_state > 3) {
+	  if(++flow->metadata.tinc_state > 3) {
 	    struct tinc_cache_entry tinc_cache_entry = {
 	      .src_address = flow->core.c_address.v4,
 	      .dst_address = flow->core.s_address.v4,

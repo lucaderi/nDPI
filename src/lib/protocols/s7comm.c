@@ -80,8 +80,8 @@ static void ndpi_parse_s7comm_message(struct ndpi_detection_module_struct *ndpi_
   if (s7comm_len < S7COMM_HEADER_MIN_LEN)
     return;
 
-  if(flow->monit == NULL)
-    flow->monit = ndpi_calloc(1, sizeof(struct ndpi_metadata_monitoring));
+  if(flow->metadata.monit == NULL)
+    flow->metadata.monit = ndpi_calloc(1, sizeof(struct ndpi_metadata_monitoring));
 
   msg_type = s7comm_header[S7COMM_HEADER_MSG_TYPE];
   param_len = ntohs(get_u_int16_t(s7comm_header, S7COMM_HEADER_PARAM_LEN));
@@ -96,7 +96,7 @@ static void ndpi_parse_s7comm_message(struct ndpi_detection_module_struct *ndpi_
   /* Update message type counters */
   switch(msg_type) {
     case S7COMM_MSG_JOB:
-      flow->protos.s7comm.num_requests++;
+      flow->metadata.protos.s7comm.num_requests++;
 
       /* Parse function code from parameter section for Job messages */
       if (param_len > 0 && s7comm_len > S7COMM_JOB_PARAM_START) {
@@ -106,39 +106,39 @@ static void ndpi_parse_s7comm_message(struct ndpi_detection_module_struct *ndpi_
         /* Update function-specific counters */
         switch(function_code) {
           case S7COMM_FUNC_READ_VAR:
-            flow->protos.s7comm.num_read_var++;
+            flow->metadata.protos.s7comm.num_read_var++;
             break;
           case S7COMM_FUNC_WRITE_VAR:
-            flow->protos.s7comm.num_write_var++;
+            flow->metadata.protos.s7comm.num_write_var++;
             break;
           case S7COMM_FUNC_SETUP_COMM:
-            flow->protos.s7comm.num_setup_comm++;
+            flow->metadata.protos.s7comm.num_setup_comm++;
             break;
           case S7COMM_FUNC_DOWNLOAD:
-            flow->protos.s7comm.num_download++;
+            flow->metadata.protos.s7comm.num_download++;
             break;
           case S7COMM_FUNC_UPLOAD:
-            flow->protos.s7comm.num_upload++;
+            flow->metadata.protos.s7comm.num_upload++;
             break;
           case S7COMM_FUNC_PLC_CONTROL:
-            flow->protos.s7comm.num_plc_control++;
+            flow->metadata.protos.s7comm.num_plc_control++;
             break;
           case S7COMM_FUNC_PLC_STOP:
-            flow->protos.s7comm.num_plc_stop++;
+            flow->metadata.protos.s7comm.num_plc_stop++;
             break;
           default:
-            flow->protos.s7comm.num_other_funcs++;
+            flow->metadata.protos.s7comm.num_other_funcs++;
             break;
         }
       }
       break;
 
     case S7COMM_MSG_ACK:
-      flow->protos.s7comm.num_acks++;
+      flow->metadata.protos.s7comm.num_acks++;
       break;
 
     case S7COMM_MSG_ACK_DATA:
-      flow->protos.s7comm.num_responses++;
+      flow->metadata.protos.s7comm.num_responses++;
       /* Could also parse the function code from Ack_Data if needed */
       if (param_len > 0 && s7comm_len > S7COMM_ACK_DATA_PARAM_START) {
         function_code = s7comm_header[S7COMM_ACK_DATA_PARAM_START];
@@ -147,7 +147,7 @@ static void ndpi_parse_s7comm_message(struct ndpi_detection_module_struct *ndpi_
       break;
 
     case S7COMM_MSG_USERDATA:
-      flow->protos.s7comm.num_userdata++;
+      flow->metadata.protos.s7comm.num_userdata++;
       break;
 
     default:

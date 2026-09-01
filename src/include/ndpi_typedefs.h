@@ -1706,12 +1706,15 @@ struct ndpi_flow_code_struct {
   ndpi_risk risk, risk_shadow; /* Issues found with this flow [bitmask of ndpi_risk] */
   struct ndpi_risk_information risk_infos[MAX_NUM_RISK_INFOS]; /* String that contains information about the risks found */
   u_int8_t num_risk_infos;
+  struct ndpi_dissector_bitmask excluded_dissectors_bitmask;
+
+  /* Flow payload */
+  u_int16_t flow_payload_len;
+  char *flow_payload;
 };
 
 
-struct ndpi_flow_struct {
-  struct ndpi_flow_code_struct core;
-  
+struct ndpi_flow_protocols_struct {
   /*
     the tcp / udp / other l4 value union
     used to reduce the number of bytes for tcp or udp protocol states
@@ -2021,8 +2024,6 @@ struct ndpi_flow_struct {
   /* **Packet** metadata for flows where monitoring is enabled. It is reset after each packet! */
   struct ndpi_metadata_monitoring *monit;
 
-  struct ndpi_dissector_bitmask excluded_dissectors_bitmask;
-
   /* NDPI_PROTOCOL_BITTORRENT */
   u_int8_t bittorrent_stage; // can be 0 - 255
   u_int8_t bt_check_performed : 1;
@@ -2038,10 +2039,11 @@ struct ndpi_flow_struct {
 
    /* NDPI_PROTOCOL_RTCP */
    u_int8_t rtcp_stage:2;
+};
 
-  /* Flow payload */
-  u_int16_t flow_payload_len;
-  char *flow_payload;
+struct ndpi_flow_struct {
+  struct ndpi_flow_code_struct core;
+  struct ndpi_flow_protocols_struct metadata;
 };
 
 #if !defined(NDPI_CFFI_PREPROCESSING) && defined(__linux__)

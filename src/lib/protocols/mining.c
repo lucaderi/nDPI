@@ -70,7 +70,7 @@ static void ndpi_search_mining(struct ndpi_detection_module_struct *ndpi_struct,
 
     /* Try matching some zcash domains like "eu1-zcash.flypool.org" */
     if(ndpi_strnstr((const char *)packet->payload, "zcash", packet->payload_packet_len))
-      ndpi_snprintf(flow->protos.mining.currency, sizeof(flow->protos.mining.currency), "%s", "ZCash");
+      ndpi_snprintf(flow->metadata.protos.mining.currency, sizeof(flow->metadata.protos.mining.currency), "%s", "ZCash");
     ndpi_set_detected_protocol(ndpi_struct, flow, NDPI_PROTOCOL_MINING, NDPI_PROTOCOL_UNKNOWN, NDPI_CONFIDENCE_DPI);
     cacheMiningHostTwins(ndpi_struct, flow);
     return;
@@ -78,14 +78,14 @@ static void ndpi_search_mining(struct ndpi_detection_module_struct *ndpi_struct,
 
   /* Xmr-stak-cpu is a ZCash/Monero CPU miner */
   if(ndpi_strnstr((const char *)packet->payload, "\"agent\":\"xmr-stak-cpu", packet->payload_packet_len)) {
-    ndpi_snprintf(flow->protos.mining.currency, sizeof(flow->protos.mining.currency), "%s", "ZCash/Monero");
+    ndpi_snprintf(flow->metadata.protos.mining.currency, sizeof(flow->metadata.protos.mining.currency), "%s", "ZCash/Monero");
     ndpi_set_detected_protocol(ndpi_struct, flow, NDPI_PROTOCOL_MINING, NDPI_PROTOCOL_UNKNOWN, NDPI_CONFIDENCE_DPI);
     cacheMiningHostTwins(ndpi_struct, flow);
     return;
   }
   
   if(ndpi_strnstr((const char *)packet->payload, "\"method\": \"eth_submitLogin", packet->payload_packet_len)) {
-    ndpi_snprintf(flow->protos.mining.currency, sizeof(flow->protos.mining.currency), "%s", "Ethereum");
+    ndpi_snprintf(flow->metadata.protos.mining.currency, sizeof(flow->metadata.protos.mining.currency), "%s", "Ethereum");
     ndpi_set_detected_protocol(ndpi_struct, flow, NDPI_PROTOCOL_MINING, NDPI_PROTOCOL_UNKNOWN, NDPI_CONFIDENCE_DPI);
     cacheMiningHostTwins(ndpi_struct, flow);
     return;

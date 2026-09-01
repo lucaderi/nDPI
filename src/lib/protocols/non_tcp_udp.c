@@ -82,7 +82,7 @@ static void ndpi_search_in_non_tcp_udp(struct ndpi_detection_module_struct
 
       if(packet->payload_packet_len > sizeof(struct ndpi_icmphdr)) {
         if(ndpi_struct->cfg.compute_entropy && (flow->core.skip_entropy_check == 0)) {
-          flow->entropy = ndpi_entropy(packet->payload + sizeof(struct ndpi_icmphdr),
+          flow->metadata.entropy = ndpi_entropy(packet->payload + sizeof(struct ndpi_icmphdr),
                                        packet->payload_packet_len - sizeof(struct ndpi_icmphdr));
           ndpi_entropy2risk(ndpi_struct, flow);
         }

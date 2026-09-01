@@ -344,9 +344,9 @@ static int process_queries(struct ndpi_detection_module_struct *ndpi_struct,
 #ifdef DNS_DEBUG
     printf("[DNS] [response (query)] response_type=%d\n", rsp_type);
 #endif
-    if(flow->protos.dns.query_type == 0) {
+    if(flow->metadata.protos.dns.query_type == 0) {
       /* In case we missed the query packet... */
-      flow->protos.dns.query_type = rsp_type;
+      flow->metadata.protos.dns.query_type = rsp_type;
     }
 
     /* here x points to the response "class" field */
@@ -397,7 +397,7 @@ static int process_answers(struct ndpi_detection_module_struct *ndpi_struct,
 
     if(found == 0) {
       ndpi_check_dns_type(ndpi_struct, flow, rsp_type);
-      flow->protos.dns.rsp_type = rsp_type;
+      flow->metadata.protos.dns.rsp_type = rsp_type;
     }
 
     /* x points to the response "class" field */
@@ -423,8 +423,8 @@ static int process_answers(struct ndpi_detection_module_struct *ndpi_struct,
 
               orig_x = x;
               ndpi_grab_dns_name(packet, &x,
-                                 flow->protos.dns.ptr_domain_name,
-                                 sizeof(flow->protos.dns.ptr_domain_name), &len,
+                                 flow->metadata.protos.dns.ptr_domain_name,
+                                 sizeof(flow->metadata.protos.dns.ptr_domain_name), &len,
                                  ignore_checks, NULL);
               /* ndpi_grab_dns_name doesn't update the offset if it failed.
                  We unconditionally update it at the end of the for loop */
@@ -437,30 +437,30 @@ static int process_answers(struct ndpi_detection_module_struct *ndpi_struct,
                    )) {
           if(found == 0) {
 
-            if(flow->protos.dns.num_rsp_addr < MAX_NUM_DNS_RSP_ADDRESSES) {
+            if(flow->metadata.protos.dns.num_rsp_addr < MAX_NUM_DNS_RSP_ADDRESSES) {
               /* Necessary for IP address comparison */
-              memset(&flow->protos.dns.rsp_addr[flow->protos.dns.num_rsp_addr], 0, sizeof(ndpi_ip_addr_t));
+              memset(&flow->metadata.protos.dns.rsp_addr[flow->metadata.protos.dns.num_rsp_addr], 0, sizeof(ndpi_ip_addr_t));
 
-              memcpy(&flow->protos.dns.rsp_addr[flow->protos.dns.num_rsp_addr], packet->payload + x, data_len);
-              flow->protos.dns.is_rsp_addr_ipv6[flow->protos.dns.num_rsp_addr] = (data_len == 16) ? 1 : 0;
-              flow->protos.dns.rsp_addr_ttl[flow->protos.dns.num_rsp_addr] = ttl;
+              memcpy(&flow->metadata.protos.dns.rsp_addr[flow->metadata.protos.dns.num_rsp_addr], packet->payload + x, data_len);
+              flow->metadata.protos.dns.is_rsp_addr_ipv6[flow->metadata.protos.dns.num_rsp_addr] = (data_len == 16) ? 1 : 0;
+              flow->metadata.protos.dns.rsp_addr_ttl[flow->metadata.protos.dns.num_rsp_addr] = ttl;
 
               if(ndpi_struct->cfg.address_cache_size)
                 ndpi_cache_address(ndpi_struct,
-                                   flow->protos.dns.rsp_addr[flow->protos.dns.num_rsp_addr],
-                                   flow->host_server_name,
+                                   flow->metadata.protos.dns.rsp_addr[flow->metadata.protos.dns.num_rsp_addr],
+                                   flow->metadata.host_server_name,
                                    packet->current_time_ms/1000,
-                                   flow->protos.dns.rsp_addr_ttl[flow->protos.dns.num_rsp_addr]);
+                                   flow->metadata.protos.dns.rsp_addr_ttl[flow->metadata.protos.dns.num_rsp_addr]);
 
 	      if(ndpi_struct->cfg.hostname_dns_check_enabled)
 		ndpi_cache_hostname_ip(ndpi_struct,
-				       &flow->protos.dns.rsp_addr[flow->protos.dns.num_rsp_addr],
-				       flow->host_server_name);
+				       &flow->metadata.protos.dns.rsp_addr[flow->metadata.protos.dns.num_rsp_addr],
+				       flow->metadata.host_server_name);
 
-              ++flow->protos.dns.num_rsp_addr;
+              ++flow->metadata.protos.dns.num_rsp_addr;
             }
 
-            if(flow->protos.dns.num_rsp_addr >= MAX_NUM_DNS_RSP_ADDRESSES)
+            if(flow->metadata.protos.dns.num_rsp_addr >= MAX_NUM_DNS_RSP_ADDRESSES)
               found = 1;
           }
 
@@ -595,10 +595,10 @@ static int process_additionals(struct ndpi_detection_module_struct *ndpi_struct,
 
       if(rsp_type == 41 /* OPT */) {
         /* https://en.wikipedia.org/wiki/Extension_Mechanisms_for_DNS */
-        flow->protos.dns.edns0_udp_payload_size = ntohs(*((u_int16_t*)&packet->payload[x])); /* EDNS(0) */
+        flow->metadata.protos.dns.edns0_udp_payload_size = ntohs(*((u_int16_t*)&packet->payload[x])); /* EDNS(0) */
 
 #ifdef DNS_DEBUG
-        printf("[DNS] [response] edns0_udp_payload_size: %u\n", flow->protos.dns.edns0_udp_payload_size);
+        printf("[DNS] [response] edns0_udp_payload_size: %u\n", flow->metadata.protos.dns.edns0_udp_payload_size);
 #endif
         x += 6;
 
@@ -623,8 +623,8 @@ static int process_additionals(struct ndpi_detection_module_struct *ndpi_struct,
 #ifdef DNS_DEBUG
               printf("[DNS] NSID Airport code [%.*s]\n", opt_len - 6, opt + 6);
 #endif
-              memcpy(flow->protos.dns.geolocation_iata_code, opt + 6,
-                     ndpi_min(opt_len - 6, (int)sizeof(flow->protos.dns.geolocation_iata_code) - 1));
+              memcpy(flow->metadata.protos.dns.geolocation_iata_code, opt + 6,
+                     ndpi_min(opt_len - 6, (int)sizeof(flow->metadata.protos.dns.geolocation_iata_code) - 1));
             }
           }
 
@@ -817,8 +817,8 @@ static int dns_tcp_process(struct ndpi_detection_module_struct *ndpi_struct,
   original_payload_len = packet->payload_packet_len;
 
   /* Message already split: append this segment and parse from the reassembly buffer. */
-  if(flow->dns_tcp_reasm != NULL) {
-    reasm = &flow->dns_tcp_reasm->dir[packet->packet_direction];
+  if(flow->metadata.dns_tcp_reasm != NULL) {
+    reasm = &flow->metadata.dns_tcp_reasm->dir[packet->packet_direction];
     if(reasm->buf != NULL || reasm->cur_len > 0)
       goto append_and_reasm;
   }
@@ -857,13 +857,13 @@ static int dns_tcp_process(struct ndpi_detection_module_struct *ndpi_struct,
     return processed > 0 ? 1 : 0;
 
   /* Split segment: store only the trailing bytes; wait for the next TCP packet. */
-  if(flow->dns_tcp_reasm == NULL) {
-    flow->dns_tcp_reasm = ndpi_calloc(1, sizeof(struct ndpi_dns_tcp_reasm_state));
-    if(flow->dns_tcp_reasm == NULL)
+  if(flow->metadata.dns_tcp_reasm == NULL) {
+    flow->metadata.dns_tcp_reasm = ndpi_calloc(1, sizeof(struct ndpi_dns_tcp_reasm_state));
+    if(flow->metadata.dns_tcp_reasm == NULL)
       return -1;
   }
 
-  reasm = &flow->dns_tcp_reasm->dir[packet->packet_direction];
+  reasm = &flow->metadata.dns_tcp_reasm->dir[packet->packet_direction];
   if(dns_tcp_reasm_append(reasm, &original_payload[offset],
 			  (u_int16_t)(original_payload_len - offset)) < 0) {
     dns_tcp_reasm_free_dir(reasm);
@@ -932,7 +932,7 @@ static int keep_extra_dissection(struct ndpi_flow_struct *flow)
 {
   /* As a general rule, we wait for a valid response
      (in the ideal world, we want to process the request/response pair) */
-  return !(!flow->protos.dns.is_query && flow->protos.dns.num_answers != 0);
+  return !(!flow->metadata.protos.dns.is_query && flow->metadata.protos.dns.num_answers != 0);
 }
 
 /* *********************************************** */
@@ -1028,20 +1028,20 @@ static int process_hostname(struct ndpi_detection_module_struct *ndpi_struct,
     }
   }
 
-  if(strlen(flow->host_server_name) > 0) {
+  if(strlen(flow->metadata.host_server_name) > 0) {
     ndpi_protocol_match_result ret_match;
 
     if(flow->core.detected_protocol_stack[1] == NDPI_PROTOCOL_UNKNOWN) {
       proto->app_protocol = ndpi_match_host_subprotocol(ndpi_struct, flow,
-                                                        flow->host_server_name,
-                                                        strlen(flow->host_server_name),
+                                                        flow->metadata.host_server_name,
+                                                        strlen(flow->metadata.host_server_name),
                                                         &ret_match,
                                                         proto->master_protocol,
                                                         /* Avoid updating classification if subclassification is disabled */
                                                         ndpi_struct->cfg.dns_subclassification_enabled ? 1 : 0);
     }
 
-    ndpi_check_dga_name(ndpi_struct, flow, flow->host_server_name, 1, 0, proto->app_protocol != NDPI_PROTOCOL_UNKNOWN);
+    ndpi_check_dga_name(ndpi_struct, flow, flow->metadata.host_server_name, 1, 0, proto->app_protocol != NDPI_PROTOCOL_UNKNOWN);
   }
 
   return 0;
@@ -1079,8 +1079,8 @@ static void search_dns_tcp_udp(struct ndpi_detection_module_struct *ndpi_struct,
   off = sizeof(struct ndpi_dns_packet_header) + payload_offset;
 
   if(is_query) {
-    flow->protos.dns.is_query = 1;
-    flow->protos.dns.transaction_id = dns_header.tr_id;
+    flow->metadata.protos.dns.is_query = 1;
+    flow->metadata.protos.dns.transaction_id = dns_header.tr_id;
 
     rc = process_queries(ndpi_struct, flow, &dns_header, off);
 #ifdef DNS_DEBUG
@@ -1088,18 +1088,18 @@ static void search_dns_tcp_udp(struct ndpi_detection_module_struct *ndpi_struct,
       printf("[DNS] Error queries (query msg)\n");
 #endif
   } else {
-    flow->protos.dns.is_query = 0;
-    flow->protos.dns.transaction_id = dns_header.tr_id;
-    flow->protos.dns.reply_code = dns_header.flags & 0x0F;
-    flow->protos.dns.num_queries = dns_header.num_queries;
-    flow->protos.dns.num_answers = dns_header.num_answers + dns_header.authority_rrs + dns_header.additional_rrs;
+    flow->metadata.protos.dns.is_query = 0;
+    flow->metadata.protos.dns.transaction_id = dns_header.tr_id;
+    flow->metadata.protos.dns.reply_code = dns_header.flags & 0x0F;
+    flow->metadata.protos.dns.num_queries = dns_header.num_queries;
+    flow->metadata.protos.dns.num_answers = dns_header.num_answers + dns_header.authority_rrs + dns_header.additional_rrs;
 
-    if(flow->protos.dns.reply_code != 0) {
+    if(flow->metadata.protos.dns.reply_code != 0) {
       if(is_flowrisk_info_enabled(ndpi_struct, NDPI_ERROR_CODE_DETECTED)) {
         char str[32], buf[16];
 
         snprintf(str, sizeof(str), "DNS Error Code %s",
-                 dns_error_code2string(flow->protos.dns.reply_code, buf, sizeof(buf)));
+                 dns_error_code2string(flow->metadata.protos.dns.reply_code, buf, sizeof(buf)));
         ndpi_set_risk(ndpi_struct, flow, NDPI_ERROR_CODE_DETECTED, str);
       } else {
         ndpi_set_risk(ndpi_struct, flow, NDPI_ERROR_CODE_DETECTED, NULL);
@@ -1136,7 +1136,7 @@ static void search_dns_tcp_udp(struct ndpi_detection_module_struct *ndpi_struct,
        /* TODO: add support to RFC6891 to avoid some false positives */
        packet->udp &&
        packet->payload_packet_len > PKT_LEN_ALERT &&
-       packet->payload_packet_len > flow->protos.dns.edns0_udp_payload_size) {
+       packet->payload_packet_len > flow->metadata.protos.dns.edns0_udp_payload_size) {
       if(is_flowrisk_info_enabled(ndpi_struct, NDPI_DNS_LARGE_PACKET)) {
         char str[48];
 
@@ -1147,9 +1147,9 @@ static void search_dns_tcp_udp(struct ndpi_detection_module_struct *ndpi_struct,
       }
     }
 
-    NDPI_LOG_DBG2(ndpi_struct, "Response: [num_queries=%d][num_answers=%d][reply_code=%u][rsp_type=%u][host_server_name=%s]\n",
-                  flow->protos.dns.num_queries, flow->protos.dns.num_answers,
-                  flow->protos.dns.reply_code, flow->protos.dns.rsp_type, flow->host_server_name);
+    NDPI_LOG_DBG2(ndpi_struct, "Response: [num_queries=%d][num_answers=%d][reply_code=%u][rsp_type=%u][metadata.host_server_name=%s]\n",
+                  flow->metadata.protos.dns.num_queries, flow->metadata.protos.dns.num_answers,
+                  flow->metadata.protos.dns.reply_code, flow->metadata.protos.dns.rsp_type, flow->metadata.host_server_name);
   }
 
   if(flow->core.detected_protocol_stack[0] == NDPI_PROTOCOL_UNKNOWN) {
@@ -1242,10 +1242,10 @@ void ndpi_search_dns_tcp_udp(struct ndpi_detection_module_struct *ndpi_struct, s
             !ndpi_is_multi_or_broadcast(flow) &&
             flow->core.l4_proto == IPPROTO_UDP && /* No TCP to avoid too many false positives */
             /* Avoid collision with other protocols requiring multiple pkts. */
-            flow->rtp.rtp_stage == 0 &&
-            flow->rtcp_stage == 0 &&
-            flow->teamviewer_stage == 0 &&
-            flow->l4.udp.eaq_pkt_id == 0 && flow->l4.udp.eaq_sequence == 0) {
+            flow->metadata.rtp.rtp_stage == 0 &&
+            flow->metadata.rtcp_stage == 0 &&
+            flow->metadata.teamviewer_stage == 0 &&
+            flow->metadata.l4.udp.eaq_pkt_id == 0 && flow->metadata.l4.udp.eaq_sequence == 0) {
     /* Ok, check DNS on any ports: keep going */
   } else {
     NDPI_EXCLUDE_DISSECTOR(ndpi_struct, flow);

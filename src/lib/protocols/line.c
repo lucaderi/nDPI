@@ -75,9 +75,9 @@ static void ndpi_search_line(struct ndpi_detection_module_struct *ndpi_struct,
      it seems that the 4th bytes of these packets is some kind of packet
      number. Look for 4 packets per direction with consecutive numbers. */
   if(packet->payload_packet_len > 10) {
-    if(flow->l4.udp.line_pkts[packet->packet_direction] == 0) {
-      flow->l4.udp.line_base_cnt[packet->packet_direction] = packet->payload[3];
-      flow->l4.udp.line_pkts[packet->packet_direction] += 1;
+    if(flow->metadata.l4.udp.line_pkts[packet->packet_direction] == 0) {
+      flow->metadata.l4.udp.line_base_cnt[packet->packet_direction] = packet->payload[3];
+      flow->metadata.l4.udp.line_pkts[packet->packet_direction] += 1;
       return;
     } else {
       /* It might be a RTP/RTCP packet. Ignore it and keep looking for the
@@ -90,12 +90,12 @@ static void ndpi_search_line(struct ndpi_detection_module_struct *ndpi_struct,
           return;
 	}
       } else {
-        if((u_int8_t)(flow->l4.udp.line_base_cnt[packet->packet_direction] +
-                      flow->l4.udp.line_pkts[packet->packet_direction]) == packet->payload[3]) {
-          flow->l4.udp.line_pkts[packet->packet_direction] += 1;
-          if(flow->l4.udp.line_pkts[0] >= 4 && flow->l4.udp.line_pkts[1] >= 4) {
+        if((u_int8_t)(flow->metadata.l4.udp.line_base_cnt[packet->packet_direction] +
+                      flow->metadata.l4.udp.line_pkts[packet->packet_direction]) == packet->payload[3]) {
+          flow->metadata.l4.udp.line_pkts[packet->packet_direction] += 1;
+          if(flow->metadata.l4.udp.line_pkts[0] >= 4 && flow->metadata.l4.udp.line_pkts[1] >= 4) {
             /* To avoid false positives: usually "base pkt numbers" per-direction are different */
-            if(flow->l4.udp.line_base_cnt[0] != flow->l4.udp.line_base_cnt[1])
+            if(flow->metadata.l4.udp.line_base_cnt[0] != flow->metadata.l4.udp.line_base_cnt[1])
               ndpi_int_line_add_connection(ndpi_struct, flow);
             else
               NDPI_EXCLUDE_DISSECTOR(ndpi_struct, flow);

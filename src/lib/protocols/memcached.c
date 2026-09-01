@@ -116,7 +116,7 @@ static void ndpi_search_memcached(struct ndpi_detection_module_struct *ndpi_stru
       return;
     }
 
-    matches = &flow->l4.tcp.memcached_matches;
+    matches = &flow->metadata.l4.tcp.memcached_matches;
   }
   else {
     if (packet->payload_packet_len < MEMCACHED_MIN_UDP_LEN) {
@@ -132,7 +132,7 @@ static void ndpi_search_memcached(struct ndpi_detection_module_struct *ndpi_stru
 
     offset += MEMCACHED_UDP_HDR_LEN;
     length -= MEMCACHED_UDP_HDR_LEN;
-    matches = &flow->l4.udp.memcached_matches;
+    matches = &flow->metadata.l4.udp.memcached_matches;
   }
 
   /* grep MCD memcached.c |\

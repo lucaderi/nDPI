@@ -107,20 +107,20 @@ static void search_hamachi_udp(struct ndpi_detection_module_struct* ndpi_struct,
    * We need to verify consistency within each direction and collect samples from both.
    */
 
-  if (flow->l4.udp.hamachi_stage == 0) {
+  if (flow->metadata.l4.udp.hamachi_stage == 0) {
     /* Store signature values from first packet and set stage based on direction */
-    flow->l4.udp.hamachi_long[dir] = hamachi_l;
-    flow->l4.udp.hamachi_short[dir] = hamachi_s;
-    flow->l4.udp.hamachi_stage = dir ? 2 : 1; /* Stage 1 for dir=0, stage 2 for dir=1 */
+    flow->metadata.l4.udp.hamachi_long[dir] = hamachi_l;
+    flow->metadata.l4.udp.hamachi_short[dir] = hamachi_s;
+    flow->metadata.l4.udp.hamachi_stage = dir ? 2 : 1; /* Stage 1 for dir=0, stage 2 for dir=1 */
     return;
   }
 
-  if (flow->l4.udp.hamachi_stage == 1 || flow->l4.udp.hamachi_stage == 2) {
-    u_int8_t stored_dir = flow->l4.udp.hamachi_stage - 1;
+  if (flow->metadata.l4.udp.hamachi_stage == 1 || flow->metadata.l4.udp.hamachi_stage == 2) {
+    u_int8_t stored_dir = flow->metadata.l4.udp.hamachi_stage - 1;
     /* Current packet is same direction - verify */
     if (dir == stored_dir) {
-      if (hamachi_l != flow->l4.udp.hamachi_long[dir] ||
-          hamachi_s != flow->l4.udp.hamachi_short[dir])
+      if (hamachi_l != flow->metadata.l4.udp.hamachi_long[dir] ||
+          hamachi_s != flow->metadata.l4.udp.hamachi_short[dir])
       {
         goto exclude_hamachi;
       }
@@ -128,22 +128,22 @@ static void search_hamachi_udp(struct ndpi_detection_module_struct* ndpi_struct,
     }
 
     /* Opposite direction - verify signatures differ */
-    if (hamachi_l == flow->l4.udp.hamachi_long[stored_dir] ||
-       hamachi_s == flow->l4.udp.hamachi_short[stored_dir])
+    if (hamachi_l == flow->metadata.l4.udp.hamachi_long[stored_dir] ||
+       hamachi_s == flow->metadata.l4.udp.hamachi_short[stored_dir])
     {
       goto exclude_hamachi;
     }
 
-    flow->l4.udp.hamachi_long[dir] = hamachi_l;
-    flow->l4.udp.hamachi_short[dir] = hamachi_s;
-    flow->l4.udp.hamachi_stage = 3;
+    flow->metadata.l4.udp.hamachi_long[dir] = hamachi_l;
+    flow->metadata.l4.udp.hamachi_short[dir] = hamachi_s;
+    flow->metadata.l4.udp.hamachi_stage = 3;
     return;
   }
 
-  if (flow->l4.udp.hamachi_stage == 3) {
+  if (flow->metadata.l4.udp.hamachi_stage == 3) {
     /* Final consistency check */
-    if (hamachi_l != flow->l4.udp.hamachi_long[dir] ||
-        hamachi_s != flow->l4.udp.hamachi_short[dir])
+    if (hamachi_l != flow->metadata.l4.udp.hamachi_long[dir] ||
+        hamachi_s != flow->metadata.l4.udp.hamachi_short[dir])
     {
       goto exclude_hamachi;
     }

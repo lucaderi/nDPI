@@ -132,17 +132,17 @@ static int ndpi_search_natpmp_extra(struct ndpi_detection_module_struct *ndpi_st
       return 1; // Nothing to do here.
     case NATPMP_REQUEST_UDP_MAPPING:
     case NATPMP_REQUEST_TCP_MAPPING:
-      flow->protos.natpmp.internal_port = ntohs(get_u_int16_t(packet->payload, 4));
-      flow->protos.natpmp.external_port = ntohs(get_u_int16_t(packet->payload, 6));
-      if (flow->protos.natpmp.internal_port == 0)
+      flow->metadata.protos.natpmp.internal_port = ntohs(get_u_int16_t(packet->payload, 4));
+      flow->metadata.protos.natpmp.external_port = ntohs(get_u_int16_t(packet->payload, 6));
+      if (flow->metadata.protos.natpmp.internal_port == 0)
       {
         ndpi_set_risk(ndpi_struct, flow, NDPI_MALFORMED_PACKET, "Request Port Mapping: Internal port must not 0");
       }
       break;
     case NATPMP_RESPONSE_ADDRESS:
-      flow->protos.natpmp.result_code = ntohs(get_u_int16_t(packet->payload, 2));
-      flow->protos.natpmp.external_address.ipv4 = get_u_int32_t(packet->payload, 8);
-      if (flow->protos.natpmp.result_code != 0 && flow->protos.natpmp.external_address.ipv4 != 0)
+      flow->metadata.protos.natpmp.result_code = ntohs(get_u_int16_t(packet->payload, 2));
+      flow->metadata.protos.natpmp.external_address.ipv4 = get_u_int32_t(packet->payload, 8);
+      if (flow->metadata.protos.natpmp.result_code != 0 && flow->metadata.protos.natpmp.external_address.ipv4 != 0)
       {
         ndpi_set_risk(ndpi_struct, flow, NDPI_MALFORMED_PACKET, "Address Response: Result code indicates an error, but External IPv4 Address is set");
       }
@@ -150,9 +150,9 @@ static int ndpi_search_natpmp_extra(struct ndpi_detection_module_struct *ndpi_st
     case NATPMP_RESPONSE_UDP_MAPPING:
     case NATPMP_RESPONSE_TCP_MAPPING:
     {
-      flow->protos.natpmp.internal_port = ntohs(get_u_int16_t(packet->payload, 8));
-      flow->protos.natpmp.external_port = ntohs(get_u_int16_t(packet->payload, 10));
-      if (flow->protos.natpmp.internal_port == 0 || flow->protos.natpmp.external_port == 0)
+      flow->metadata.protos.natpmp.internal_port = ntohs(get_u_int16_t(packet->payload, 8));
+      flow->metadata.protos.natpmp.external_port = ntohs(get_u_int16_t(packet->payload, 10));
+      if (flow->metadata.protos.natpmp.internal_port == 0 || flow->metadata.protos.natpmp.external_port == 0)
       {
         ndpi_set_risk(ndpi_struct, flow, NDPI_MALFORMED_PACKET, "Port Mapping Response: Internal/External port must not 0");
       }

@@ -109,13 +109,13 @@ static void ndpi_search_z3950(struct ndpi_detection_module_struct *ndpi_struct,
       return;
     }
 
-    if(flow->l4.tcp.z3950_stage == 3) {
+    if(flow->metadata.l4.tcp.z3950_stage == 3) {
       if(flow->core.packet_direction_counter[0] && flow->core.packet_direction_counter[1])
 	ndpi_int_z3950_add_connection(ndpi_struct, flow);
       else
 	NDPI_EXCLUDE_DISSECTOR(ndpi_struct, flow);  /* Skip if unidirectional traffic */
     } else
-      flow->l4.tcp.z3950_stage++;
+      flow->metadata.l4.tcp.z3950_stage++;
 
     return;
   }

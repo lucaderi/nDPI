@@ -185,8 +185,8 @@ static void ndpi_check_rx(struct ndpi_detection_module_struct *ndpi_struct,
      them. */
   if(flow->core.packet_direction_counter[!packet->packet_direction] != 0)
   {
-    if (flow->l4.udp.rx_conn_epoch == header->conn_epoch &&
-	flow->l4.udp.rx_conn_id == header->conn_id)
+    if (flow->metadata.l4.udp.rx_conn_epoch == header->conn_epoch &&
+	flow->metadata.l4.udp.rx_conn_id == header->conn_id)
     {
       NDPI_LOG_INFO(ndpi_struct, "found RX\n");
       ndpi_set_detected_protocol(ndpi_struct, flow, NDPI_PROTOCOL_RX, NDPI_PROTOCOL_UNKNOWN, NDPI_CONFIDENCE_DPI);
@@ -198,8 +198,8 @@ static void ndpi_check_rx(struct ndpi_detection_module_struct *ndpi_struct,
       return;
     }
   } else {
-    flow->l4.udp.rx_conn_epoch = header->conn_epoch;
-    flow->l4.udp.rx_conn_id = header->conn_id;
+    flow->metadata.l4.udp.rx_conn_epoch = header->conn_epoch;
+    flow->metadata.l4.udp.rx_conn_id = header->conn_id;
   }
 }
 

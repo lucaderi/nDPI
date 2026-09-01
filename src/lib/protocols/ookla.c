@@ -99,12 +99,12 @@ void ndpi_search_ookla(struct ndpi_detection_module_struct* ndpi_struct, struct 
   if(flow->core.packet_counter == 1 &&
      packet->payload_packet_len >= NDPI_STATICSTRING_LEN("HI") &&
      memcmp(packet->payload, "HI", NDPI_STATICSTRING_LEN("HI")) == 0) {
-    flow->ookla_stage = 1;
+    flow->metadata.ookla_stage = 1;
     return;
   }
   
   if(flow->core.packet_counter == 2 &&
-     flow->ookla_stage == 1 &&
+     flow->metadata.ookla_stage == 1 &&
      packet->payload_packet_len >= NDPI_STATICSTRING_LEN("HELLO") &&
      memcmp(packet->payload, "HELLO", NDPI_STATICSTRING_LEN("HELLO")) == 0) {
     NDPI_LOG_INFO(ndpi_struct, "found ookla (Hi + Hello)\n");

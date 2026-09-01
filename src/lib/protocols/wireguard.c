@@ -119,8 +119,8 @@ static void ndpi_search_wireguard(struct ndpi_detection_module_struct *ndpi_stru
     /*
      * We always start a new detection stage on a handshake initiation.
      */
-    flow->l4.udp.wireguard_stage = 1 + packet->packet_direction;
-    flow->l4.udp.wireguard_peer_index[packet->packet_direction] = sender_index;
+    flow->metadata.l4.udp.wireguard_stage = 1 + packet->packet_direction;
+    flow->metadata.l4.udp.wireguard_peer_index[packet->packet_direction] = sender_index;
 
     if(flow->core.num_processed_pkts > 1) {
       /* This looks like a retransmission and probably this communication is blocked hence let's stop here */
@@ -130,7 +130,7 @@ static void ndpi_search_wireguard(struct ndpi_detection_module_struct *ndpi_stru
     /* need more packets before deciding */
   } else if (message_type == WG_TYPE_HANDSHAKE_RESPONSE &&
              (packet->payload_packet_len == 92 || packet->payload_packet_len == 100)) {
-    if (flow->l4.udp.wireguard_stage == 2 - packet->packet_direction) {
+    if (flow->metadata.l4.udp.wireguard_stage == 2 - packet->packet_direction) {
       /*
        * This means we are probably processing a handshake response to a handshake
        * initiation that we've just processed, so we check if the receiver index
@@ -138,7 +138,7 @@ static void ndpi_search_wireguard(struct ndpi_detection_module_struct *ndpi_stru
        */
       u_int32_t receiver_index = get_u_int32_t(payload, 8);
 
-      if (receiver_index == flow->l4.udp.wireguard_peer_index[1 - packet->packet_direction]) {
+      if (receiver_index == flow->metadata.l4.udp.wireguard_peer_index[1 - packet->packet_direction]) {
         if(packet->payload_packet_len == 100 &&
            ndpi_struct->cfg.wireguard_subclassification_by_ip /* TODO: the right option? */)
           ndpi_int_wireguard_add_connection(ndpi_struct, flow, NDPI_PROTOCOL_TUNNELBEAR);
@@ -156,9 +156,9 @@ static void ndpi_search_wireguard(struct ndpi_detection_module_struct *ndpi_stru
      * this cookie reply packet, we check if the receiver index in this packet
      * matches the sender index in that handshake initiation packet.
      */
-    if (flow->l4.udp.wireguard_stage == 2 - packet->packet_direction) {
+    if (flow->metadata.l4.udp.wireguard_stage == 2 - packet->packet_direction) {
       u_int32_t receiver_index = get_u_int32_t(payload, 4);
-      if (receiver_index == flow->l4.udp.wireguard_peer_index[1 - packet->packet_direction]) {
+      if (receiver_index == flow->metadata.l4.udp.wireguard_peer_index[1 - packet->packet_direction]) {
         ndpi_int_wireguard_add_connection(ndpi_struct, flow, NDPI_PROTOCOL_UNKNOWN);
       } else {
         NDPI_EXCLUDE_DISSECTOR(ndpi_struct, flow);
@@ -177,16 +177,16 @@ static void ndpi_search_wireguard(struct ndpi_detection_module_struct *ndpi_stru
     /* We speculate this is wireguard, so let's remember it */
     flow->core.fast_callback_protocol_id = NDPI_PROTOCOL_WIREGUARD;
     
-    if (flow->l4.udp.wireguard_stage == 0) {
-      flow->l4.udp.wireguard_stage = 3 + packet->packet_direction;
-      flow->l4.udp.wireguard_peer_index[packet->packet_direction] = receiver_index;
+    if (flow->metadata.l4.udp.wireguard_stage == 0) {
+      flow->metadata.l4.udp.wireguard_stage = 3 + packet->packet_direction;
+      flow->metadata.l4.udp.wireguard_peer_index[packet->packet_direction] = receiver_index;
       /* need more packets before deciding */
-    } else if (flow->l4.udp.wireguard_stage == 4 - packet->packet_direction) {
-      flow->l4.udp.wireguard_peer_index[packet->packet_direction] = receiver_index;
-      flow->l4.udp.wireguard_stage = 5;
+    } else if (flow->metadata.l4.udp.wireguard_stage == 4 - packet->packet_direction) {
+      flow->metadata.l4.udp.wireguard_peer_index[packet->packet_direction] = receiver_index;
+      flow->metadata.l4.udp.wireguard_stage = 5;
       /* need more packets before deciding */
-    } else if (flow->l4.udp.wireguard_stage == 5) {
-      if (receiver_index == flow->l4.udp.wireguard_peer_index[packet->packet_direction]) {
+    } else if (flow->metadata.l4.udp.wireguard_stage == 5) {
+      if (receiver_index == flow->metadata.l4.udp.wireguard_peer_index[packet->packet_direction]) {
         ndpi_int_wireguard_add_connection(ndpi_struct, flow, NDPI_PROTOCOL_UNKNOWN);
       } else {
         NDPI_EXCLUDE_DISSECTOR(ndpi_struct, flow);

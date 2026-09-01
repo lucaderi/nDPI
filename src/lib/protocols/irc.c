@@ -85,10 +85,10 @@ static void ndpi_search_irc_tcp(struct ndpi_detection_module_struct *ndpi_struct
         ndpi_set_risk(ndpi_struct, flow, NDPI_CLEAR_TEXT_CREDENTIALS, msg);
       }
 
-      NDPI_LOG_DBG2(ndpi_struct, "IRC stage: %d\n", flow->l4.tcp.irc_stage);
-      flow->l4.tcp.irc_stage++;
+      NDPI_LOG_DBG2(ndpi_struct, "IRC stage: %d\n", flow->metadata.l4.tcp.irc_stage);
+      flow->metadata.l4.tcp.irc_stage++;
       /* 3 consecutive valid packets */
-      if(flow->l4.tcp.irc_stage == 3)
+      if(flow->metadata.l4.tcp.irc_stage == 3)
         ndpi_int_irc_add_connection(ndpi_struct, flow, NDPI_CONFIDENCE_DPI);
       return;
     }

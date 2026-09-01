@@ -245,9 +245,9 @@ static int krb_parse(struct ndpi_detection_module_struct * const ndpi_struct,
   kasn1_offset += length;
   text += 2;
   length -= 2;
-  if (flow->protos.kerberos.domain[0] == '\0')
+  if (flow->metadata.protos.kerberos.domain[0] == '\0')
   {
-    krb_strncpy_lower(flow->protos.kerberos.domain, sizeof(flow->protos.kerberos.domain),
+    krb_strncpy_lower(flow->metadata.protos.kerberos.domain, sizeof(flow->metadata.protos.kerberos.domain),
                       text, length);
   }
 
@@ -285,12 +285,12 @@ static int krb_parse(struct ndpi_detection_module_struct * const ndpi_struct,
   kasn1_offset += length;
   text += 2;
   length -= 2;
-  if (flow->protos.kerberos.hostname[0] == '\0' && text[length - 1] != '$')
+  if (flow->metadata.protos.kerberos.hostname[0] == '\0' && text[length - 1] != '$')
   {
-    krb_strncpy_lower(flow->protos.kerberos.hostname, sizeof(flow->protos.kerberos.hostname),
+    krb_strncpy_lower(flow->metadata.protos.kerberos.hostname, sizeof(flow->metadata.protos.kerberos.hostname),
                       text, length);
-  } else if (flow->protos.kerberos.username[0] == '\0') {
-    krb_strncpy_lower(flow->protos.kerberos.username, sizeof(flow->protos.kerberos.username),
+  } else if (flow->metadata.protos.kerberos.username[0] == '\0') {
+    krb_strncpy_lower(flow->metadata.protos.kerberos.username, sizeof(flow->metadata.protos.kerberos.username),
                       text, length - 1);
   }
 
@@ -324,25 +324,25 @@ static void ndpi_search_kerberos(struct ndpi_detection_module_struct *ndpi_struc
   printf("\n[Kerberos] Process packet [len: %u]\n", packet->payload_packet_len);
 #endif
     
-  if(flow->kerberos_buf.pktbuf != NULL) {
-    u_int missing = flow->kerberos_buf.pktbuf_maxlen - flow->kerberos_buf.pktbuf_currlen;
+  if(flow->metadata.kerberos_buf.pktbuf != NULL) {
+    u_int missing = flow->metadata.kerberos_buf.pktbuf_maxlen - flow->metadata.kerberos_buf.pktbuf_currlen;
 
     if(packet->payload_packet_len <= missing) {
-      memcpy(&flow->kerberos_buf.pktbuf[flow->kerberos_buf.pktbuf_currlen], packet->payload, packet->payload_packet_len);
-      flow->kerberos_buf.pktbuf_currlen += packet->payload_packet_len;
+      memcpy(&flow->metadata.kerberos_buf.pktbuf[flow->metadata.kerberos_buf.pktbuf_currlen], packet->payload, packet->payload_packet_len);
+      flow->metadata.kerberos_buf.pktbuf_currlen += packet->payload_packet_len;
 
-      if(flow->kerberos_buf.pktbuf_currlen == flow->kerberos_buf.pktbuf_maxlen) {
+      if(flow->metadata.kerberos_buf.pktbuf_currlen == flow->metadata.kerberos_buf.pktbuf_maxlen) {
 	original_packet_payload = packet->payload;
 	original_payload_packet_len = packet->payload_packet_len;
-	packet->payload = (u_int8_t *)flow->kerberos_buf.pktbuf;
-	packet->payload_packet_len = flow->kerberos_buf.pktbuf_currlen;
+	packet->payload = (u_int8_t *)flow->metadata.kerberos_buf.pktbuf;
+	packet->payload_packet_len = flow->metadata.kerberos_buf.pktbuf_currlen;
 #ifdef KERBEROS_DEBUG
 	printf("[Kerberos] Packet is now full: processing\n");
 #endif
       } else {
 #ifdef KERBEROS_DEBUG
 	printf("[Kerberos] Missing %u bytes: skipping\n",
-	       flow->kerberos_buf.pktbuf_maxlen - flow->kerberos_buf.pktbuf_currlen);
+	       flow->metadata.kerberos_buf.pktbuf_maxlen - flow->metadata.kerberos_buf.pktbuf_currlen);
 #endif
 
 	return;
@@ -374,21 +374,21 @@ static void ndpi_search_kerberos(struct ndpi_detection_module_struct *ndpi_struc
       */
       if(kerberos_len > expected_len) {
 	if(packet->tcp) {
-	  if(flow->kerberos_buf.pktbuf == NULL) {
-	    flow->kerberos_buf.pktbuf = (char*)ndpi_malloc(kerberos_len+4);
+	  if(flow->metadata.kerberos_buf.pktbuf == NULL) {
+	    flow->metadata.kerberos_buf.pktbuf = (char*)ndpi_malloc(kerberos_len+4);
 
-	    if(flow->kerberos_buf.pktbuf != NULL) {
-	      flow->kerberos_buf.pktbuf_maxlen = kerberos_len+4;	      
+	    if(flow->metadata.kerberos_buf.pktbuf != NULL) {
+	      flow->metadata.kerberos_buf.pktbuf_maxlen = kerberos_len+4;	      
 #ifdef KERBEROS_DEBUG
-	      printf("[Kerberos] Allocated %u bytes\n", flow->kerberos_buf.pktbuf_maxlen);
+	      printf("[Kerberos] Allocated %u bytes\n", flow->metadata.kerberos_buf.pktbuf_maxlen);
 #endif	      
 	    }
 	  }
 	  
-	  if(flow->kerberos_buf.pktbuf != NULL) {
-	    if(packet->payload_packet_len <= flow->kerberos_buf.pktbuf_maxlen) {
-	      memcpy(flow->kerberos_buf.pktbuf, packet->payload, packet->payload_packet_len);
-	      flow->kerberos_buf.pktbuf_currlen = packet->payload_packet_len;
+	  if(flow->metadata.kerberos_buf.pktbuf != NULL) {
+	    if(packet->payload_packet_len <= flow->metadata.kerberos_buf.pktbuf_maxlen) {
+	      memcpy(flow->metadata.kerberos_buf.pktbuf, packet->payload, packet->payload_packet_len);
+	      flow->metadata.kerberos_buf.pktbuf_currlen = packet->payload_packet_len;
 	    }
 	  }
 	}
@@ -532,9 +532,9 @@ static void ndpi_search_kerberos(struct ndpi_detection_module_struct *ndpi_struc
 		       && (cname_len < sizeof(cname_str))
 		       && (cname_str[cname_len-1] == '$')) {
 		      cname_str[cname_len-1] = '\0';
-		      ndpi_snprintf(flow->protos.kerberos.hostname, sizeof(flow->protos.kerberos.hostname), "%s", cname_str);
+		      ndpi_snprintf(flow->metadata.protos.kerberos.hostname, sizeof(flow->metadata.protos.kerberos.hostname), "%s", cname_str);
 		    } else
-		      ndpi_snprintf(flow->protos.kerberos.username, sizeof(flow->protos.kerberos.username), "%s", cname_str);
+		      ndpi_snprintf(flow->metadata.protos.kerberos.username, sizeof(flow->metadata.protos.kerberos.username), "%s", cname_str);
 
 		    for(i=0; (i < 14) && (realm_offset <  packet->payload_packet_len); i++) {
 		      if(packet->payload[realm_offset] != 0x1b)
@@ -560,7 +560,7 @@ static void ndpi_search_kerberos(struct ndpi_detection_module_struct *ndpi_struc
 #ifdef KERBEROS_DEBUG
 			printf("[AS-REQ][Kerberos Realm][len: %u][%s]\n", realm_len, realm_str);
 #endif
-		        ndpi_snprintf(flow->protos.kerberos.domain, sizeof(flow->protos.kerberos.domain), "%s", realm_str);
+		        ndpi_snprintf(flow->metadata.protos.kerberos.domain, sizeof(flow->metadata.protos.kerberos.domain), "%s", realm_str);
 		      }
 		    }
 		  }
@@ -608,15 +608,15 @@ static void ndpi_search_kerberos(struct ndpi_detection_module_struct *ndpi_struc
 #ifdef KERBEROS_DEBUG
 		    printf("[TGS-REQ][s/dport: %u/%u][Kerberos Realm][len: %u][%s]\n", sport, dport, realm_len, realm_str);
 #endif
-		    ndpi_snprintf(flow->protos.kerberos.domain, sizeof(flow->protos.kerberos.domain), "%s", realm_str);
+		    ndpi_snprintf(flow->metadata.protos.kerberos.domain, sizeof(flow->metadata.protos.kerberos.domain), "%s", realm_str);
 
 		    /* If necessary we can decode sname */
-		    if(flow->kerberos_buf.pktbuf) {
-			    ndpi_free(flow->kerberos_buf.pktbuf);
+		    if(flow->metadata.kerberos_buf.pktbuf) {
+			    ndpi_free(flow->metadata.kerberos_buf.pktbuf);
 			    packet->payload = original_packet_payload;
 			    packet->payload_packet_len = original_payload_packet_len;
 		    }
-		    flow->kerberos_buf.pktbuf = NULL;
+		    flow->metadata.kerberos_buf.pktbuf = NULL;
 		  }
 		}
 	      }
@@ -628,11 +628,11 @@ static void ndpi_search_kerberos(struct ndpi_detection_module_struct *ndpi_struc
 	        flow->core.extra_packets_func = ndpi_search_kerberos_extra;
 	      }
 
-	      if(flow->kerberos_buf.pktbuf != NULL) {
-		ndpi_free(flow->kerberos_buf.pktbuf);
+	      if(flow->metadata.kerberos_buf.pktbuf != NULL) {
+		ndpi_free(flow->metadata.kerberos_buf.pktbuf);
 		packet->payload = original_packet_payload;
 		packet->payload_packet_len = original_payload_packet_len;
-		flow->kerberos_buf.pktbuf = NULL;
+		flow->metadata.kerberos_buf.pktbuf = NULL;
 	      }
 
 	      return;
@@ -646,8 +646,8 @@ static void ndpi_search_kerberos(struct ndpi_detection_module_struct *ndpi_struc
 	      }
 	      NDPI_LOG_DBG(ndpi_struct,
 	                   "[TGS-REP][s/dport: %u/%u][Kerberos Hostname,Domain,Username][%s,%s,%s]\n",
-	                   sport, dport, flow->protos.kerberos.hostname, flow->protos.kerberos.domain,
-	                   flow->protos.kerberos.username);
+	                   sport, dport, flow->metadata.protos.kerberos.hostname, flow->metadata.protos.kerberos.domain,
+	                   flow->metadata.protos.kerberos.username);
 	      flow->core.extra_packets_func = NULL;
 	    } else if(msg_type == 0x1e) /* Error */ {
 #ifdef KERBEROS_DEBUG
@@ -667,7 +667,7 @@ static void ndpi_search_kerberos(struct ndpi_detection_module_struct *ndpi_struc
 	     sport, dport, kerberos_len);
 #endif
 
-      if(flow->protos.kerberos.domain[0] != '\0')
+      if(flow->metadata.protos.kerberos.domain[0] != '\0')
 	return;
     }
   }

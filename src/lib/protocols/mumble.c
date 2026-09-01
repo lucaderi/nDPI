@@ -40,15 +40,15 @@ static void ndpi_search_mumble(struct ndpi_detection_module_struct *ndpi_struct,
       packet->payload_packet_len == 12)
   {
     if (get_u_int32_t(packet->payload, 0) == 0) {
-      flow->l4.udp.mumble_stage = 1;
-      flow->l4.udp.mumble_ident = ndpi_ntohll(get_u_int64_t(packet->payload, 4));
+      flow->metadata.l4.udp.mumble_stage = 1;
+      flow->metadata.l4.udp.mumble_ident = ndpi_ntohll(get_u_int64_t(packet->payload, 4));
       return;
     }
     goto not_mumble;
   }
 
-  if (flow->l4.udp.mumble_stage == 1 && packet->payload_packet_len == 24) {
-    if (ndpi_ntohll(get_u_int64_t(packet->payload, 4)) == flow->l4.udp.mumble_ident) {
+  if (flow->metadata.l4.udp.mumble_stage == 1 && packet->payload_packet_len == 24) {
+    if (ndpi_ntohll(get_u_int64_t(packet->payload, 4)) == flow->metadata.l4.udp.mumble_ident) {
       NDPI_LOG_INFO(ndpi_struct, "found Mumble\n");
       ndpi_set_detected_protocol(ndpi_struct, flow, NDPI_PROTOCOL_MUMBLE,
                                  NDPI_PROTOCOL_UNKNOWN, NDPI_CONFIDENCE_DPI);

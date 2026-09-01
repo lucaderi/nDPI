@@ -945,7 +945,7 @@ static void ndpi_process_packet(uint8_t * const args,
 	  flow_to_process->detected_l7_protocol.proto.app_protocol == NDPI_PROTOCOL_TLS)
         {
 	  if (flow_to_process->tls_client_hello_seen == 0 &&
-	      flow_to_process->ndpi_flow->protos.tls_quic.client_hello_processed != 0)
+	      flow_to_process->ndpi_flow->metadata.protos.tls_quic.client_hello_processed != 0)
             {
 	      uint8_t unknown_tls_version = 0;
 	      char buf_ver[16];
@@ -954,15 +954,15 @@ static void ndpi_process_packet(uint8_t * const args,
 		     reader_thread->array_index,
 		     flow_to_process->flow_id,
 		     ndpi_ssl_version2str(buf_ver, sizeof(buf_ver),
-					  flow_to_process->ndpi_flow->protos.tls_quic.ssl_version,
+					  flow_to_process->ndpi_flow->metadata.protos.tls_quic.ssl_version,
 					  &unknown_tls_version),
-		     flow_to_process->ndpi_flow->host_server_name,
-		     (flow_to_process->ndpi_flow->protos.tls_quic.advertised_alpns != NULL ?
-		      flow_to_process->ndpi_flow->protos.tls_quic.advertised_alpns : "-"));
+		     flow_to_process->ndpi_flow->metadata.host_server_name,
+		     (flow_to_process->ndpi_flow->metadata.protos.tls_quic.advertised_alpns != NULL ?
+		      flow_to_process->ndpi_flow->metadata.protos.tls_quic.advertised_alpns : "-"));
 	      flow_to_process->tls_client_hello_seen = 1;
             }
 	  if (flow_to_process->tls_server_hello_seen == 0 &&
-	      flow_to_process->ndpi_flow->tls_quic.certificate_processed != 0)
+	      flow_to_process->ndpi_flow->metadata.tls_quic.certificate_processed != 0)
             {
 	      uint8_t unknown_tls_version = 0;
 	      char buf_ver[16];
@@ -972,16 +972,16 @@ static void ndpi_process_packet(uint8_t * const args,
 		     reader_thread->array_index,
 		     flow_to_process->flow_id,
 		     ndpi_ssl_version2str(buf_ver, sizeof(buf_ver),
-					  flow_to_process->ndpi_flow->protos.tls_quic.ssl_version,
+					  flow_to_process->ndpi_flow->metadata.protos.tls_quic.ssl_version,
 					  &unknown_tls_version),
-		     (flow_to_process->ndpi_flow->protos.tls_quic.server_names_len == 0 ?
-		      1 : flow_to_process->ndpi_flow->protos.tls_quic.server_names_len),
-		     (flow_to_process->ndpi_flow->protos.tls_quic.server_names == NULL ?
-		      "-" : flow_to_process->ndpi_flow->protos.tls_quic.server_names),
-		     (flow_to_process->ndpi_flow->protos.tls_quic.issuerDN != NULL ?
-		      flow_to_process->ndpi_flow->protos.tls_quic.issuerDN : "-"),
-		     (flow_to_process->ndpi_flow->protos.tls_quic.subjectDN != NULL ?
-		      flow_to_process->ndpi_flow->protos.tls_quic.subjectDN : "-"));
+		     (flow_to_process->ndpi_flow->metadata.protos.tls_quic.server_names_len == 0 ?
+		      1 : flow_to_process->ndpi_flow->metadata.protos.tls_quic.server_names_len),
+		     (flow_to_process->ndpi_flow->metadata.protos.tls_quic.server_names == NULL ?
+		      "-" : flow_to_process->ndpi_flow->metadata.protos.tls_quic.server_names),
+		     (flow_to_process->ndpi_flow->metadata.protos.tls_quic.issuerDN != NULL ?
+		      flow_to_process->ndpi_flow->metadata.protos.tls_quic.issuerDN : "-"),
+		     (flow_to_process->ndpi_flow->metadata.protos.tls_quic.subjectDN != NULL ?
+		      flow_to_process->ndpi_flow->metadata.protos.tls_quic.subjectDN : "-"));
 	      flow_to_process->tls_server_hello_seen = 1;
             }
         }

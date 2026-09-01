@@ -82,7 +82,7 @@ static void ndpi_search_snmp(struct ndpi_detection_module_struct *ndpi_struct,
 
       if(flow->core.extra_packets_func == NULL) {
         ndpi_int_snmp_add_connection(ndpi_struct, flow);
-        flow->protos.snmp.version = packet->payload[1 + len_length + 2];
+        flow->metadata.protos.snmp.version = packet->payload[1 + len_length + 2];
       }
 
       offset = 1 + len_length + 2;
@@ -101,7 +101,7 @@ static void ndpi_search_snmp(struct ndpi_detection_module_struct *ndpi_struct,
         if(snmp_primitive_offset < packet->payload_packet_len) {
           u_int8_t snmp_primitive = packet->payload[snmp_primitive_offset] & 0xF;
 
-          flow->protos.snmp.primitive = snmp_primitive;
+          flow->metadata.protos.snmp.primitive = snmp_primitive;
 
           if(snmp_primitive == 2 /* Get Response */ &&
              snmp_primitive_offset + 1 < packet->payload_packet_len) {
@@ -123,7 +123,7 @@ static void ndpi_search_snmp(struct ndpi_detection_module_struct *ndpi_struct,
 
                 flow->core.extra_packets_func = NULL; /* We're good now */
 
-		flow->protos.snmp.error_status = error_status;
+		flow->metadata.protos.snmp.error_status = error_status;
 
                 if(error_status != 0) {
                   char str[64];

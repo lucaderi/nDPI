@@ -71,7 +71,7 @@ static int is_custom_version(struct ndpi_detection_module_struct *ndpi_struct)
 static void exclude_proto(struct ndpi_detection_module_struct *ndpi_struct,
                           struct ndpi_flow_struct *flow)
 {
-  if (flow->l4.udp.raknet_custom == 1)
+  if (flow->metadata.l4.udp.raknet_custom == 1)
   {
     NDPI_LOG_INFO(ndpi_struct, "found RakNet (custom version)\n");
     /* Classify as Raknet or as Roblox?
@@ -103,7 +103,7 @@ static void ndpi_search_raknet(struct ndpi_detection_module_struct *ndpi_struct,
   */
   if (flow->core.packet_counter == 1)
   {
-    flow->l4.udp.raknet_custom = is_custom_version(ndpi_struct);
+    flow->metadata.l4.udp.raknet_custom = is_custom_version(ndpi_struct);
   }
 
   if (packet->payload_packet_len < 7)
@@ -295,7 +295,7 @@ static void ndpi_search_raknet(struct ndpi_detection_module_struct *ndpi_struct,
         if (frame_offset == packet->payload_packet_len)
         {
           /* This packet might also be a RTP/RTCP one: give precedence to RTP/RTCP dissector */
-          if(flow->rtp.rtp_stage == 0 && flow->rtcp_stage == 0)
+          if(flow->metadata.rtp.rtp_stage == 0 && flow->metadata.rtcp_stage == 0)
             ndpi_int_raknet_add_connection(ndpi_struct, flow);
         } else {
           exclude_proto(ndpi_struct, flow);
@@ -366,7 +366,7 @@ static void ndpi_search_raknet(struct ndpi_detection_module_struct *ndpi_struct,
         if (record_index == record_count && record_offset == packet->payload_packet_len)
         {
           /* This packet might also be a RTP/RTCP one: give precedence to RTP/RTCP dissector */
-          if(flow->rtp.rtp_stage == 0 && flow->rtcp_stage == 0)
+          if(flow->metadata.rtp.rtp_stage == 0 && flow->metadata.rtcp_stage == 0)
             ndpi_int_raknet_add_connection(ndpi_struct, flow);
         } else {
           exclude_proto(ndpi_struct, flow);

@@ -53,7 +53,7 @@ static void ndpi_int_zoom_add_connection(struct ndpi_detection_module_struct *nd
 					 struct ndpi_flow_struct *flow) {
   u_int16_t master;
 
-  if(flow->flow_multimedia_types != ndpi_multimedia_unknown_flow)
+  if(flow->metadata.flow_multimedia_types != ndpi_multimedia_unknown_flow)
     master = NDPI_PROTOCOL_SRTP;
   else
     master = NDPI_PROTOCOL_UNKNOWN;
@@ -91,7 +91,7 @@ static int is_zme(struct ndpi_detection_module_struct *ndpi_struct,
     case 13: /* Screen Share: RTP is not always there, expecially at the beginning of the flow */
       if(payload_len > 27) {
          if(is_rtp_or_rtcp(ndpi_struct, payload + 27, payload_len - 27, NULL) == IS_RTP) {
-           flow->flow_multimedia_types |= ndpi_multimedia_screen_sharing_flow;
+           flow->metadata.flow_multimedia_types |= ndpi_multimedia_screen_sharing_flow;
          }
          return 1;
       }
@@ -100,7 +100,7 @@ static int is_zme(struct ndpi_detection_module_struct *ndpi_struct,
     case 30: /* P2P Screen Share: it seems RTP is always present */
       if(payload_len > 20 &&
          is_rtp_or_rtcp(ndpi_struct, payload + 20, payload_len - 20, NULL) == IS_RTP) {
-        flow->flow_multimedia_types |= ndpi_multimedia_screen_sharing_flow;
+        flow->metadata.flow_multimedia_types |= ndpi_multimedia_screen_sharing_flow;
         return 1;
       }
       break;
@@ -108,7 +108,7 @@ static int is_zme(struct ndpi_detection_module_struct *ndpi_struct,
     case 15: /* RTP Audio */
       if(payload_len > 19 &&
          is_rtp_or_rtcp(ndpi_struct, payload + 19, payload_len - 19, NULL) == IS_RTP) {
-        flow->flow_multimedia_types |= ndpi_multimedia_audio_flow;
+        flow->metadata.flow_multimedia_types |= ndpi_multimedia_audio_flow;
         return 1;
       }
       break;
@@ -116,7 +116,7 @@ static int is_zme(struct ndpi_detection_module_struct *ndpi_struct,
     case 16: /* RTP Video */
       if(payload_len > 24 &&
          is_rtp_or_rtcp(ndpi_struct, payload + 24, payload_len - 24, NULL) == IS_RTP) {
-        flow->flow_multimedia_types |= ndpi_multimedia_video_flow;
+        flow->metadata.flow_multimedia_types |= ndpi_multimedia_video_flow;
         return 1;
       }
       break;
@@ -165,11 +165,11 @@ static int zoom_search_again(struct ndpi_detection_module_struct *ndpi_struct,
   if(ndpi_struct->packet.payload_packet_len == 0)
     return keep_extra_dissection(flow);
 
-  if(!flow->l4.udp.zoom_p2p &&
+  if(!flow->metadata.l4.udp.zoom_p2p &&
      is_sfu_5(ndpi_struct, flow)) {
     ndpi_int_zoom_add_connection(ndpi_struct, flow);
   }
-  if(flow->l4.udp.zoom_p2p &&
+  if(flow->metadata.l4.udp.zoom_p2p &&
      is_zme(ndpi_struct, flow, packet->payload, packet->payload_packet_len)) {
     ndpi_int_zoom_add_connection(ndpi_struct, flow);
   }
@@ -235,7 +235,7 @@ static void ndpi_search_zoom(struct ndpi_detection_module_struct *ndpi_struct,
 
       if(packet->payload_packet_len == 24 + 4 + ip_len + 4 + uuid_len + 4) {
         NDPI_LOG_DBG(ndpi_struct, "found P2P Zoom\n");
-        flow->l4.udp.zoom_p2p = 1;
+        flow->metadata.l4.udp.zoom_p2p = 1;
         ndpi_int_zoom_add_connection(ndpi_struct, flow);
         return;
       }

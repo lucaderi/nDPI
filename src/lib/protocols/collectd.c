@@ -120,9 +120,9 @@ static int ndpi_int_collectd_dissect_username(struct ndpi_flow_struct * const fl
     return 1;
   }
 
-  size_t sz_len = ndpi_min(sizeof(flow->protos.collectd.client_username) - 1, username_length);
-  memcpy(flow->protos.collectd.client_username, &packet->payload[6], sz_len);
-  flow->protos.collectd.client_username[sz_len] = '\0';
+  size_t sz_len = ndpi_min(sizeof(flow->metadata.protos.collectd.client_username) - 1, username_length);
+  memcpy(flow->metadata.protos.collectd.client_username, &packet->payload[6], sz_len);
+  flow->metadata.protos.collectd.client_username[sz_len] = '\0';
 
   return 0;
 }

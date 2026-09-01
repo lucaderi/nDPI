@@ -63,9 +63,9 @@ static void ndpi_search_discord(struct ndpi_detection_module_struct *ndpi_struct
         ntohl(get_u_int32_t(packet->payload, 0)) == 0x00020046)
     {
       /* Dissect client IP. */
-      size_t len = sizeof(flow->protos.discord.client_ip) - 1;
-      strncpy(flow->protos.discord.client_ip, (char const *)&packet->payload[8], len);
-      flow->protos.discord.client_ip[len] = '\0';
+      size_t len = sizeof(flow->metadata.protos.discord.client_ip) - 1;
+      strncpy(flow->metadata.protos.discord.client_ip, (char const *)&packet->payload[8], len);
+      flow->metadata.protos.discord.client_ip[len] = '\0';
       ndpi_int_discord_add_connection(ndpi_struct, flow);
       return;
     }

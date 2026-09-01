@@ -140,7 +140,7 @@ static void ndpi_search_bittorrent_hash(struct ndpi_detection_module_struct *ndp
     bt_hash = (const char*)&packet->payload[28];
   
   if(bt_hash && (packet->payload_packet_len >= (20 + (bt_hash-(const char*)packet->payload))))
-    memcpy(flow->protos.bittorrent.hash, bt_hash, 20);
+    memcpy(flow->metadata.protos.bittorrent.hash, bt_hash, 20);
 }
 
 /* *********************************************** */
@@ -193,7 +193,7 @@ static void ndpi_add_connection_as_bittorrent(struct ndpi_detection_module_struc
 					    confidence);
   
   if(ndpi_struct->cfg.bittorrent_hash_enabled &&
-     flow->protos.bittorrent.hash[0] == '\0') {
+     flow->metadata.protos.bittorrent.hash[0] == '\0') {
     /* Don't use just 1 as in TCP DNS more packets could be returned (e.g. ACK). */
     flow->core.max_extra_packets_to_check = 3;
     flow->core.extra_packets_func = search_bittorrent_again;
@@ -614,9 +614,9 @@ static void ndpi_search_bittorrent(struct ndpi_detection_module_struct *ndpi_str
 
 	}
 
-      flow->bittorrent_stage++;
+      flow->metadata.bittorrent_stage++;
 
-      if(flow->bittorrent_stage < 5) {
+      if(flow->metadata.bittorrent_stage < 5) {
 	/* We have detected bittorrent but we need to wait until we get a hash */
 
 	if(packet->payload_packet_len > 19 /* min size */) {
@@ -630,8 +630,8 @@ static void ndpi_search_bittorrent(struct ndpi_detection_module_struct *ndpi_str
 	     ) {
 	  bittorrent_found:
 	    if(bt_proto != NULL && ((u_int8_t *)&bt_proto[27] - packet->payload +
-				    sizeof(flow->protos.bittorrent.hash)) < packet->payload_packet_len) {
-	      memcpy(flow->protos.bittorrent.hash, &bt_proto[27], sizeof(flow->protos.bittorrent.hash));
+				    sizeof(flow->metadata.protos.bittorrent.hash)) < packet->payload_packet_len) {
+	      memcpy(flow->metadata.protos.bittorrent.hash, &bt_proto[27], sizeof(flow->metadata.protos.bittorrent.hash));
 	      flow->core.extra_packets_func = NULL; /* Nothing else to do */
 	    }
 
