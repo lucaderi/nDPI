@@ -911,6 +911,8 @@ struct ndpi_flow_tcp_struct {
   /* Part of the TCP header */
   u_int8_t cli2srv_tcp_flags, srv2cli_tcp_flags;
 
+  /* **** Protocols **** */
+  
   /* NDPI_PROTOCOL_MAIL_SMTP */
   /* NDPI_PROTOCOL_MAIL_POP */
   /* NDPI_PROTOCOL_MAIL_IMAP */
@@ -951,64 +953,60 @@ struct ndpi_flow_tcp_struct {
   u_int8_t memcached_matches;
 
   /* Part of the TCP header */
-  u_int64_t seen_syn:1, seen_syn_ack:1, seen_ack:1;
+  u_int8_t seen_syn:1, seen_syn_ack:1, seen_ack:1;
 
   /* NDPI_PROTOCOL_IRC */
-  u_int64_t irc_stage:2;
+  u_int8_t irc_stage:2;
 
   /* NDPI_PROTOCOL_USENET */
-  u_int64_t usenet_stage:2;
+  u_int8_t usenet_stage:2;
 
   /* NDPI_PROTOCOL_HTTP */
-  u_int64_t http_stage:3;
-  u_int64_t http_asymmetric_stage:2;
+  u_int8_t http_stage:3, http_asymmetric_stage:2;
 
   /* NDPI_PROTOCOL_GNUTELLA */
-  u_int64_t gnutella_stage:2;
+  u_int8_t gnutella_stage:2;
 
   /* NDPI_PROTOCOL_SSH */
-  u_int64_t ssh_stage:3;
+  u_int8_t ssh_stage:3;
 
   /* NDPI_PROTOCOL_VNC */
-  u_int64_t vnc_stage:2;
+  u_int8_t vnc_stage:2;
 
   /* NDPI_PROTOCOL_RADMIN */
-  u_int64_t radmin_stage:1;
+  u_int8_t radmin_stage:1;
 
   /* NDPI_PROTOCOL_FTP_CONTROL */
-  u_int64_t ftp_control_stage:2;
+  u_int8_t ftp_control_stage:2;
 
   /* NDPI_PROTOCOL_SOAP */
-  u_int64_t soap_stage:1;
+  u_int8_t soap_stage:1;
 
   /* NDPI_PROTOCOL_SOCKS */
-  u_int64_t socks5_stage:2;
-  u_int64_t socks4_stage:2;
+  u_int8_t socks5_stage:2, socks4_stage:2;
 
   /* NDPI_PROTOCOL_Z3950 */
-  u_int64_t z3950_stage:2;
+  u_int8_t z3950_stage:2;
 
   /* NDPI_PROTOCOL_RTMP */
-  u_int64_t rtmp_stage:2;
+  u_int8_t rtmp_stage:2;
 
   /* NDPI_PROTOCOL_POSTGRES */
-  u_int64_t postgres_stage:3;
+  u_int8_t postgres_stage:3;
 
   /* NDPI_PROTOCOL_MAIL_POP */
-  u_int64_t mail_pop_stage:2;
+  u_int8_t mail_pop_stage:2;
 
   /* NDPI_PROTOCOL_MAIL_IMAP */
-  u_int64_t mail_imap_stage:3;
-  u_int64_t mail_imap_starttls:1;
+  u_int8_t mail_imap_stage:3, mail_imap_starttls:1;
 
   /* NDPI_PROTOCOL_RDP */
-  u_int64_t rdp_protocol_detected:1;
+  u_int8_t rdp_protocol_detected:1;
 
   /* Reserved for future use */
   u_int64_t reserved:21;
 
-  char *fingerprint;
-  char *fingerprint_raw;
+  char *fingerprint, *fingerprint_raw;
   ndpi_os os_hint;
 };
 
@@ -1620,6 +1618,8 @@ typedef struct {
 #define NDPI_IKEV2_REQUEST_PROPOSAL  0
 #define NDPI_IKEV2_RESPONSE_PROPOSAL 1
 
+#define OPENVPN_HEUR_MAX_NUM_OPCODES 4
+
 /* Per-proposal crypto algorithm selection from an IKEv2 SA payload (RFC 7296 §3.3) */
 struct ndpi_ipsec_proposal {
   u_int8_t  proto_id;        /* 1=IKE, 2=AH, 3=ESP */
@@ -1768,8 +1768,24 @@ struct ndpi_flow_struct {
     char *opaque; /* Plugin custom storage. If not NULL will be deleted automatically by ndpi_free_flow() */
   } tls_quic; /* Used also by DTLS and POPS/IMAPS/SMTPS/FTPS */
 
-  struct rtp_info rtp[2 /* directions */];
+  struct {
+    struct rtp_info rtp[2 /* directions */];
+    /* NDPI_PROTOCOL_RTP */
+    u_int8_t rtp_stage:2;
+    u_int8_t rtp_seq_set[2];
+    u_int16_t rtp_seq[2];
+  } rtp;
 
+  struct {
+    /* NDPI_PROTOCOL_OPENVPN */
+    u_int8_t ovpn_session_id[2][8];
+    u_int8_t ovpn_alg_standard_state:2, ovpn_alg_heur_opcode_state:2, ovpn_heur_opcode__codes_num:4;
+    u_int8_t ovpn_heur_opcode__num_msgs;
+    u_int8_t ovpn_heur_opcode__codes[OPENVPN_HEUR_MAX_NUM_OPCODES];
+    u_int8_t ovpn_heur_opcode__resets[2];
+    u_int16_t ovpn_heur_opcode__missing_bytes[2];
+  } openvpn;
+  
   union {
     /* the only fields useful for nDPI and ntopng */
     struct {
@@ -2000,7 +2016,7 @@ struct ndpi_flow_struct {
   struct ndpi_dissector_bitmask excluded_dissectors_bitmask;
 
   /* NDPI_PROTOCOL_BITTORRENT */
-  u_int8_t bittorrent_stage;		      // can be 0 - 255
+  u_int8_t bittorrent_stage; // can be 0 - 255
   u_int8_t bt_check_performed : 1;
 
   /* NDPI_PROTOCOL_OOKLA */
@@ -2009,38 +2025,15 @@ struct ndpi_flow_struct {
   /* NDPI_PROTOCOL_TEAMVIEWER */
   u_int8_t teamviewer_stage : 3;
 
-  /* NDPI_PROTOCOL_OPENVPN */
-  u_int8_t ovpn_session_id[2][8];
-  u_int8_t ovpn_alg_standard_state : 2;
-  u_int8_t ovpn_alg_heur_opcode_state : 2;
-  u_int8_t ovpn_heur_opcode__codes_num : 4;
-  u_int8_t ovpn_heur_opcode__num_msgs;
-#define OPENVPN_HEUR_MAX_NUM_OPCODES 4
-  u_int8_t ovpn_heur_opcode__codes[OPENVPN_HEUR_MAX_NUM_OPCODES];
-  u_int8_t ovpn_heur_opcode__resets[2];
-  u_int16_t ovpn_heur_opcode__missing_bytes[2];
-
   /* NDPI_PROTOCOL_TINC */
   u_int8_t tinc_state;
 
    /* NDPI_PROTOCOL_RTCP */
    u_int8_t rtcp_stage:2;
 
-   /* NDPI_PROTOCOL_RTP */
-   u_int8_t rtp_stage:2;
-   u_int8_t rtp_seq_set[2];
-   u_int16_t rtp_seq[2];
-
   /* Flow payload */
   u_int16_t flow_payload_len;
   char *flow_payload;
-
-  /*
-     Leave this field below at the end
-     The field below can be used by third
-     party dissectors for storing private data
-   */
-  u_int8_t priv_data[16];
 };
 
 #if !defined(NDPI_CFFI_PREPROCESSING) && defined(__linux__)

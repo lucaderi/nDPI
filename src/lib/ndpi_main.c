@@ -8660,8 +8660,8 @@ static int tcp_ack_padding(struct ndpi_packet_struct *packet) {
 
 /* ******************************************************************** */
 
-static void connection_tracking(struct ndpi_detection_module_struct *ndpi_str,
-				struct ndpi_flow_struct *flow) {
+static void ndpi_connection_tracking(struct ndpi_detection_module_struct *ndpi_str,
+				     struct ndpi_flow_struct *flow) {
   /* const for gcc code optimization and cleaner code */
   struct ndpi_packet_struct *packet = &ndpi_str->packet;
   const struct ndpi_iphdr *iph = packet->iph;
@@ -8962,17 +8962,15 @@ static u_int32_t check_ndpi_detection_func(struct ndpi_detection_module_struct *
         if((func != callback_buffer[a].func) &&
 	   (callback_buffer[a].ndpi_selection_bitmask & ndpi_selection_packet) ==
 	   callback_buffer[a].ndpi_selection_bitmask &&
-	   !dissector_bitmask_is_set(&flow->excluded_dissectors_bitmask, dissector_idx))
-	  {
+	   !dissector_bitmask_is_set(&flow->excluded_dissectors_bitmask, dissector_idx)) {
             ndpi_str->current_dissector_idx = dissector_idx;
 	    callback_buffer[a].func(ndpi_str, flow);
 	    num_calls++;
-
-	    if(flow->detected_protocol_stack[0] != NDPI_PROTOCOL_UNKNOWN)
-	      {
-		break; /* Stop after the first detected protocol. */
-	      }
-	  }
+	    
+	    if(flow->detected_protocol_stack[0] != NDPI_PROTOCOL_UNKNOWN) {
+	      break; /* Stop after the first detected protocol. */
+	    }
+	}
       }
     }
 
@@ -10614,8 +10612,7 @@ static void ndpi_internal_detection_process_packet(struct ndpi_detection_module_
   NDPI_LOG_DBG(ndpi_str, "[%d/%d cat:%d breed:%d] START packet processing\n",
                flow->detected_protocol_stack[0],
 	       flow->detected_protocol_stack[1],
-	       flow->category,
-	       flow->breed);
+	       flow->category, flow->breed);
 
   if(flow->monit)
     memset(flow->monit, '\0', sizeof(*flow->monit));
@@ -10623,7 +10620,7 @@ static void ndpi_internal_detection_process_packet(struct ndpi_detection_module_
   if(ndpi_init_packet(ndpi_str, flow, current_time_ms, packet_data, packetlen, input_info) != 0)
     return;
 
-  connection_tracking(ndpi_str, flow);
+  ndpi_connection_tracking(ndpi_str, flow);
 
   /* At this point, we updated ndpi_str->input_info->in_pkt_dir */
 
@@ -10698,6 +10695,23 @@ static void ndpi_internal_detection_process_packet(struct ndpi_detection_module_
       }
     }
 #endif
+    /* End first packet of a flow */
+  }
+
+  if(!flow->protocol_id_already_guessed) {
+    flow->protocol_id_already_guessed = 1;
+
+    if(do_guess(ndpi_str, flow) == -1) {
+
+      fill_protocol_category_and_breed(ndpi_str, flow);
+
+      fpc_check_eval(ndpi_str, flow);
+
+      /* Reason: custom rules */
+      internal_giveup(ndpi_str, flow);
+
+      return;
+    }
   }
 
   /* build ndpi_selection packet bitmask */
@@ -10722,22 +10736,6 @@ static void ndpi_internal_detection_process_packet(struct ndpi_detection_module_
   if(packet->iphv6 != NULL)
     ndpi_selection_packet |= NDPI_SELECTION_BITMASK_PROTOCOL_IPV6 | NDPI_SELECTION_BITMASK_PROTOCOL_IPV4_OR_IPV6;
 
-  if(!flow->protocol_id_already_guessed) {
-    flow->protocol_id_already_guessed = 1;
-
-    if(do_guess(ndpi_str, flow) == -1) {
-
-      fill_protocol_category_and_breed(ndpi_str, flow);
-
-      fpc_check_eval(ndpi_str, flow);
-
-      /* Reason: custom rules */
-      internal_giveup(ndpi_str, flow);
-
-      return;
-    }
-  }
-
   num_calls = ndpi_check_flow_func(ndpi_str, flow, &ndpi_selection_packet);
 
 ret_protocols:
@@ -10747,6 +10745,7 @@ ret_protocols:
      flow->detected_protocol_stack[0] != NDPI_PROTOCOL_UNKNOWN) {
     fill_protocol_category_and_breed(ndpi_str, flow);
   }
+  
   if(flow->breed == NDPI_PROTOCOL_UNRATED) {
     ndpi_master_app_protocol proto;
     proto.app_protocol = flow->detected_protocol_stack[0];

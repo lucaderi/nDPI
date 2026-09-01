@@ -5764,6 +5764,8 @@ static void hash_walker(char *key, u_int64_t value, void *data) {
 int main(int argc, char **argv) {
   int i;
 
+  struct ndpi_flow_struct a;
+  printf("%lu\n", sizeof(a.protos)); exit(0);
 #ifdef DEBUG_TRACE
   trace = fopen("/tmp/ndpiReader.log", "a");
 
