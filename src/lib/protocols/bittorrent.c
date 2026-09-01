@@ -151,9 +151,9 @@ u_int64_t make_bittorrent_host_key(struct ndpi_flow_struct *flow, int client, in
   /* network byte order */
   if(flow->is_ipv6) {
     if(client)
-      key = (ndpi_quick_hash64((const char *)flow->c_address.v6, 16) << 16) | htons(ntohs(flow->c_port) + offset);
+      key = (ndpi_quick_hash64((const char *)flow->c_address.v6.u6_addr.u6_addr8, 16) << 16) | htons(ntohs(flow->c_port) + offset);
     else
-      key = (ndpi_quick_hash64((const char *)flow->s_address.v6, 16) << 16) | flow->s_port;
+      key = (ndpi_quick_hash64((const char *)flow->s_address.v6.u6_addr.u6_addr8, 16) << 16) | flow->s_port;
   } else {
     if(client)
       key = ((u_int64_t)flow->c_address.v4 << 32) | htons(ntohs(flow->c_port) + offset);
@@ -171,7 +171,8 @@ u_int64_t make_bittorrent_peers_key(struct ndpi_flow_struct *flow) {
 
   /* network byte order */
   if(flow->is_ipv6)
-    key = (ndpi_quick_hash64((const char *)flow->c_address.v6, 16) << 32) | (ndpi_quick_hash64((const char *)flow->s_address.v6, 16) & 0xFFFFFFFF);
+    key = (ndpi_quick_hash64((const char *)flow->c_address.v6.u6_addr.u6_addr8, 16) << 32)
+      | (ndpi_quick_hash64((const char *)flow->s_address.v6.u6_addr.u6_addr8, 16) & 0xFFFFFFFF);
   else
     key = ((u_int64_t)flow->c_address.v4 << 32) | flow->s_address.v4;
 

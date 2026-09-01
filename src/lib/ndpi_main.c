@@ -8842,8 +8842,8 @@ static void connection_tracking(struct ndpi_detection_module_struct *ndpi_str,
 	flow->c_address.v4 = packet->iph->saddr;
 	flow->s_address.v4 = packet->iph->daddr;
       } else {
-	memcpy(flow->c_address.v6, &packet->iphv6->ip6_src, 16);
-	memcpy(flow->s_address.v6, &packet->iphv6->ip6_dst, 16);
+	memcpy(&flow->c_address.v6, &packet->iphv6->ip6_src, 16);
+	memcpy(&flow->s_address.v6, &packet->iphv6->ip6_dst, 16);
       }
 
       flow->c_port = s_port;
@@ -8853,8 +8853,8 @@ static void connection_tracking(struct ndpi_detection_module_struct *ndpi_str,
 	flow->c_address.v4 = packet->iph->daddr;
 	flow->s_address.v4 = packet->iph->saddr;
       } else {
-	memcpy(flow->c_address.v6, &packet->iphv6->ip6_dst, 16);
-	memcpy(flow->s_address.v6, &packet->iphv6->ip6_src, 16);
+	memcpy(&flow->c_address.v6, &packet->iphv6->ip6_dst, 16);
+	memcpy(&flow->s_address.v6, &packet->iphv6->ip6_src, 16);
       }
 
       flow->c_port = d_port;
@@ -9077,12 +9077,12 @@ static u_int64_t make_msteams_key(struct ndpi_flow_struct *flow, u_int8_t use_cl
 
   if(use_client) {
     if(flow->is_ipv6)
-      key = ndpi_quick_hash64((const char *)flow->c_address.v6, 16);
+      key = ndpi_quick_hash64((const char *)flow->c_address.v6.u6_addr.u6_addr8, 16);
     else
       key = ntohl(flow->c_address.v4);
   } else {
     if(flow->is_ipv6)
-      key = ndpi_quick_hash64((const char *)flow->s_address.v6, 16);
+      key = ndpi_quick_hash64((const char *)flow->s_address.v6.u6_addr.u6_addr8, 16);
     else
       key = ntohl(flow->s_address.v4);
   }
@@ -10313,8 +10313,8 @@ static int do_guess(struct ndpi_detection_module_struct *ndpi_str, struct ndpi_f
     if(packet->iph)
       ndpi_fill_ip_protocol_category(ndpi_str, flow, flow->c_address.v4, flow->s_address.v4, &ret);
     else
-      ndpi_fill_ipv6_protocol_category(ndpi_str, flow, (struct in6_addr *)flow->c_address.v6,
-                                       (struct in6_addr *)flow->s_address.v6, &ret);
+      ndpi_fill_ipv6_protocol_category(ndpi_str, flow, (struct in6_addr *)&flow->c_address.v6,
+                                       (struct in6_addr *)&flow->s_address.v6, &ret);
     flow->guessed_header_category = ret.category;
     flow->custom_category_userdata = ret.custom_category_userdata;
   } else {

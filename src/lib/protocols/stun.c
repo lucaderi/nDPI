@@ -1132,12 +1132,12 @@ static int stun_telegram_search_again(struct ndpi_detection_module_struct *ndpi_
 static u_int64_t get_stun_lru_key(struct ndpi_flow_struct *flow, u_int8_t rev) {
   if(rev) {
     if(flow->is_ipv6)
-      return (ndpi_quick_hash64((const char *)flow->s_address.v6, 16) << 16) | ntohs(flow->s_port);
+      return (ndpi_quick_hash64((const char *)flow->s_address.v6.u6_addr.u6_addr8, 16) << 16) | ntohs(flow->s_port);
     else
       return ((u_int64_t)flow->s_address.v4 << 32) | flow->s_port;
   } else {
     if(flow->is_ipv6)
-      return (ndpi_quick_hash64((const char *)flow->c_address.v6, 16) << 16) | ntohs(flow->c_port);
+      return (ndpi_quick_hash64((const char *)flow->c_address.v6.u6_addr.u6_addr8, 16) << 16) | ntohs(flow->c_port);
     else
       return ((u_int64_t)flow->c_address.v4 << 32) | flow->c_port;
   }
@@ -1181,10 +1181,10 @@ static void ndpi_int_stun_add_connection(struct ndpi_detection_module_struct *nd
 	u_int64_t pref1 = ndpi_htonll(0x2001486048640005); /* 2001:4860:4864:5::/64 */
 	u_int64_t pref2 = ndpi_htonll(0x2001486048640006); /* 2001:4860:4864:6::/64 */
 
-        if(memcmp(flow->c_address.v6, &pref1, sizeof(pref1)) == 0 ||
-           memcmp(flow->c_address.v6, &pref2, sizeof(pref2)) == 0 ||
-           memcmp(flow->s_address.v6, &pref1, sizeof(pref1)) == 0 ||
-           memcmp(flow->s_address.v6, &pref2, sizeof(pref2)) == 0) {
+        if(memcmp(&flow->c_address.v6, &pref1, sizeof(pref1)) == 0 ||
+           memcmp(&flow->c_address.v6, &pref2, sizeof(pref2)) == 0 ||
+           memcmp(&flow->s_address.v6, &pref1, sizeof(pref1)) == 0 ||
+           memcmp(&flow->s_address.v6, &pref2, sizeof(pref2)) == 0) {
           app_proto = NDPI_PROTOCOL_GOOGLE_CALL;
 	}
       } else {
@@ -1307,7 +1307,7 @@ static void ndpi_search_stun(struct ndpi_detection_module_struct *ndpi_struct, s
 static u_int64_t get_signal_key(struct ndpi_flow_struct *flow)
 {
   if(flow->is_ipv6)
-    return ndpi_quick_hash64((const char *)flow->c_address.v6, 16);
+    return ndpi_quick_hash64((const char *)flow->c_address.v6.u6_addr.u6_addr8, 16);
   else
     return flow->c_address.v4;
 }

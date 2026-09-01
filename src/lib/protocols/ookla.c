@@ -33,7 +33,7 @@ const u_int16_t ookla_port = 8080;
 static u_int64_t get_ookla_key(struct ndpi_flow_struct *flow)
 {
   if(flow->is_ipv6)
-    return ndpi_quick_hash64((const char *)flow->c_address.v6, 16);
+    return ndpi_quick_hash64((const char *)flow->c_address.v6.u6_addr.u6_addr8, 16);
   else
     return flow->c_address.v4;
 }

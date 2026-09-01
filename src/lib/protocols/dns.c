@@ -223,7 +223,7 @@ u_int64_t fpc_dns_cache_key_from_flow(struct ndpi_flow_struct *flow) {
   u_int64_t key;
 
   if(flow->is_ipv6)
-    key = ndpi_quick_hash64((const char *)flow->s_address.v6, 16);
+    key = ndpi_quick_hash64((const char *)flow->s_address.v6.u6_addr.u6_addr8, 16);
   else
     key = (u_int64_t)(flow->s_address.v4);
 

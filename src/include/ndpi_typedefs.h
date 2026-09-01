@@ -1664,7 +1664,7 @@ struct ndpi_flow_struct {
    */
   union {
     u_int32_t v4;
-    u_int8_t v6[16];
+    struct ndpi_in6_addr v6;
   } c_address, s_address;	/* For some unknown reasons, x86_64-w64-mingw32-gcc doesn't like the name "s_addr" */
   u_int16_t c_port, s_port;
 
