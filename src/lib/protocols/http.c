@@ -535,7 +535,7 @@ static void ndpi_http_parse_subprotocol(struct ndpi_detection_module_struct *ndp
      strncmp((const char *)packet->server_line.ptr, "Icecast", 7) == 0) {
     ndpi_set_detected_protocol(ndpi_struct, flow, NDPI_PROTOCOL_ICECAST, master_protocol, NDPI_CONFIDENCE_DPI);
     update_category_and_breed(ndpi_struct, flow);
-    ndpi_unset_risk(ndpi_struct, flow, NDPI_KNOWN_PROTOCOL_ON_NON_STANDARD_PORT);
+    ndpi_unset_risk(ndpi_struct, &flow->core, NDPI_KNOWN_PROTOCOL_ON_NON_STANDARD_PORT);
   }
 
   /* Matching on Content-Type.
@@ -909,7 +909,7 @@ static void http_process_user_agent(struct ndpi_detection_module_struct *ndpi_st
   }
 
   if(ndpi_user_agent_set(flow, ua_ptr, ua_ptr_len) != NULL) {
-    ndpi_unset_risk(ndpi_struct, flow, NDPI_HTTP_SUSPICIOUS_USER_AGENT);
+    ndpi_unset_risk(ndpi_struct, &flow->core, NDPI_HTTP_SUSPICIOUS_USER_AGENT);
     ndpi_check_user_agent(ndpi_struct, flow, flow->metadata.http.user_agent, ua_ptr_len);
   } else {
     NDPI_LOG_DBG2(ndpi_struct, "Could not set HTTP user agent (already set?)\n");
@@ -1646,19 +1646,19 @@ static void reset(struct ndpi_detection_module_struct *ndpi_struct,
   /* Reset flow risks. We should reset only those risks triggered by
      the previous HTTP response... */
   /* TODO */
-  ndpi_unset_risk(ndpi_struct, flow, NDPI_BINARY_APPLICATION_TRANSFER);
-  ndpi_unset_risk(ndpi_struct, flow, NDPI_HTTP_SUSPICIOUS_CONTENT);
-  ndpi_unset_risk(ndpi_struct, flow, NDPI_POSSIBLE_EXPLOIT);
-  ndpi_unset_risk(ndpi_struct, flow, NDPI_HTTP_SUSPICIOUS_USER_AGENT);
-  ndpi_unset_risk(ndpi_struct, flow, NDPI_HTTP_CRAWLER_BOT);
-  ndpi_unset_risk(ndpi_struct, flow, NDPI_NUMERIC_IP_HOST);
-  ndpi_unset_risk(ndpi_struct, flow, NDPI_URL_POSSIBLE_RCE_INJECTION);
-  ndpi_unset_risk(ndpi_struct, flow, NDPI_HTTP_OBSOLETE_SERVER);
-  ndpi_unset_risk(ndpi_struct, flow, NDPI_CLEAR_TEXT_CREDENTIALS);
-  ndpi_unset_risk(ndpi_struct, flow, NDPI_INVALID_CHARACTERS);
-  ndpi_unset_risk(ndpi_struct, flow, NDPI_HTTP_SUSPICIOUS_HEADER);
-  ndpi_unset_risk(ndpi_struct, flow, NDPI_ERROR_CODE_DETECTED);
-  ndpi_unset_risk(ndpi_struct, flow, NDPI_MALFORMED_PACKET);
+  ndpi_unset_risk(ndpi_struct, &flow->core, NDPI_BINARY_APPLICATION_TRANSFER);
+  ndpi_unset_risk(ndpi_struct, &flow->core, NDPI_HTTP_SUSPICIOUS_CONTENT);
+  ndpi_unset_risk(ndpi_struct, &flow->core, NDPI_POSSIBLE_EXPLOIT);
+  ndpi_unset_risk(ndpi_struct, &flow->core, NDPI_HTTP_SUSPICIOUS_USER_AGENT);
+  ndpi_unset_risk(ndpi_struct, &flow->core, NDPI_HTTP_CRAWLER_BOT);
+  ndpi_unset_risk(ndpi_struct, &flow->core, NDPI_NUMERIC_IP_HOST);
+  ndpi_unset_risk(ndpi_struct, &flow->core, NDPI_URL_POSSIBLE_RCE_INJECTION);
+  ndpi_unset_risk(ndpi_struct, &flow->core, NDPI_HTTP_OBSOLETE_SERVER);
+  ndpi_unset_risk(ndpi_struct, &flow->core, NDPI_CLEAR_TEXT_CREDENTIALS);
+  ndpi_unset_risk(ndpi_struct, &flow->core, NDPI_INVALID_CHARACTERS);
+  ndpi_unset_risk(ndpi_struct, &flow->core, NDPI_HTTP_SUSPICIOUS_HEADER);
+  ndpi_unset_risk(ndpi_struct, &flow->core, NDPI_ERROR_CODE_DETECTED);
+  ndpi_unset_risk(ndpi_struct, &flow->core, NDPI_MALFORMED_PACKET);
 }
 
 static void ndpi_check_http_tcp(struct ndpi_detection_module_struct *ndpi_struct,
