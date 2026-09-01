@@ -2288,11 +2288,11 @@ int ndpi_flow2json(struct ndpi_detection_module_struct *ndpi_struct,
 
   ndpi_serialize_string_uint32(serializer, "ip", ip_version);
 
-  if(flow->tcp.fingerprint)
-    ndpi_serialize_string_string(serializer, "tcp_fingerprint", flow->tcp.fingerprint);
+  if(flow->l4.tcp.fingerprint)
+    ndpi_serialize_string_string(serializer, "tcp_fingerprint", flow->l4.tcp.fingerprint);
 
-  if(flow->tcp.fingerprint_raw)
-    ndpi_serialize_string_string(serializer, "tcp_fingerprint_raw", flow->tcp.fingerprint_raw);
+  if(flow->l4.tcp.fingerprint_raw)
+    ndpi_serialize_string_string(serializer, "tcp_fingerprint_raw", flow->l4.tcp.fingerprint_raw);
 
   if(flow->ndpi.client_fingerprint || flow->ndpi.server_fingerprint) {
     ndpi_serialize_start_of_block(serializer, "ndpi_fingerprint");

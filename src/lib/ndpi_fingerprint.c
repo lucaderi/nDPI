@@ -269,7 +269,7 @@ char* ndpi_compute_ndpi_flow_fingerprint(struct ndpi_detection_module_struct *nd
 	* no fingerprint for mid-flows
 	TODO: is that what we really want?
      */
-     (flow->tcp.fingerprint || flow->protos.tls_quic.ja4_ndpi_client[0] != '\0')) {
+     (flow->l4.tcp.fingerprint || flow->protos.tls_quic.ja4_ndpi_client[0] != '\0')) {
     char *l4_fp = "no_l4_fp";
     char *l7_pf = "no_app_fp_cli";
     char *l7_pf_tls_blocks = "";
@@ -280,8 +280,8 @@ char* ndpi_compute_ndpi_flow_fingerprint(struct ndpi_detection_module_struct *nd
     char l7_pf_tls_blocks_buf[256];
 
     if((!ndpi_str->cfg.tls_ndpifp_ignore_tcp_fingerprint)
-       && (flow->tcp.fingerprint != NULL))
-      l4_fp = flow->tcp.fingerprint;
+       && (flow->l4.tcp.fingerprint != NULL))
+      l4_fp = flow->l4.tcp.fingerprint;
 
     if(flow->protos.tls_quic.ja4_ndpi_client[0] != '\0')
       l7_pf = flow->protos.tls_quic.ja4_ndpi_client;

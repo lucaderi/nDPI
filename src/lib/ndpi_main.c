@@ -8139,14 +8139,14 @@ void ndpi_free_flow_data(struct ndpi_flow_struct* flow) {
 	ndpi_free(flow->risk_infos[i].info);
     }
 
-    if(flow->tcp.fingerprint)
-      ndpi_free(flow->tcp.fingerprint);
+    if(flow->l4.tcp.fingerprint)
+      ndpi_free(flow->l4.tcp.fingerprint);
 
     if((flow->l4_proto == IPPROTO_TCP) && flow->l4.tcp.tls.tls_blocks)
       ndpi_free(flow->l4.tcp.tls.tls_blocks);
 
-    if(flow->tcp.fingerprint_raw)
-      ndpi_free(flow->tcp.fingerprint_raw);
+    if(flow->l4.tcp.fingerprint_raw)
+      ndpi_free(flow->l4.tcp.fingerprint_raw);
 
     if(flow->ndpi.client_fingerprint)
       ndpi_free(flow->ndpi.client_fingerprint);
@@ -8307,7 +8307,7 @@ static int ndpi_init_packet(struct ndpi_detection_module_struct *ndpi_str,
 
     if(transport_len >= tcp_header_len) {
       if(ndpi_str->cfg.tcp_fingerprint_enabled &&
-         flow->tcp.fingerprint == NULL) {
+         flow->l4.tcp.fingerprint == NULL) {
 	u_int8_t *t = (u_int8_t*)packet->tcp;
 	u_int16_t flags = ntohs(*((u_int16_t*)&t[12])) & 0xFFF;
 	u_int16_t syn_mask = TH_SYN | TH_ECE | TH_CWR;
@@ -8510,12 +8510,12 @@ static int ndpi_init_packet(struct ndpi_detection_module_struct *ndpi_str,
 	      break;
 	    }
 
-	    flow->tcp.fingerprint = ndpi_strdup(fingerprint);
+	    flow->l4.tcp.fingerprint = ndpi_strdup(fingerprint);
 
 	    if(ndpi_str->cfg.tcp_fingerprint_raw_enabled && options_fp_len)
-	      flow->tcp.fingerprint_raw = ndpi_strdup(options_fp);
+	      flow->l4.tcp.fingerprint_raw = ndpi_strdup(options_fp);
 
-	    flow->tcp.os_hint = ndpi_get_os_from_tcp_fingerprint(ndpi_str, flow->tcp.fingerprint);
+	    flow->l4.tcp.os_hint = ndpi_get_os_from_tcp_fingerprint(ndpi_str, flow->l4.tcp.fingerprint);
 	  }
 	}
       }

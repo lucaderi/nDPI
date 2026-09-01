@@ -76,8 +76,8 @@ enum ndpi_license_type {
     do not have a license from ntop for dual-licensed components: all
     components LGPL and dual-license are enabled
   */
-  NDPI_LICENSE_NOT_FOR_PROFIT_LGPL = 0,  
-  
+  NDPI_LICENSE_NOT_FOR_PROFIT_LGPL = 0,
+
   /*
     Use this value if you use nDPI in a for profit project and you
     do not have a license from ntop for dual-licensed components
@@ -888,6 +888,17 @@ struct ndpi_tls_block {
   u_int16_t msec_delta; /* Used to store protocol_id in ja4 hash */
 };
 
+typedef enum {
+  ndpi_os_unknown     = 0,
+  ndpi_os_windows     = 1,
+  ndpi_os_macos       = 2,
+  ndpi_os_ios_ipad_os = 3,
+  ndpi_os_android     = 4,
+  ndpi_os_linux       = 5,
+  ndpi_os_freebsd     = 6,
+  ndpi_os_MAX_OS      = 7 /* Keep it as last */
+} ndpi_os;
+
 struct ndpi_flow_tcp_struct {
   struct {
     u_int64_t syn_time, syn_ack_time, ack_time;
@@ -995,42 +1006,46 @@ struct ndpi_flow_tcp_struct {
 
   /* Reserved for future use */
   u_int64_t reserved:21;
+
+  char *fingerprint;
+  char *fingerprint_raw;
+  ndpi_os os_hint;
 };
 
 /* ************************************************** */
 
 struct ndpi_flow_udp_struct {
   /* NDPI_PROTOCOL_TFTP */
-  u_int32_t tftp_stage:2;
+  u_int16_t tftp_stage:2,
 
   /* NDPI_PROTOCOL_XBOX */
-  u_int32_t xbox_stage:1;
+    xbox_stage:1,
 
   /* NDPI_PROTOCOL_QUIC */
-  u_int32_t quic_server_cid_stage:2;
-  u_int32_t quic_0rtt_found:1;
-  u_int32_t quic_vn_pair:1;
+    quic_server_cid_stage:2,
+    quic_0rtt_found:1,
+    quic_vn_pair:1,
 
   /* NDPI_PROTOCOL_LOLWILDRIFT */
-  u_int32_t lolwildrift_stage:1;
+    lolwildrift_stage:1,
 
   /* NDPI_PROTOCOL_ZOOM */
-  u_int32_t zoom_p2p:1;
+   zoom_p2p:1,
 
   /* NDPI_PROTOCOL_RAKNET */
-  u_int32_t raknet_custom:1;
+    raknet_custom:1,
 
   /* NDPI_PROTOCOL_MUMBLE */
-  u_int32_t mumble_stage:1;
+   mumble_stage:1,
 
   /* NDPI_PROTOCOL_HAMACHI */
-  u_int32_t hamachi_stage:2;
+   hamachi_stage:2,
 
   /* NDPI_PROTOCOL_NETMOTION */
-  u_int32_t netmotion_stage:2;
+   netmotion_stage:2,
 
   /* NDPI_PROTOCOL_EPICGAMES */
-  u_int32_t epicgames_stage:1;
+   epicgames_stage:1;
   u_int32_t epicgames_word;
 
   /* NDPI_PROTOCOL_RX */
@@ -1460,17 +1475,6 @@ struct ndpi_metadata_monitoring {
   } protos;
 };
 
-typedef enum {
-  ndpi_os_unknown     = 0,
-  ndpi_os_windows     = 1,
-  ndpi_os_macos       = 2,
-  ndpi_os_ios_ipad_os = 3,
-  ndpi_os_android     = 4,
-  ndpi_os_linux       = 5,
-  ndpi_os_freebsd     = 6,
-  ndpi_os_MAX_OS      = 7 /* Keep it as last */
-} ndpi_os;
-
 struct os_fingerprint {
   const char *fingerprint;
   ndpi_os os;
@@ -1710,12 +1714,6 @@ struct ndpi_flow_struct {
   ndpi_risk risk, risk_shadow; /* Issues found with this flow [bitmask of ndpi_risk] */
   struct ndpi_risk_information risk_infos[MAX_NUM_RISK_INFOS]; /* String that contains information about the risks found */
   u_int8_t num_risk_infos;
-
-  struct {
-    char *fingerprint;
-    char *fingerprint_raw;
-    ndpi_os os_hint;
-  } tcp;
 
   struct {
     char *client_fingerprint, *server_fingerprint;

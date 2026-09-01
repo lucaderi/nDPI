@@ -1737,11 +1737,11 @@ void process_ndpi_collected_info(struct ndpi_workflow * workflow, struct ndpi_fl
 
   flow->multimedia_flow_types |= flow->ndpi_flow->flow_multimedia_types;
 
-  if(flow->ndpi_flow->tcp.fingerprint) {
+  if(flow->ndpi_flow->l4.tcp.fingerprint) {
     char buf[128];
 
-    snprintf(buf, sizeof(buf), "%s/%s", flow->ndpi_flow->tcp.fingerprint,
-	     ndpi_print_os_hint(flow->ndpi_flow->tcp.os_hint));
+    snprintf(buf, sizeof(buf), "%s/%s", flow->ndpi_flow->l4.tcp.fingerprint,
+	     ndpi_print_os_hint(flow->ndpi_flow->l4.tcp.os_hint));
     flow->tcp_fingerprint = ndpi_strdup(buf);
   }
 
