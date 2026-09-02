@@ -299,7 +299,7 @@ static int tls_obfuscated_heur_search(struct ndpi_detection_module_struct* ndpi_
        data path) after the FIRST Change-Cipher message. However, for this
        heuristic, we need to ignore all packets before a Change-Cipher is sent in the
        same direction */
-    if(current_pkt_from_client_to_server(ndpi_struct, flow) &&
+    if(current_pkt_from_client_to_server(ndpi_struct, &flow->core) &&
        flow->metadata.tls_quic.change_cipher_from_client == 0) {
       if(packet->payload[0] == 0x14) {
         NDPI_LOG_DBG2(ndpi_struct, "TLS-Obf-Heur: Change-Cipher from client\n");
@@ -308,7 +308,7 @@ static int tls_obfuscated_heur_search(struct ndpi_detection_module_struct* ndpi_
       NDPI_LOG_DBG2(ndpi_struct, "TLS-Obf-Heur: skip\n");
       return 0; /* Continue */
     }
-    if(current_pkt_from_server_to_client(ndpi_struct, flow) &&
+    if(current_pkt_from_server_to_client(ndpi_struct, &flow->core) &&
        flow->metadata.tls_quic.change_cipher_from_server == 0) {
       if(packet->payload[0] == 0x14) {
         flow->metadata.tls_quic.change_cipher_from_server = 1;
@@ -332,7 +332,7 @@ static int tls_obfuscated_heur_search(struct ndpi_detection_module_struct* ndpi_
       /* This happen only at the beginning of the heuristic: after the first pkt
          of the third (absolute) burst, we always have both sets used */
       if(i == 0 || state->sets[0].stage == 3) {
-        if(current_pkt_from_client_to_server(ndpi_struct, flow)) {
+        if(current_pkt_from_client_to_server(ndpi_struct, &flow->core)) {
           NDPI_LOG_DBG2(ndpi_struct, "TLS-Obf-Heur: open set %d\n", i);
           set->stage = 1;
           break;
@@ -345,19 +345,19 @@ static int tls_obfuscated_heur_search(struct ndpi_detection_module_struct* ndpi_
       }
       continue;
     case 1:
-      if(current_pkt_from_server_to_client(ndpi_struct, flow))
+      if(current_pkt_from_server_to_client(ndpi_struct, &flow->core))
         set->stage = 2;
       break;
     case 2:
-      if(current_pkt_from_client_to_server(ndpi_struct, flow))
+      if(current_pkt_from_client_to_server(ndpi_struct, &flow->core))
         set->stage = 3;
       break;
     case 3:
-      if(current_pkt_from_server_to_client(ndpi_struct, flow))
+      if(current_pkt_from_server_to_client(ndpi_struct, &flow->core))
         set->stage = 4;
       break;
     case 4:
-      if(current_pkt_from_client_to_server(ndpi_struct, flow))
+      if(current_pkt_from_client_to_server(ndpi_struct, &flow->core))
         set->stage = 5;
       break;
     /* We cant have 5 here */
@@ -1518,7 +1518,7 @@ int ndpi_search_tls_tcp(struct ndpi_detection_module_struct *ndpi_struct,
 #ifdef DEBUG_TLS
         printf("[TLS] Change Cipher Spec\n");
 #endif
-        if(current_pkt_from_client_to_server(ndpi_struct, flow))
+        if(current_pkt_from_client_to_server(ndpi_struct, &flow->core))
           flow->metadata.tls_quic.change_cipher_from_client = 1;
         else
           flow->metadata.tls_quic.change_cipher_from_server = 1;
@@ -1568,9 +1568,9 @@ int ndpi_search_tls_tcp(struct ndpi_detection_module_struct *ndpi_struct,
           const u_int8_t *block = (const u_int8_t *)&message->buffer[processed];
           u_int32_t block_len   = (block[1] << 16) + (block[2] << 8) + block[3];
 
-          if((current_pkt_from_client_to_server(ndpi_struct, flow) &&
+          if((current_pkt_from_client_to_server(ndpi_struct, &flow->core) &&
               flow->metadata.tls_quic.change_cipher_from_client == 1) ||
-             (!current_pkt_from_client_to_server(ndpi_struct, flow) &&
+             (!current_pkt_from_client_to_server(ndpi_struct, &flow->core) &&
               flow->metadata.tls_quic.change_cipher_from_server == 1)) {
 #ifdef DEBUG_TLS_MEMORY
             printf("[TLS Mem] Encrypted Handshake msg. Skip\n");

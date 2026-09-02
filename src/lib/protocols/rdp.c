@@ -77,7 +77,7 @@ static void ndpi_search_rdp(struct ndpi_detection_module_struct *ndpi_struct,
        /* COTP */
        packet->payload[4] == packet->payload_packet_len - 5) {
 
-      if(current_pkt_from_client_to_server(ndpi_struct, flow)) {
+      if(current_pkt_from_client_to_server(ndpi_struct, &flow->core)) {
         if(packet->payload[5] == 0xE0 && /* COTP CR */
 	   ((packet->payload[11] == 0x01 && /* RDP Negotiation Request */
              packet->payload[13] == 0x08 /* RDP Length */) ||
@@ -115,7 +115,7 @@ static void ndpi_search_rdp(struct ndpi_detection_module_struct *ndpi_struct,
 
     if( flow->metadata.l4.tcp.rdp_protocol_detected) {
       /* Do not promote an RDP-like request when the server clearly speaks HTTP. */
-      if(!current_pkt_from_client_to_server(ndpi_struct, flow) &&
+      if(!current_pkt_from_client_to_server(ndpi_struct, &flow->core) &&
          ntohs(packet->tcp->source) != RDP_PORT &&
          ntohs(packet->tcp->dest) != RDP_PORT &&
          packet->payload_packet_len >= 5 &&

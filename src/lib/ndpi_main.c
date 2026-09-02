@@ -8232,12 +8232,13 @@ void ndpi_free_flow_data(struct ndpi_flow_struct* flow) {
 
 /* ************************************************ */
 
-static int ndpi_init_packet(struct ndpi_detection_module_struct *ndpi_str,
-			    struct ndpi_flow_struct *flow,
-			    const u_int64_t current_time_ms,
-			    const unsigned char *packet_data,
-			    unsigned short packetlen,
-			    struct ndpi_flow_input_info *input_info) {
+int ndpi_init_packet(struct ndpi_detection_module_struct *ndpi_str,
+		     struct ndpi_flow_core_struct *core,
+		     struct ndpi_flow_metadata_struct *metadata,
+		     const u_int64_t current_time_ms,
+		     const unsigned char *packet_data,
+		     unsigned short packetlen,
+		     struct ndpi_flow_input_info *input_info) {
   struct ndpi_packet_struct *packet = &ndpi_str->packet;
   const struct ndpi_iphdr *raw_iph;
   const u_int8_t *transport_ptr;
@@ -8293,7 +8294,7 @@ static int ndpi_init_packet(struct ndpi_detection_module_struct *ndpi_str,
                                     &transport_proto, 0) != 0)
     return(1);
 
-  flow->core.l4_proto = transport_proto;
+  core->l4_proto = transport_proto;
 
   /* Demultiplex the transport protocol and populate packet fields */
   if(transport_proto == IPPROTO_TCP) {
@@ -8306,8 +8307,9 @@ static int ndpi_init_packet(struct ndpi_detection_module_struct *ndpi_str,
     tcp_header_len = packet->tcp->doff * 4;
 
     if(transport_len >= tcp_header_len) {
-      if(ndpi_str->cfg.tcp_fingerprint_enabled &&
-         flow->metadata.l4.tcp.fingerprint == NULL) {
+      if(ndpi_str->cfg.tcp_fingerprint_enabled
+	 && metadata
+         && metadata->l4.tcp.fingerprint == NULL) {
 	u_int8_t *t = (u_int8_t*)packet->tcp;
 	u_int16_t flags = ntohs(*((u_int16_t*)&t[12])) & 0xFFF;
 	u_int16_t syn_mask = TH_SYN | TH_ECE | TH_CWR;
@@ -8362,7 +8364,7 @@ static int ndpi_init_packet(struct ndpi_detection_module_struct *ndpi_str,
 	      else
 		msg = "Massive scanner detected";
 
-	      ndpi_set_risk(ndpi_str, &flow->core, NDPI_MALICIOUS_FINGERPRINT, (char*)msg);
+	      ndpi_set_risk(ndpi_str, core, NDPI_MALICIOUS_FINGERPRINT, (char*)msg);
 	    } else {
 #ifdef DEBUG_TCP_OPTIONS
               printf("Options len: %u\n", options_len);
@@ -8468,7 +8470,7 @@ static int ndpi_init_packet(struct ndpi_detection_module_struct *ndpi_str,
 		if(packet->iphv6 /* Modern IP stack */
 		   || (packet->iph
 		       && ndpi_is_public_ipv4(ntohl(packet->iph->saddr))))
-		  ndpi_set_risk(ndpi_str, &flow->core, NDPI_MALICIOUS_FINGERPRINT,
+		  ndpi_set_risk(ndpi_str, core, NDPI_MALICIOUS_FINGERPRINT,
 				"Unusual TCP fingerprint (scanner detected?)");
 	      }
 	    }
@@ -8510,12 +8512,12 @@ static int ndpi_init_packet(struct ndpi_detection_module_struct *ndpi_str,
 	      break;
 	    }
 
-	    flow->metadata.l4.tcp.fingerprint = ndpi_strdup(fingerprint);
+	    metadata->l4.tcp.fingerprint = ndpi_strdup(fingerprint);
 
 	    if(ndpi_str->cfg.tcp_fingerprint_raw_enabled && options_fp_len)
-	      flow->metadata.l4.tcp.fingerprint_raw = ndpi_strdup(options_fp);
+	      metadata->l4.tcp.fingerprint_raw = ndpi_strdup(options_fp);
 
-	    flow->metadata.l4.tcp.os_hint = ndpi_get_os_from_tcp_fingerprint(ndpi_str, flow->metadata.l4.tcp.fingerprint);
+	    metadata->l4.tcp.os_hint = ndpi_get_os_from_tcp_fingerprint(ndpi_str, metadata->l4.tcp.fingerprint);
 	  }
 	}
       }
@@ -8625,17 +8627,17 @@ static int fully_enc_heuristic(struct ndpi_detection_module_struct *ndpi_str,
 /* ************************************************ */
 
 int current_pkt_from_client_to_server(const struct ndpi_detection_module_struct *ndpi_str,
-				      const struct ndpi_flow_struct *flow)
+				      const struct ndpi_flow_core_struct *core)
 {
-  return ndpi_str->packet.packet_direction == flow->core.client_packet_direction;
+  return ndpi_str->packet.packet_direction == core->client_packet_direction;
 }
 
 /* ******************************************************************** */
 
 int current_pkt_from_server_to_client(const struct ndpi_detection_module_struct *ndpi_str,
-				      const struct ndpi_flow_struct *flow)
+				      const struct ndpi_flow_core_struct *core)
 {
-  return ndpi_str->packet.packet_direction != flow->core.client_packet_direction;
+  return ndpi_str->packet.packet_direction != core->client_packet_direction;
 }
 
 /* ******************************************************************** */
@@ -8659,8 +8661,9 @@ static int tcp_ack_padding(struct ndpi_packet_struct *packet) {
 
 /* ******************************************************************** */
 
-static void ndpi_connection_tracking(struct ndpi_detection_module_struct *ndpi_str,
-				     struct ndpi_flow_struct *flow) {
+void ndpi_connection_tracking(struct ndpi_detection_module_struct *ndpi_str,
+			      struct ndpi_flow_core_struct *core,
+			      struct ndpi_flow_metadata_struct *metadata) {
   /* const for gcc code optimization and cleaner code */
   struct ndpi_packet_struct *packet = &ndpi_str->packet;
   const struct ndpi_iphdr *iph = packet->iph;
@@ -8671,15 +8674,15 @@ static void ndpi_connection_tracking(struct ndpi_detection_module_struct *ndpi_s
   if(ndpi_str->max_payload_track_len > 0 && packet->payload_packet_len > 0) {
     /* printf("LEN: %u [%s]\n", packet->payload_packet_len, packet->payload); */
 
-    if(flow->core.flow_payload == NULL)
-      flow->core.flow_payload = (char*)ndpi_malloc(ndpi_str->max_payload_track_len + 1);
+    if(core->flow_payload == NULL)
+      core->flow_payload = (char*)ndpi_malloc(ndpi_str->max_payload_track_len + 1);
 
-    if(flow->core.flow_payload != NULL)  {
+    if(core->flow_payload != NULL)  {
       u_int i;
 
       for(i=0; (i<packet->payload_packet_len)
-	    && (flow->core.flow_payload_len < ndpi_str->max_payload_track_len); i++) {
-	flow->core.flow_payload[flow->core.flow_payload_len++] =
+	    && (core->flow_payload_len < ndpi_str->max_payload_track_len); i++) {
+	core->flow_payload[core->flow_payload_len++] =
 	  (ndpi_isprint(packet->payload[i])
 	   || ndpi_isspace(packet->payload[i])) ? packet->payload[i] : '.';
       }
@@ -8695,65 +8698,71 @@ static void ndpi_connection_tracking(struct ndpi_detection_module_struct *ndpi_s
      && NDPI_COMPARE_IPV6_ADDRESS_STRUCTS(&iphv6->ip6_src, &iphv6->ip6_dst) != 0)
     packet->packet_direction = 1;
 
-  flow->core.is_ipv6 = (packet->iphv6 != NULL);
+  core->is_ipv6 = (packet->iphv6 != NULL);
 
   if(tcph != NULL) {
     u_int8_t flags = ((u_int8_t*)tcph)[13];
     u_int16_t syn_mask = TH_SYN | TH_ECE | TH_CWR | TH_ACK;
     u_int8_t flags_3wh = flags & syn_mask;
 
-    if((flags_3wh & (TH_SYN|TH_ACK)) == (TH_SYN|TH_ACK))
-      flow->metadata.l4.tcp.three_way_handshake.syn_ack_time = packet->current_time_ms;
-    else if((flags_3wh & TH_SYN) == TH_SYN)
-      flow->metadata.l4.tcp.three_way_handshake.syn_time = packet->current_time_ms;
-    else if(((flags_3wh & TH_ACK) == TH_ACK)
-	    && (flow->metadata.l4.tcp.three_way_handshake.ack_time == 0))
-      flow->metadata.l4.tcp.three_way_handshake.ack_time = packet->current_time_ms;
-
+    if(metadata) {
+      if((flags_3wh & (TH_SYN|TH_ACK)) == (TH_SYN|TH_ACK))
+	metadata->l4.tcp.three_way_handshake.syn_ack_time = packet->current_time_ms;
+      else if((flags_3wh & TH_SYN) == TH_SYN)
+	metadata->l4.tcp.three_way_handshake.syn_time = packet->current_time_ms;
+      else if(((flags_3wh & TH_ACK) == TH_ACK)
+	      && (metadata->l4.tcp.three_way_handshake.ack_time == 0))
+	metadata->l4.tcp.three_way_handshake.ack_time = packet->current_time_ms;
+    }
+    
     if(flags == 0)
-      ndpi_set_risk(ndpi_str, &flow->core, NDPI_TCP_ISSUES, "TCP NULL scan");
+      ndpi_set_risk(ndpi_str, core, NDPI_TCP_ISSUES, "TCP NULL scan");
     else if(flags == (TH_FIN | TH_PUSH | TH_URG))
-      ndpi_set_risk(ndpi_str, &flow->core, NDPI_TCP_ISSUES, "TCP XMAS scan");
+      ndpi_set_risk(ndpi_str, core, NDPI_TCP_ISSUES, "TCP XMAS scan");
 
     if(tcph->source != tcph->dest)
       packet->packet_direction = (ntohs(tcph->source) < ntohs(tcph->dest)) ? 1 : 0;
 
     if(packet->packet_direction == 0 /* cli -> srv */) {
       if(flags == TH_FIN)
-	ndpi_set_risk(ndpi_str, &flow->core, NDPI_TCP_ISSUES, "TCP FIN scan");
+	ndpi_set_risk(ndpi_str, core, NDPI_TCP_ISSUES, "TCP FIN scan");
 
-      flow->metadata.l4.tcp.cli2srv_tcp_flags |= flags;
-    } else
-      flow->metadata.l4.tcp.srv2cli_tcp_flags |= flags;
-
+      if(metadata) metadata->l4.tcp.cli2srv_tcp_flags |= flags;
+    } else {
+      if(metadata) metadata->l4.tcp.srv2cli_tcp_flags |= flags;
+    }
+    
     if((ndpi_str->input_info == NULL)
        || ndpi_str->input_info->seen_flow_beginning == NDPI_FLOW_BEGINNING_UNKNOWN) {
-      if(tcph->syn != 0 && tcph->ack == 0 && flow->metadata.l4.tcp.seen_syn == 0
-	 && flow->metadata.l4.tcp.seen_syn_ack == 0 &&
-	 flow->metadata.l4.tcp.seen_ack == 0) {
-	flow->metadata.l4.tcp.seen_syn = 1;
+      if(metadata) {
+      if(tcph->syn != 0 && tcph->ack == 0 && metadata->l4.tcp.seen_syn == 0
+	 && metadata->l4.tcp.seen_syn_ack == 0 &&
+	 metadata->l4.tcp.seen_ack == 0) {
+	metadata->l4.tcp.seen_syn = 1;
       } else {
-	if(tcph->syn != 0 && tcph->ack != 0 && flow->metadata.l4.tcp.seen_syn == 1
-	   && flow->metadata.l4.tcp.seen_syn_ack == 0 &&
-	   flow->metadata.l4.tcp.seen_ack == 0) {
-	  flow->metadata.l4.tcp.seen_syn_ack = 1;
+	if(tcph->syn != 0 && tcph->ack != 0 && metadata->l4.tcp.seen_syn == 1
+	   && metadata->l4.tcp.seen_syn_ack == 0 &&
+	   metadata->l4.tcp.seen_ack == 0) {
+	  metadata->l4.tcp.seen_syn_ack = 1;
 	} else {
-	  if(tcph->syn == 0 && tcph->ack == 1 && flow->metadata.l4.tcp.seen_syn == 1 && flow->metadata.l4.tcp.seen_syn_ack == 1 &&
-	     flow->metadata.l4.tcp.seen_ack == 0) {
-	    flow->metadata.l4.tcp.seen_ack = 1;
+	  if(tcph->syn == 0 && tcph->ack == 1 && metadata->l4.tcp.seen_syn == 1 && metadata->l4.tcp.seen_syn_ack == 1 &&
+	     metadata->l4.tcp.seen_ack == 0) {
+	    metadata->l4.tcp.seen_ack = 1;
 	  }
 	}
+      }
       }
     }
 
     if(ndpi_str->cfg.tcp_ack_paylod_heuristic && tcp_ack_padding(packet)) {
       NDPI_LOG_DBG2(ndpi_str, "TCP ACK with zero padding. Ignoring\n");
       packet->tcp_retransmission = 1;
-    } else if(flow->metadata.l4.tcp.next_tcp_seq_nr[0] == 0 || flow->metadata.l4.tcp.next_tcp_seq_nr[1] == 0 ||
-	      tcph->syn) {
+    } else if(metadata && (metadata->l4.tcp.next_tcp_seq_nr[0] == 0
+			   || metadata->l4.tcp.next_tcp_seq_nr[1] == 0 ||
+			   tcph->syn)) {
       /* Initialize tcp sequence counters */
       /* If we receive multiple syn(-ack), keep the last one */
-      flow->metadata.l4.tcp.next_tcp_seq_nr[packet->packet_direction] =
+      metadata->l4.tcp.next_tcp_seq_nr[packet->packet_direction] =
 	  ntohl(tcph->seq) + (tcph->syn ? 1 : packet->payload_packet_len);
 
       /*
@@ -8761,49 +8770,51 @@ static void ndpi_connection_tracking(struct ndpi_detection_module_struct *ndpi_s
 	but that is already started when nDPI being to process it. See also (***) below
        */
       if(tcph->ack != 0)
-        flow->metadata.l4.tcp.next_tcp_seq_nr[1 - packet->packet_direction] = ntohl(tcph->ack_seq);
-    } else if(packet->payload_packet_len > 0) {
+        metadata->l4.tcp.next_tcp_seq_nr[1 - packet->packet_direction] = ntohl(tcph->ack_seq);
+    } else if(metadata && (packet->payload_packet_len > 0)) {
       /* check tcp sequence counters */
-      if(((u_int32_t)(ntohl(tcph->seq) - flow->metadata.l4.tcp.next_tcp_seq_nr[packet->packet_direction])) >
+      if(((u_int32_t)(ntohl(tcph->seq) - metadata->l4.tcp.next_tcp_seq_nr[packet->packet_direction])) >
 	 ndpi_str->tcp_max_retransmission_window_size) {
-	if(flow->metadata.l4.tcp.last_tcp_pkt_payload_len > 0) {
+	if(metadata->l4.tcp.last_tcp_pkt_payload_len > 0) {
           NDPI_LOG_DBG2(ndpi_str, "TCP Retransmission\n");
 	  packet->tcp_retransmission = 1;
 	}
 
-	if((flow->metadata.l4.tcp.next_tcp_seq_nr[packet->packet_direction] - ntohl(tcph->seq) <
+	if((metadata->l4.tcp.next_tcp_seq_nr[packet->packet_direction] - ntohl(tcph->seq) <
 	    packet->payload_packet_len)) {
-	  if(flow->core.num_processed_pkts > 1) /* See also (***) above */
-	    flow->metadata.l4.tcp.next_tcp_seq_nr[packet->packet_direction] = ntohl(tcph->seq) + packet->payload_packet_len;
+	  if(core->num_processed_pkts > 1) /* See also (***) above */
+	    metadata->l4.tcp.next_tcp_seq_nr[packet->packet_direction] = ntohl(tcph->seq) + packet->payload_packet_len;
 	}
       }
       else {
-	flow->metadata.l4.tcp.next_tcp_seq_nr[packet->packet_direction] = ntohl(tcph->seq) + packet->payload_packet_len;
+	if(metadata)
+	  metadata->l4.tcp.next_tcp_seq_nr[packet->packet_direction] = ntohl(tcph->seq) + packet->payload_packet_len;
       }
     }
 
-    if(tcph->rst) {
-      flow->metadata.l4.tcp.next_tcp_seq_nr[0] = 0;
-      flow->metadata.l4.tcp.next_tcp_seq_nr[1] = 0;
+    if(tcph->rst && metadata) {
+      metadata->l4.tcp.next_tcp_seq_nr[0] = 0;
+      metadata->l4.tcp.next_tcp_seq_nr[1] = 0;
     }
 
-    flow->metadata.l4.tcp.last_tcp_pkt_payload_len = packet->payload_packet_len;
+    if(metadata) metadata->l4.tcp.last_tcp_pkt_payload_len = packet->payload_packet_len;
   } else if(udph != NULL) {
     if(udph->source != udph->dest)
       packet->packet_direction = (htons(udph->source) < htons(udph->dest)) ? 1 : 0;
   }
 
-  if(flow->core.init_finished == 0) {
+  if(core->init_finished == 0) {
     u_int16_t s_port = 0, d_port = 0; /* Source/Dest ports */
 
-    flow->core.init_finished = 1;
+    core->init_finished = 1;
 
     if(tcph != NULL) {
-      if(ndpi_str->input_info &&
-	 ndpi_str->input_info->seen_flow_beginning == NDPI_FLOW_BEGINNING_SEEN) {
-	flow->metadata.l4.tcp.seen_syn = 1;
-	flow->metadata.l4.tcp.seen_syn_ack = 1;
-	flow->metadata.l4.tcp.seen_ack = 1;
+      if(ndpi_str->input_info
+	 && metadata
+	 && ndpi_str->input_info->seen_flow_beginning == NDPI_FLOW_BEGINNING_SEEN) {
+	metadata->l4.tcp.seen_syn = 1;
+	metadata->l4.tcp.seen_syn_ack = 1;
+	metadata->l4.tcp.seen_ack = 1;
       }
 
       s_port = tcph->source, d_port = tcph->dest;
@@ -8817,75 +8828,75 @@ static void ndpi_connection_tracking(struct ndpi_detection_module_struct *ndpi_s
     if(ndpi_str->input_info &&
        ndpi_str->input_info->in_pkt_dir != NDPI_IN_PKT_DIR_UNKNOWN) {
       if(ndpi_str->input_info->in_pkt_dir == NDPI_IN_PKT_DIR_C_TO_S)
-	flow->core.client_packet_direction = packet->packet_direction;
+	core->client_packet_direction = packet->packet_direction;
       else
-	flow->core.client_packet_direction = !packet->packet_direction;
+	core->client_packet_direction = !packet->packet_direction;
     } else {
       if(tcph && tcph->syn) {
 	if(tcph->ack == 0) {
-	  flow->core.client_packet_direction = packet->packet_direction;
+	  core->client_packet_direction = packet->packet_direction;
 	} else {
-	  flow->core.client_packet_direction = !packet->packet_direction;
+	  core->client_packet_direction = !packet->packet_direction;
 	}
       } else if(ntohs(s_port) > 1024 && ntohs(d_port) < 1024) {
-	flow->core.client_packet_direction = packet->packet_direction;
+	core->client_packet_direction = packet->packet_direction;
       } else if(ntohs(s_port) < 1024 && ntohs(d_port) > 1024) {
-	flow->core.client_packet_direction = !packet->packet_direction;
+	core->client_packet_direction = !packet->packet_direction;
       } else {
-	flow->core.client_packet_direction = packet->packet_direction;
+	core->client_packet_direction = packet->packet_direction;
       }
     }
 
-    if(current_pkt_from_client_to_server(ndpi_str, flow)) {
-      if(flow->core.is_ipv6 == 0) {
-	flow->core.c_address.v4 = packet->iph->saddr;
-	flow->core.s_address.v4 = packet->iph->daddr;
+    if(current_pkt_from_client_to_server(ndpi_str, core)) {
+      if(core->is_ipv6 == 0) {
+	core->c_address.v4 = packet->iph->saddr;
+	core->s_address.v4 = packet->iph->daddr;
       } else {
-	memcpy(&flow->core.c_address.v6, &packet->iphv6->ip6_src, 16);
-	memcpy(&flow->core.s_address.v6, &packet->iphv6->ip6_dst, 16);
+	memcpy(&core->c_address.v6, &packet->iphv6->ip6_src, 16);
+	memcpy(&core->s_address.v6, &packet->iphv6->ip6_dst, 16);
       }
 
-      flow->core.c_port = s_port;
-      flow->core.s_port = d_port;
+      core->c_port = s_port;
+      core->s_port = d_port;
     } else {
-      if(flow->core.is_ipv6 == 0) {
-	flow->core.c_address.v4 = packet->iph->daddr;
-	flow->core.s_address.v4 = packet->iph->saddr;
+      if(core->is_ipv6 == 0) {
+	core->c_address.v4 = packet->iph->daddr;
+	core->s_address.v4 = packet->iph->saddr;
       } else {
-	memcpy(&flow->core.c_address.v6, &packet->iphv6->ip6_dst, 16);
-	memcpy(&flow->core.s_address.v6, &packet->iphv6->ip6_src, 16);
+	memcpy(&core->c_address.v6, &packet->iphv6->ip6_dst, 16);
+	memcpy(&core->s_address.v6, &packet->iphv6->ip6_src, 16);
       }
 
-      flow->core.c_port = d_port;
-      flow->core.s_port = s_port;
+      core->c_port = d_port;
+      core->s_port = s_port;
     }
   }
 
-  if(flow->core.packet_counter < MAX_PACKET_COUNTER && packet->payload_packet_len) {
-    flow->core.packet_counter++;
+  if(core->packet_counter < MAX_PACKET_COUNTER && packet->payload_packet_len) {
+    core->packet_counter++;
   }
 
-  if(flow->core.all_packets_counter < MAX_PACKET_COUNTER)
-    flow->core.all_packets_counter++;
+  if(core->all_packets_counter < MAX_PACKET_COUNTER)
+    core->all_packets_counter++;
 
-  if((flow->core.packet_direction_counter[packet->packet_direction] < MAX_PACKET_COUNTER)
+  if((core->packet_direction_counter[packet->packet_direction] < MAX_PACKET_COUNTER)
      && packet->payload_packet_len) {
-    flow->core.packet_direction_counter[packet->packet_direction]++;
+    core->packet_direction_counter[packet->packet_direction]++;
   }
 
-  if(flow->core.packet_direction_complete_counter[packet->packet_direction] < MAX_PACKET_COUNTER) {
-    flow->core.packet_direction_complete_counter[packet->packet_direction]++;
+  if(core->packet_direction_complete_counter[packet->packet_direction] < MAX_PACKET_COUNTER) {
+    core->packet_direction_complete_counter[packet->packet_direction]++;
   }
 
   if(ndpi_str->input_info &&
      ndpi_str->input_info->in_pkt_dir == NDPI_IN_PKT_DIR_UNKNOWN) {
-    if(current_pkt_from_client_to_server(ndpi_str, flow))
+    if(current_pkt_from_client_to_server(ndpi_str, core))
       ndpi_str->input_info->in_pkt_dir = NDPI_IN_PKT_DIR_C_TO_S;
     else
       ndpi_str->input_info->in_pkt_dir = NDPI_IN_PKT_DIR_S_TO_C;
   }
 
-  flow->core.last_packet_time_ms = packet->current_time_ms;
+  core->last_packet_time_ms = packet->current_time_ms;
 }
 
 /* ************************************************ */
@@ -9476,26 +9487,25 @@ bool ndpi_is_cnd_cloud_provider(u_int16_t proto_id) {
 
 /* ********************************************************************************* */
 
-static ndpi_protocol create_public_results(struct ndpi_detection_module_struct *ndpi_str,
-                                           const struct ndpi_flow_struct *flow)
-{
+ndpi_protocol ndpi_create_public_results(struct ndpi_detection_module_struct *ndpi_str,
+					 const struct ndpi_flow_core_struct *core) {
   ndpi_protocol ret;
   unsigned int i;
 
-  ret.proto.master_protocol = ndpi_map_ndpi_id_to_user_proto_id(ndpi_str, flow->core.detected_protocol_stack[1]);
-  ret.proto.app_protocol = ndpi_map_ndpi_id_to_user_proto_id(ndpi_str, flow->core.detected_protocol_stack[0]);
-  ret.protocol_stack.protos_num = flow->core.protocol_stack.protos_num;
+  ret.proto.master_protocol = ndpi_map_ndpi_id_to_user_proto_id(ndpi_str, core->detected_protocol_stack[1]);
+  ret.proto.app_protocol = ndpi_map_ndpi_id_to_user_proto_id(ndpi_str, core->detected_protocol_stack[0]);
+  ret.protocol_stack.protos_num = core->protocol_stack.protos_num;
   for(i = 0; i < ret.protocol_stack.protos_num; i++) {
-    ret.protocol_stack.protos[i] = ndpi_map_ndpi_id_to_user_proto_id(ndpi_str, flow->core.protocol_stack.protos[i]);
+    ret.protocol_stack.protos[i] = ndpi_map_ndpi_id_to_user_proto_id(ndpi_str, core->protocol_stack.protos[i]);
   }
-  ret.protocol_by_ip = ndpi_map_ndpi_id_to_user_proto_id(ndpi_str, flow->core.guessed_protocol_id_by_ip);
-  ret.custom_category_userdata = flow->core.custom_category_userdata;
-  ret.category = flow->core.category;
-  ret.breed = flow->core.breed;
-  ret.fpc.proto.master_protocol = ndpi_map_ndpi_id_to_user_proto_id(ndpi_str, flow->core.fpc.proto.master_protocol);
-  ret.fpc.proto.app_protocol = ndpi_map_ndpi_id_to_user_proto_id(ndpi_str, flow->core.fpc.proto.app_protocol);
-  ret.fpc.confidence = flow->core.fpc.confidence;
-  ret.state = flow->core.state;
+  ret.protocol_by_ip = ndpi_map_ndpi_id_to_user_proto_id(ndpi_str, core->guessed_protocol_id_by_ip);
+  ret.custom_category_userdata = core->custom_category_userdata;
+  ret.category = core->category;
+  ret.breed = core->breed;
+  ret.fpc.proto.master_protocol = ndpi_map_ndpi_id_to_user_proto_id(ndpi_str, core->fpc.proto.master_protocol);
+  ret.fpc.proto.app_protocol = ndpi_map_ndpi_id_to_user_proto_id(ndpi_str, core->fpc.proto.app_protocol);
+  ret.fpc.confidence = core->fpc.confidence;
+  ret.state = core->state;
 
   return ret;
 }
@@ -9819,7 +9829,7 @@ ndpi_protocol ndpi_detection_giveup(struct ndpi_detection_module_struct *ndpi_st
 
   ndpi_internal_detection_giveup(ndpi_str, flow);
 
-  return create_public_results(ndpi_str, flow);
+  return ndpi_create_public_results(ndpi_str, &flow->core);
 }
 
 /* ********************************************************************************* */
@@ -10614,10 +10624,11 @@ static void ndpi_internal_detection_process_packet(struct ndpi_detection_module_
   if(flow->metadata.monit)
     memset(flow->metadata.monit, '\0', sizeof(*flow->metadata.monit));
 
-  if(ndpi_init_packet(ndpi_str, flow, current_time_ms, packet_data, packetlen, input_info) != 0)
+  if(ndpi_init_packet(ndpi_str, &flow->core, &flow->metadata,
+		      current_time_ms, packet_data, packetlen, input_info) != 0)
     return;
 
-  ndpi_connection_tracking(ndpi_str, flow);
+  ndpi_connection_tracking(ndpi_str, &flow->core, &flow->metadata);
 
   /* At this point, we updated ndpi_str->input_info->in_pkt_dir */
 
@@ -10699,7 +10710,6 @@ static void ndpi_internal_detection_process_packet(struct ndpi_detection_module_
     flow->core.protocol_id_already_guessed = 1;
 
     if(do_guess(ndpi_str, flow) == -1) {
-
       fill_protocol_category_and_breed(ndpi_str, flow);
 
       fpc_check_eval(ndpi_str, flow);
@@ -10842,6 +10852,7 @@ ndpi_protocol ndpi_detection_process_packet(struct ndpi_detection_module_struct 
 
   if(!flow || !ndpi_str || ndpi_str->finalized != 1) {
     ndpi_protocol ret;
+    
     memset(&ret, 0, sizeof(ret));
     return(ret);
   }
@@ -10849,14 +10860,14 @@ ndpi_protocol ndpi_detection_process_packet(struct ndpi_detection_module_struct 
   /* The application shoudn't provide further packets after it gets NDPI_STATE_CLASSIFIED:
      return the already known classification */
   if(flow->core.state == NDPI_STATE_CLASSIFIED) {
-    return create_public_results(ndpi_str, flow);
+    return ndpi_create_public_results(ndpi_str, &flow->core);
   }
 
   ndpi_internal_detection_process_packet(ndpi_str, flow, packet_data,
                                          packetlen, current_time_ms,
                                          input_info);
 
-  return create_public_results(ndpi_str, flow);
+  return ndpi_create_public_results(ndpi_str, &flow->core);
 }
 
 /* ********************************************************************************* */

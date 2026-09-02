@@ -40,7 +40,7 @@ static void search_blizzard_tcp(struct ndpi_detection_module_struct* ndpi_struct
   if(flow->core.guessed_protocol_id_by_ip == NDPI_PROTOCOL_BLIZZARD &&
      flow->core.s_port == htons(1119)) {
     /* Looking for the first pkt sent by the server */
-    if(current_pkt_from_server_to_client(ndpi_struct, flow) &&
+    if(current_pkt_from_server_to_client(ndpi_struct, &flow->core) &&
        packet->payload_packet_len == 2 &&
        packet->payload[0] == 0x52 && packet->payload[1] == 0x08) {
       NDPI_LOG_INFO(ndpi_struct, "Found Blizzard (battle.net)\n");

@@ -615,7 +615,7 @@ static void ndpi_search_ssh_tcp(struct ndpi_detection_module_struct *ndpi_struct
 
   if(flow->metadata.l4.tcp.ssh_stage <= 1) {
     if(packet->payload_packet_len > 7 && memcmp(packet->payload, "SSH-", 4) == 0) {
-      if(current_pkt_from_client_to_server(ndpi_struct, flow)) {
+      if(current_pkt_from_client_to_server(ndpi_struct, &flow->core)) {
 	int len = ndpi_min(sizeof(flow->metadata.protos.ssh.client_signature)-1, packet->payload_packet_len);
       
 	strncpy(flow->metadata.protos.ssh.client_signature, (const char *)packet->payload, len);

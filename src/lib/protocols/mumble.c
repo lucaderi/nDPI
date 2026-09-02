@@ -36,7 +36,7 @@ static void ndpi_search_mumble(struct ndpi_detection_module_struct *ndpi_struct,
 
   NDPI_LOG_DBG(ndpi_struct, "search Mumble\n");
 
-  if (current_pkt_from_client_to_server(ndpi_struct, flow) && 
+  if (current_pkt_from_client_to_server(ndpi_struct, &flow->core) && 
       packet->payload_packet_len == 12)
   {
     if (get_u_int32_t(packet->payload, 0) == 0) {

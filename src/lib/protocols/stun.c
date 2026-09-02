@@ -622,14 +622,14 @@ int is_stun(struct ndpi_detection_module_struct *ndpi_struct,
       break;
 
     case 0x8029: /* ICE-CONTROLLED */
-      if(current_pkt_from_client_to_server(ndpi_struct, flow))
+      if(current_pkt_from_client_to_server(ndpi_struct, &flow->core))
         flow->metadata.stun.is_client_controlling = 0;
       else
         flow->metadata.stun.is_client_controlling = 1;
       break;
 
     case 0x802A: /* ICE-CONTROLLING */
-      if(current_pkt_from_client_to_server(ndpi_struct, flow))
+      if(current_pkt_from_client_to_server(ndpi_struct, &flow->core))
         flow->metadata.stun.is_client_controlling = 1;
       else
         flow->metadata.stun.is_client_controlling = 0;

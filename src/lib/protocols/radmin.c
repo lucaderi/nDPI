@@ -46,7 +46,8 @@ static void ndpi_search_radmin(struct ndpi_detection_module_struct *ndpi_struct,
 
   NDPI_LOG_DBG(ndpi_struct, "search Radmin\n");
 
-  if (current_pkt_from_client_to_server(ndpi_struct, flow) && packet->payload_packet_len == 10 &&
+  if (current_pkt_from_client_to_server(ndpi_struct, &flow->core)
+      && packet->payload_packet_len == 10 &&
       !flow->metadata.l4.tcp.radmin_stage)
   {
     if (ntohl(get_u_int32_t(packet->payload, 0)) == 0x1000000 && 
@@ -58,7 +59,8 @@ static void ndpi_search_radmin(struct ndpi_detection_module_struct *ndpi_struct,
     }
   }
 
-  if (current_pkt_from_server_to_client(ndpi_struct, flow) && packet->payload_packet_len == 46 &&
+  if (current_pkt_from_server_to_client(ndpi_struct, &flow->core)
+      && packet->payload_packet_len == 46 &&
       flow->metadata.l4.tcp.radmin_stage)
   {
     if (ntohl(get_u_int32_t(packet->payload, 0)) == 0x1000000 &&

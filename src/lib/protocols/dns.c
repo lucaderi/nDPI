@@ -1300,7 +1300,8 @@ bool ndpi_search_dns_tcp_udp_internal(struct ndpi_detection_module_struct *ndpi_
 
 void ndpi_search_dns_tcp_udp(struct ndpi_detection_module_struct *ndpi_struct,
 			     struct ndpi_flow_struct *flow) {
-  ndpi_search_dns_tcp_udp_internal(ndpi_struct, &flow->core, &flow->metadata, &flow->metadata.protos.dns);
+  (void)ndpi_search_dns_tcp_udp_internal(ndpi_struct, &flow->core,
+					 &flow->metadata, &flow->metadata.protos.dns);
 }
 
 /* *********************************************** */

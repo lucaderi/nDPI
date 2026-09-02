@@ -274,7 +274,7 @@ static int get_rtp_info(struct ndpi_detection_module_struct *ndpi_struct,
                         struct ndpi_flow_struct *flow,
                         const u_int8_t *payload,
                         u_int16_t payload_len) {
-  u_int8_t packet_direction = current_pkt_from_client_to_server(ndpi_struct, flow) ? 0 : 1;
+  u_int8_t packet_direction = current_pkt_from_client_to_server(ndpi_struct, &flow->core) ? 0 : 1;
 
   if(flow->metadata.rtp.rtp[packet_direction].payload_detected == false) {
     flow->metadata.rtp.rtp[packet_direction].payload_type = payload[1] & 0x7F;

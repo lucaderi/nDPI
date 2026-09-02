@@ -51,7 +51,7 @@ static void ndpi_search_source_engine(struct ndpi_detection_module_struct *ndpi_
   /* https://developer.valvesoftware.com/wiki/Server_queries */
 
   /* A2S request */
-  if (current_pkt_from_client_to_server(ndpi_struct, flow) &&
+  if (current_pkt_from_client_to_server(ndpi_struct, &flow->core) &&
       (packet->payload_packet_len > 8 && packet->payload_packet_len < 30) &&
       get_u_int32_t(packet->payload, 0) == 0xFFFFFFFF)
   {
@@ -65,7 +65,7 @@ static void ndpi_search_source_engine(struct ndpi_detection_module_struct *ndpi_
   }
 
   /* A2S response */
-  if (current_pkt_from_server_to_client(ndpi_struct, flow))
+  if (current_pkt_from_server_to_client(ndpi_struct, &flow->core))
   {
     /* Challenge response */
     if (packet->payload_packet_len == 9 && 

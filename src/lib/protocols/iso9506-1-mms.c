@@ -49,7 +49,7 @@ static void ndpi_search_iso9506_1_mms(struct ndpi_detection_module_struct *ndpi_
   
   if ((packet->payload_packet_len > 60) && tpkt_verify_hdr(packet))
   {
-    if (current_pkt_from_client_to_server(ndpi_struct, flow)) {
+    if (current_pkt_from_client_to_server(ndpi_struct, &flow->core)) {
       /* Check COTP and ISO 8327-1 headers */
       if ((packet->payload[4] == 2) && (packet->payload[5] == 0xF0) &&
           (packet->payload[6] == 0x80) && (packet->payload[7] - 13 <= 1) &&

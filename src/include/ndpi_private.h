@@ -677,8 +677,8 @@ char *strptime(const char *s, const char *format, struct tm *tm);
 u_int8_t iph_is_valid_and_not_fragmented(struct ndpi_detection_module_struct *ndpi_str,
                                          const struct ndpi_iphdr *iph, const u_int16_t ipsize);
 
-int current_pkt_from_client_to_server(const struct ndpi_detection_module_struct *ndpi_str, const struct ndpi_flow_struct *flow);
-int current_pkt_from_server_to_client(const struct ndpi_detection_module_struct *ndpi_str, const struct ndpi_flow_struct *flow);
+int current_pkt_from_client_to_server(const struct ndpi_detection_module_struct *ndpi_str, const struct ndpi_flow_core_struct *core);
+int current_pkt_from_server_to_client(const struct ndpi_detection_module_struct *ndpi_str, const struct ndpi_flow_core_struct *core);
 
 int ndpi_seen_flow_beginning(const struct ndpi_flow_struct *flow);
 
@@ -1156,6 +1156,18 @@ struct cfg_param {
 };
 
   void ndpi_reconcile_msteams_call_udp(struct ndpi_flow_struct *flow);
+  void ndpi_connection_tracking(struct ndpi_detection_module_struct *ndpi_str,
+				struct ndpi_flow_core_struct *core,
+				struct ndpi_flow_metadata_struct *metadata);
+  int ndpi_init_packet(struct ndpi_detection_module_struct *ndpi_str,
+		       struct ndpi_flow_core_struct *core,
+		       struct ndpi_flow_metadata_struct *metadata,
+		       const u_int64_t current_time_ms,
+		       const unsigned char *packet_data,
+		       unsigned short packetlen,
+		       struct ndpi_flow_input_info *input_info);
+  ndpi_protocol ndpi_create_public_results(struct ndpi_detection_module_struct *ndpi_str,
+					   const struct ndpi_flow_core_struct *core);
     
 #ifdef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
 extern const struct cfg_param cfg_params[];
