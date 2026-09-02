@@ -1223,75 +1223,6 @@ static void search_dns_tcp_udp(struct ndpi_detection_module_struct *ndpi_struct,
 
 /* *********************************************** */
 
-bool ndpi_quick_search_dns_tcp_udp(struct ndpi_detection_module_struct *ndpi_struct,
-				   struct ndpi_flow_core_struct *core,
-				   struct ndpi_flow_struct_dns_metadata *dns) {
-  struct ndpi_packet_struct *packet = &ndpi_struct->packet;
-  u_int16_t s_port = 0, d_port = 0;
-
-  NDPI_LOG_DBG(ndpi_struct, "search DNS (ndpi_quick_search_dns_tcp_udp)\n");
-
-  if(packet->udp != NULL) {
-    s_port = ntohs(packet->udp->source);
-    d_port = ntohs(packet->udp->dest);
-
-    /* For MDNS/LLMNR: If the packet is not a response, dest addr needs to be multicast. */
-    if ((d_port == MDNS_PORT && isMDNSMulticastAddress(packet) == 0) ||
-        (d_port == LLMNR_PORT && isLLMNRMulticastAddress(packet) == 0)) {
-	if (packet->payload_packet_len > 5 &&
-	    ntohs(get_u_int16_t(packet->payload, 2)) != 0 &&
-	    ntohs(get_u_int16_t(packet->payload, 4)) != 0) {
-	  return(false);
-	  }
-      }
-  } else if(packet->tcp != NULL) {
-    s_port = ntohs(packet->tcp->source);
-    d_port = ntohs(packet->tcp->dest);
-  }
-
-  /* DNS on nonstandard ports is opt-in to avoid false positives. */
-  if(s_port == DNS_PORT || d_port == DNS_PORT ||
-     s_port == MDNS_PORT || d_port == MDNS_PORT ||
-     d_port == LLMNR_PORT ||
-     (ndpi_struct->cfg.dns_custom_port > 0 &&
-      (s_port == (u_int16_t)ndpi_struct->cfg.dns_custom_port ||
-       d_port == (u_int16_t)ndpi_struct->cfg.dns_custom_port))) {
-    /* Standard case, keep going */
-  } else if(ndpi_struct->cfg.dns_custom_port == 0 &&
-            !ndpi_is_multi_or_broadcast(core) &&
-            core->l4_proto == IPPROTO_UDP /* No TCP to avoid too many false positives */
-
-#ifdef TODO
-            /* Avoid collision with other protocols requiring multiple pkts. */
-            && dns->rtp.rtp_stage == 0 &&
-            dns->rtcp_stage == 0 &&
-            dns->teamviewer_stage == 0 &&
-            dns->l4.udp.eaq_pkt_id == 0 && dns->l4.udp.eaq_sequence == 0
-#endif
-	    ) {
-    /* Ok, check DNS on any ports: keep going */
-  } else {
-    return(false);
-  }
-
-  if(packet->tcp != NULL) {
-    if(dns_tcp_process(ndpi_struct, core, dns) < 0)
-      return(false);
-  } else {
-    /* Since every UDP packet must contain a complete/valid DNS message,
-       we must be able to detect these protocols on the first packet */
-    if(packet->payload_packet_len < sizeof(struct ndpi_dns_packet_header)) {
-      return(false);
-    }
-
-    search_dns_tcp_udp(ndpi_struct, core, dns);
-  }
-
-  return(true);
-}
-
-/* *********************************************** */
-
 void ndpi_search_dns_tcp_udp(struct ndpi_detection_module_struct *ndpi_struct,
 			     struct ndpi_flow_struct *flow) {
   struct ndpi_packet_struct *packet = &ndpi_struct->packet;
@@ -1319,8 +1250,8 @@ void ndpi_search_dns_tcp_udp(struct ndpi_detection_module_struct *ndpi_struct,
   }
 
   /* DNS on nonstandard ports is opt-in to avoid false positives. */
-  if(s_port == DNS_PORT || d_port == DNS_PORT ||
-     s_port == MDNS_PORT || d_port == MDNS_PORT ||
+  if(s_port == DNS_PORT   || d_port == DNS_PORT  ||
+     s_port == MDNS_PORT  || d_port == MDNS_PORT ||
      d_port == LLMNR_PORT ||
      (ndpi_struct->cfg.dns_custom_port > 0 &&
       (s_port == (u_int16_t)ndpi_struct->cfg.dns_custom_port ||
@@ -1330,12 +1261,11 @@ void ndpi_search_dns_tcp_udp(struct ndpi_detection_module_struct *ndpi_struct,
             !ndpi_is_multi_or_broadcast(&flow->core) &&
             (flow->core.l4_proto == IPPROTO_UDP) /* No TCP to avoid too many false positives */
             /* Avoid collision with other protocols requiring multiple pkts. */
-#ifdef TODO
-            && dns->rtp.rtp_stage == 0 &&
-            dns->rtcp_stage == 0 &&
-            dns->teamviewer_stage == 0 &&
-            dns->l4.udp.eaq_pkt_id == 0 && dns->l4.udp.eaq_sequence == 0
-#endif
+            && (flow->metadata.rtp.rtp_stage == 0)
+	    && (flow->metadata.rtcp_stage == 0)
+	    && (flow->metadata.teamviewer_stage == 0)
+	    && (flow->metadata.l4.udp.eaq_pkt_id == 0)
+	    && (flow->metadata.l4.udp.eaq_sequence == 0)
 	    ) {
     /* Ok, check DNS on any ports: keep going */
   } else {
