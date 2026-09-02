@@ -35,7 +35,7 @@ static void ndpi_int_msgpack_add_connection(struct ndpi_detection_module_struct 
   if (flow->core.detected_protocol_stack[0] != NDPI_PROTOCOL_UNKNOWN) {
     ndpi_set_detected_protocol_keeping_master(ndpi_struct, flow, NDPI_PROTOCOL_MSGPACK, NDPI_CONFIDENCE_DPI);
   } else {
-    ndpi_set_detected_protocol(ndpi_struct, flow,
+    ndpi_set_detected_protocol(ndpi_struct, &flow->core,
                                NDPI_PROTOCOL_MSGPACK,
                                NDPI_PROTOCOL_UNKNOWN,
                                NDPI_CONFIDENCE_DPI);

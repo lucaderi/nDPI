@@ -29,7 +29,7 @@ static void ndpi_int_cloudflare_warp_add_connection(struct ndpi_detection_module
                                                     struct ndpi_flow_struct * flow)
 {
   NDPI_LOG_INFO(ndpi_struct, "found CloudflareWarp\n");
-  ndpi_set_detected_protocol(ndpi_struct, flow, NDPI_PROTOCOL_CLOUDFLARE_WARP,
+  ndpi_set_detected_protocol(ndpi_struct, &flow->core, NDPI_PROTOCOL_CLOUDFLARE_WARP,
                              NDPI_PROTOCOL_UNKNOWN, NDPI_CONFIDENCE_DPI);
 }
 

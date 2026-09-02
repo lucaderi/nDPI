@@ -33,7 +33,7 @@ static void search_metadata(struct ndpi_detection_module_struct *ndpi_struct, st
 
 static void ndpi_int_sip_add_connection(struct ndpi_detection_module_struct *ndpi_struct,
 					struct ndpi_flow_struct *flow) {
-  ndpi_set_detected_protocol(ndpi_struct, flow, NDPI_PROTOCOL_SIP, NDPI_PROTOCOL_UNKNOWN, NDPI_CONFIDENCE_DPI);
+  ndpi_set_detected_protocol(ndpi_struct, &flow->core, NDPI_PROTOCOL_SIP, NDPI_PROTOCOL_UNKNOWN, NDPI_CONFIDENCE_DPI);
 
   search_metadata(ndpi_struct, flow);
 }

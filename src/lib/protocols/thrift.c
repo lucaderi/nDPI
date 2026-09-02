@@ -85,7 +85,7 @@ static void ndpi_int_thrift_add_connection(struct ndpi_detection_module_struct *
       break;
   }
 
-  ndpi_set_detected_protocol(ndpi_struct, flow,
+  ndpi_set_detected_protocol(ndpi_struct, &flow->core,
                              NDPI_PROTOCOL_APACHE_THRIFT, master_protocol,
                              NDPI_CONFIDENCE_DPI);
 }

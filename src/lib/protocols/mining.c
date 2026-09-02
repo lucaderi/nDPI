@@ -47,7 +47,7 @@ static void cacheMiningHostTwins(struct ndpi_detection_module_struct *ndpi_struc
 				 struct ndpi_flow_struct *flow) {
   if(ndpi_struct->mining_cache)
     ndpi_lru_add_to_cache(ndpi_struct->mining_cache, mining_make_lru_cache_key(flow),
-			  NDPI_PROTOCOL_MINING, ndpi_get_current_time(flow));
+			  NDPI_PROTOCOL_MINING, ndpi_get_current_time(&flow->core));
 }
 
 /* ************************************************************************** */
@@ -71,7 +71,7 @@ static void ndpi_search_mining(struct ndpi_detection_module_struct *ndpi_struct,
     /* Try matching some zcash domains like "eu1-zcash.flypool.org" */
     if(ndpi_strnstr((const char *)packet->payload, "zcash", packet->payload_packet_len))
       ndpi_snprintf(flow->metadata.protos.mining.currency, sizeof(flow->metadata.protos.mining.currency), "%s", "ZCash");
-    ndpi_set_detected_protocol(ndpi_struct, flow, NDPI_PROTOCOL_MINING, NDPI_PROTOCOL_UNKNOWN, NDPI_CONFIDENCE_DPI);
+    ndpi_set_detected_protocol(ndpi_struct, &flow->core, NDPI_PROTOCOL_MINING, NDPI_PROTOCOL_UNKNOWN, NDPI_CONFIDENCE_DPI);
     cacheMiningHostTwins(ndpi_struct, flow);
     return;
   }
@@ -79,14 +79,14 @@ static void ndpi_search_mining(struct ndpi_detection_module_struct *ndpi_struct,
   /* Xmr-stak-cpu is a ZCash/Monero CPU miner */
   if(ndpi_strnstr((const char *)packet->payload, "\"agent\":\"xmr-stak-cpu", packet->payload_packet_len)) {
     ndpi_snprintf(flow->metadata.protos.mining.currency, sizeof(flow->metadata.protos.mining.currency), "%s", "ZCash/Monero");
-    ndpi_set_detected_protocol(ndpi_struct, flow, NDPI_PROTOCOL_MINING, NDPI_PROTOCOL_UNKNOWN, NDPI_CONFIDENCE_DPI);
+    ndpi_set_detected_protocol(ndpi_struct, &flow->core, NDPI_PROTOCOL_MINING, NDPI_PROTOCOL_UNKNOWN, NDPI_CONFIDENCE_DPI);
     cacheMiningHostTwins(ndpi_struct, flow);
     return;
   }
   
   if(ndpi_strnstr((const char *)packet->payload, "\"method\": \"eth_submitLogin", packet->payload_packet_len)) {
     ndpi_snprintf(flow->metadata.protos.mining.currency, sizeof(flow->metadata.protos.mining.currency), "%s", "Ethereum");
-    ndpi_set_detected_protocol(ndpi_struct, flow, NDPI_PROTOCOL_MINING, NDPI_PROTOCOL_UNKNOWN, NDPI_CONFIDENCE_DPI);
+    ndpi_set_detected_protocol(ndpi_struct, &flow->core, NDPI_PROTOCOL_MINING, NDPI_PROTOCOL_UNKNOWN, NDPI_CONFIDENCE_DPI);
     cacheMiningHostTwins(ndpi_struct, flow);
     return;
   }

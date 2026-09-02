@@ -98,7 +98,7 @@ static void ndpi_search_mikrotik(struct ndpi_detection_module_struct *ndpi_struc
 	  break;
       } /* while */
     
-      ndpi_set_detected_protocol(ndpi_struct, flow,
+      ndpi_set_detected_protocol(ndpi_struct, &flow->core,
 				 NDPI_PROTOCOL_MIKROTIK,
 				 NDPI_PROTOCOL_UNKNOWN, NDPI_CONFIDENCE_DPI);
     }

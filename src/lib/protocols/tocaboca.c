@@ -29,7 +29,7 @@ static void ndpi_int_toca_boca_add_connection(struct ndpi_detection_module_struc
                                               struct ndpi_flow_struct * const flow)
 {
   NDPI_LOG_INFO(ndpi_struct, "found TocaBoca\n");
-  ndpi_set_detected_protocol(ndpi_struct, flow,
+  ndpi_set_detected_protocol(ndpi_struct, &flow->core,
                              NDPI_PROTOCOL_TOCA_BOCA, NDPI_PROTOCOL_UNKNOWN, NDPI_CONFIDENCE_DPI);
 }
 

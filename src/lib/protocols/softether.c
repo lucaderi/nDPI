@@ -63,7 +63,7 @@ static void ndpi_int_softether_add_connection(struct ndpi_detection_module_struc
   flow->core.max_extra_packets_to_check = 15;
   flow->core.extra_packets_func = ndpi_search_softether_again;
 
-  ndpi_set_detected_protocol(ndpi_struct, flow,
+  ndpi_set_detected_protocol(ndpi_struct, &flow->core,
                              NDPI_PROTOCOL_SOFTETHER,
                              NDPI_PROTOCOL_UNKNOWN,
                              NDPI_CONFIDENCE_DPI);

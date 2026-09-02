@@ -52,7 +52,7 @@ static void ndpi_int_whatsapp_add_connection(struct ndpi_detection_module_struct
                                              struct ndpi_flow_struct * flow)
 {
   NDPI_LOG_INFO(ndpi_struct, "found WhatsApp\n");
-  ndpi_set_detected_protocol(ndpi_struct, flow, NDPI_PROTOCOL_WHATSAPP,
+  ndpi_set_detected_protocol(ndpi_struct, &flow->core, NDPI_PROTOCOL_WHATSAPP,
                              NDPI_PROTOCOL_UNKNOWN, NDPI_CONFIDENCE_DPI);
 }
 

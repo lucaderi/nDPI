@@ -29,7 +29,7 @@ static void ndpi_int_merakicloud_add_connection(struct ndpi_detection_module_str
                                                 struct ndpi_flow_struct * const flow)
 {
   NDPI_LOG_INFO(ndpi_struct, "found MerakiCloud\n");
-  ndpi_set_detected_protocol(ndpi_struct, flow, NDPI_PROTOCOL_MERAKI_CLOUD,
+  ndpi_set_detected_protocol(ndpi_struct, &flow->core, NDPI_PROTOCOL_MERAKI_CLOUD,
                              NDPI_PROTOCOL_UNKNOWN, NDPI_CONFIDENCE_DPI);
 }
 

@@ -33,7 +33,7 @@ static void ndpi_int_profinet_io_add_connection(struct ndpi_detection_module_str
                                                 struct ndpi_flow_struct *flow)
 {
   NDPI_LOG_INFO(ndpi_struct, "found PROFINET/IO\n");
-  ndpi_set_detected_protocol(ndpi_struct, flow,
+  ndpi_set_detected_protocol(ndpi_struct, &flow->core,
                              NDPI_PROTOCOL_PROFINET_IO, NDPI_PROTOCOL_DCERPC,
                              NDPI_CONFIDENCE_DPI);
 }

@@ -839,12 +839,12 @@ static const char* ndpi_get_flow_info_by_proto_id(struct ndpi_flow_struct const 
     case NDPI_PROTOCOL_HTTP:
     case NDPI_PROTOCOL_HTTP_CONNECT:
     case NDPI_PROTOCOL_HTTP_PROXY:
-      return flow->metadata.host_server_name;
+      return flow->core.host_server_name;
 
     case NDPI_PROTOCOL_QUIC:
     case NDPI_PROTOCOL_TLS:
       if(flow->metadata.protos.tls_quic.client_hello_processed != 0)
-        return flow->metadata.host_server_name;
+        return flow->core.host_server_name;
       break;
   }
 
@@ -3531,7 +3531,7 @@ u_int8_t ndpi_check_issuerdn_risk_exception(struct ndpi_detection_module_struct 
 
 /* Check host exception */
 static u_int8_t ndpi_check_hostname_risk_exception(struct ndpi_detection_module_struct *ndpi_str,
-						   struct ndpi_flow_struct *flow,
+						   struct ndpi_flow_core_struct *core,
 						   char *hostname) {
   if(hostname == NULL)
     return(0);
@@ -3548,7 +3548,7 @@ static u_int8_t ndpi_check_hostname_risk_exception(struct ndpi_detection_module_
       ac_input_text.option = 0;
 
       if(ac_automata_search(automa->ac_automa, &ac_input_text, &match) > 0) {
-	if(flow) flow->core.risk_mask &= match.number64;
+	if(core) core->risk_mask &= match.number64;
 	ret = 1;
       }
     }
@@ -3561,7 +3561,7 @@ static u_int8_t ndpi_check_hostname_risk_exception(struct ndpi_detection_module_
 
 /* Check host exception */
 static u_int8_t ndpi_check_ipv4_exception(struct ndpi_detection_module_struct *ndpi_str,
-					  struct ndpi_flow_struct *flow,
+					  struct ndpi_flow_core_struct *core,
 					  u_int32_t addr) {
   struct in_addr pin;
   u_int64_t r;
@@ -3569,7 +3569,7 @@ static u_int8_t ndpi_check_ipv4_exception(struct ndpi_detection_module_struct *n
   pin.s_addr = addr;
   r = ndpi_host_ip_risk_ptree_match(ndpi_str, &pin);
 
-  if(flow) flow->core.risk_mask &= r;
+  if(core) core->risk_mask &= r;
 
   return((r != (u_int64_t)-1) ? 1 : 0);
 }
@@ -3577,13 +3577,13 @@ static u_int8_t ndpi_check_ipv4_exception(struct ndpi_detection_module_struct *n
 /* ********************************************************************************* */
 
 static u_int8_t ndpi_check_ipv6_exception(struct ndpi_detection_module_struct *ndpi_str,
-					  struct ndpi_flow_struct *flow,
+					  struct ndpi_flow_core_struct *core,
 					  struct in6_addr *addr) {
   u_int64_t r;
 
   r = ndpi_host_ip_risk_ptree_match6(ndpi_str, addr);
 
-  if(flow) flow->core.risk_mask &= r;
+  if(core) core->risk_mask &= r;
 
   return((r != (u_int64_t)-1) ? 1 : 0);
 }
@@ -3609,56 +3609,56 @@ int is_flowrisk_info_enabled(struct ndpi_detection_module_struct *ndpi_str, ndpi
 /* ********************************************************************************* */
 
 void ndpi_handle_risk_exceptions(struct ndpi_detection_module_struct *ndpi_str,
-				 struct ndpi_flow_struct *flow) {
-  if(flow->core.risk == 0) return; /* Nothing to do */
+				 struct ndpi_flow_core_struct *core) {
+  if(core->risk == 0) return; /* Nothing to do */
 
-  if((!flow->core.host_risk_mask_evaluated) && (!flow->core.ip_risk_mask_evaluated))
-    flow->core.risk_mask = (u_int64_t)-1; /* No mask */
+  if((!core->host_risk_mask_evaluated) && (!core->ip_risk_mask_evaluated))
+    core->risk_mask = (u_int64_t)-1; /* No mask */
 
-  if(!flow->core.host_risk_mask_evaluated) {
-    char *host = ndpi_get_flow_name(flow);
+  if(!core->host_risk_mask_evaluated) {
+    char *host = ndpi_get_flow_name(core);
 
     if(host && (host[0] != '\0')) {
       /* Check host exception */
-      ndpi_check_hostname_risk_exception(ndpi_str, flow, host);
+      ndpi_check_hostname_risk_exception(ndpi_str, core, host);
 
-      if(flow->core.risk_mask == 0) {
+      if(core->risk_mask == 0) {
 	u_int i;
 
 	/*
 	  Might be that the exception applied when some risks
 	  were already triggered: we need to clean them up
 	*/
-	for(i=0; i<flow->core.num_risk_infos; i++) {
-	  if(flow->core.risk_infos[i].info != NULL) {
-	    ndpi_free(flow->core.risk_infos[i].info);
-	    flow->core.risk_infos[i].info = NULL;
+	for(i=0; i<core->num_risk_infos; i++) {
+	  if(core->risk_infos[i].info != NULL) {
+	    ndpi_free(core->risk_infos[i].info);
+	    core->risk_infos[i].info = NULL;
 	  }
 
-	  flow->core.risk_infos[i].id = NDPI_NO_RISK;
+	  core->risk_infos[i].id = NDPI_NO_RISK;
 	}
 
-	flow->core.num_risk_infos = 0;
+	core->num_risk_infos = 0;
       }
 
       /* Used to avoid double checks (e.g. in DNS req/rsp) */
-      flow->core.host_risk_mask_evaluated = 1;
+      core->host_risk_mask_evaluated = 1;
     }
   }
 
-  if(!flow->core.ip_risk_mask_evaluated) {
-    if(flow->core.is_ipv6 == 0) {
-      ndpi_check_ipv4_exception(ndpi_str, flow, flow->core.c_address.v4 /* Client */);
-      ndpi_check_ipv4_exception(ndpi_str, flow, flow->core.s_address.v4 /* Server */);
+  if(!core->ip_risk_mask_evaluated) {
+    if(core->is_ipv6 == 0) {
+      ndpi_check_ipv4_exception(ndpi_str, core, core->c_address.v4 /* Client */);
+      ndpi_check_ipv4_exception(ndpi_str, core, core->s_address.v4 /* Server */);
     } else {
-      ndpi_check_ipv6_exception(ndpi_str, flow, (struct in6_addr *)&flow->core.c_address.v6 /* Client */);
-      ndpi_check_ipv6_exception(ndpi_str, flow, (struct in6_addr *)&flow->core.s_address.v6 /* Server */);
+      ndpi_check_ipv6_exception(ndpi_str, core, (struct in6_addr *)&core->c_address.v6 /* Client */);
+      ndpi_check_ipv6_exception(ndpi_str, core, (struct in6_addr *)&core->s_address.v6 /* Server */);
     }
 
-    flow->core.ip_risk_mask_evaluated = 1;
+    core->ip_risk_mask_evaluated = 1;
   }
 
-  flow->core.risk &= flow->core.risk_mask;
+  core->risk &= core->risk_mask;
 }
 
 /* ******************************************************************** */
@@ -4008,11 +4008,11 @@ u_int16_t icmp4_checksum(const u_int8_t * buf, size_t len) {
 
 /* ******************************************* */
 
-char* ndpi_get_flow_name(struct ndpi_flow_struct *flow) {
-  if(!flow) goto no_flow_info;
+char* ndpi_get_flow_name(struct ndpi_flow_core_struct *core) {
+  if(!core) goto no_flow_info;
 
-  if(flow->metadata.host_server_name[0] != '\0')
-    return((char*)flow->metadata.host_server_name);
+  if(core->host_server_name[0] != '\0')
+    return((char*)core->host_server_name);
 
  no_flow_info:
   return((char*)"");
@@ -4700,12 +4700,11 @@ bool ndpi_serialize_flow_fingerprint(struct ndpi_detection_module_struct *ndpi_s
 
       ndpi_serialize_string_string(serializer, "JA4", flow->metadata.protos.tls_quic.ja4_client);
 
-      if(flow->metadata.host_server_name[0] != '\0') {
-	ndpi_serialize_string_string(serializer, "sni", flow->metadata.host_server_name);
+      if(flow->core.host_server_name[0] != '\0') {
+	ndpi_serialize_string_string(serializer, "sni", flow->core.host_server_name);
 
 	ndpi_serialize_string_string(serializer, "sni_domain",
-				     ndpi_get_host_domain(ndpi_str,
-							  flow->metadata.host_server_name));
+				     ndpi_get_host_domain(ndpi_str, flow->core.host_server_name));
       }
 
       return(true);

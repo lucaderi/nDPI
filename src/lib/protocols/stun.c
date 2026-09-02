@@ -141,7 +141,7 @@ static u_int16_t search_into_cache(struct ndpi_detection_module_struct *ndpi_str
     key = get_stun_lru_key(flow, 0);
     rc = ndpi_lru_find_cache(ndpi_struct->stun_cache, key, &proto,
 			     0 /* Don't remove it as it can be used for other connections */,
-			     ndpi_get_current_time(flow));
+			     ndpi_get_current_time(&flow->core));
 #ifdef DEBUG_LRU
     printf("[LRU] Searching 0x%llx\n", (long long unsigned int)key);
 #endif
@@ -150,7 +150,7 @@ static u_int16_t search_into_cache(struct ndpi_detection_module_struct *ndpi_str
       key = get_stun_lru_key(flow, 1);
       rc = ndpi_lru_find_cache(ndpi_struct->stun_cache, key, &proto,
 			       0 /* Don't remove it as it can be used for other connections */,
-			       ndpi_get_current_time(flow));
+			       ndpi_get_current_time(&flow->core));
 #ifdef DEBUG_LRU
       printf("[LRU] Searching 0x%llx\n", (long long unsigned int)key);
 #endif
@@ -185,9 +185,9 @@ static void add_to_cache(struct ndpi_detection_module_struct *ndpi_struct,
 
   if(ndpi_struct->stun_cache) {
     key = get_stun_lru_key(flow, 0);
-    ndpi_lru_add_to_cache(ndpi_struct->stun_cache, key, app_proto, ndpi_get_current_time(flow));
+    ndpi_lru_add_to_cache(ndpi_struct->stun_cache, key, app_proto, ndpi_get_current_time(&flow->core));
     key_rev = get_stun_lru_key(flow, 1);
-    ndpi_lru_add_to_cache(ndpi_struct->stun_cache, key_rev, app_proto, ndpi_get_current_time(flow));
+    ndpi_lru_add_to_cache(ndpi_struct->stun_cache, key_rev, app_proto, ndpi_get_current_time(&flow->core));
 
 #ifdef DEBUG_LRU
     printf("[LRU] ADDING 0x%llx 0x%llx app %u [%u -> %u]\n",
@@ -300,7 +300,7 @@ static void parse_xor_ip_port_attribute(struct ndpi_detection_module_struct *ndp
 
           ndpi_lru_add_to_cache(ndpi_struct->stun_cache, key,
 				flow->core.detected_protocol_stack[0],
-				ndpi_get_current_time(flow));
+				ndpi_get_current_time(&flow->core));
 #ifdef DEBUG_LRU
           printf("[LRU] Add peer 0x%llx %d\n", (long long unsigned int)key, flow->core.detected_protocol_stack[0]);
 #endif
@@ -341,7 +341,7 @@ static void parse_xor_ip_port_attribute(struct ndpi_detection_module_struct *ndp
 
           ndpi_lru_add_to_cache(ndpi_struct->stun_cache, key,
                                 flow->core.detected_protocol_stack[0],
-                                ndpi_get_current_time(flow));
+                                ndpi_get_current_time(&flow->core));
 #ifdef DEBUG_LRU
           printf("[LRU] Add peer 0x%llx %d\n", (long long unsigned int)key, flow->core.detected_protocol_stack[0]);
 #endif
@@ -557,43 +557,44 @@ int is_stun(struct ndpi_detection_module_struct *ndpi_struct,
       break;
 
     case 0x0014: /* Realm */
-      if(flow->metadata.host_server_name[0] == '\0') {
+      if(flow->core.host_server_name[0] == '\0') {
 	int i;
 	bool valid = true;
 
-        ndpi_hostname_sni_set(flow, payload + off + 4, ndpi_min(len, payload_length - off - 4), NDPI_HOSTNAME_NORM_ALL);
-        NDPI_LOG_DBG(ndpi_struct, "Realm [%s]\n", flow->metadata.host_server_name);       
+        ndpi_hostname_sni_set(&flow->core, payload + off + 4, ndpi_min(len,
+								       payload_length - off - 4), NDPI_HOSTNAME_NORM_ALL);
+        NDPI_LOG_DBG(ndpi_struct, "Realm [%s]\n", flow->core.host_server_name);       
 	
 	/* Some Realm contain junk, so let's validate it */
-	for(i=0; flow->metadata.host_server_name[i] != '\0'; i++) {
-	  if(flow->metadata.host_server_name[i] == '?') {
+	for(i=0; flow->core.host_server_name[i] != '\0'; i++) {
+	  if(flow->core.host_server_name[i] == '?') {
 	    valid = false;
 	    break;
 	  }
 	}
 
 	if(valid) {
-	  if(strstr(flow->metadata.host_server_name, "google.com") != NULL) {
+	  if(strstr(flow->core.host_server_name, "google.com") != NULL) {
 	    *app_proto = NDPI_PROTOCOL_GOOGLE_CALL;
-	  } else if(strstr(flow->metadata.host_server_name, "whispersystems.org") != NULL ||
-		    strstr(flow->metadata.host_server_name, "signal.org") != NULL) {
+	  } else if(strstr(flow->core.host_server_name, "whispersystems.org") != NULL ||
+		    strstr(flow->core.host_server_name, "signal.org") != NULL) {
 	    *app_proto = NDPI_PROTOCOL_SIGNAL_VOIP;
-	  } else if(strstr(flow->metadata.host_server_name, "facebook") != NULL) {
+	  } else if(strstr(flow->core.host_server_name, "facebook") != NULL) {
 	    *app_proto = NDPI_PROTOCOL_FACEBOOK_VOIP;
-	  } else if(strstr(flow->metadata.host_server_name, "stripcdn.com") != NULL) {
+	  } else if(strstr(flow->core.host_server_name, "stripcdn.com") != NULL) {
 	    *category = NDPI_PROTOCOL_CATEGORY_ADULT_CONTENT;
-	  } else if(strstr(flow->metadata.host_server_name, "telegram") != NULL) {
+	  } else if(strstr(flow->core.host_server_name, "telegram") != NULL) {
 	    *app_proto = NDPI_PROTOCOL_TELEGRAM_VOIP;
-	  } else if(strstr(flow->metadata.host_server_name, "viber") != NULL) {
+	  } else if(strstr(flow->core.host_server_name, "viber") != NULL) {
 	    *app_proto = NDPI_PROTOCOL_VIBER_VOIP;
-	  } else if(strstr(flow->metadata.host_server_name, "turn.cloudflare.com") != NULL) {
+	  } else if(strstr(flow->core.host_server_name, "turn.cloudflare.com") != NULL) {
 	    /* The latest signal implementations hide behind cloudflare */
 	    if(signal_search_into_cache(ndpi_struct, flow)) {
 	      *app_proto = NDPI_PROTOCOL_SIGNAL_VOIP;
 	    }
 	  }
 	} else
-	  flow->metadata.host_server_name[0] = '\0';
+	  flow->core.host_server_name[0] = '\0';
       }
       break;
 
@@ -929,7 +930,7 @@ static int stun_search_again(struct ndpi_detection_module_struct *ndpi_struct,
            first_dtls_pkt) {
           NDPI_LOG_DBG(ndpi_struct, "Switch to TLS failed. Rollback to old classification\n");
 
-          ndpi_set_detected_protocol(ndpi_struct, flow,
+          ndpi_set_detected_protocol(ndpi_struct, &flow->core,
                                      old_proto_stack[0], old_proto_stack[1],
                                      NDPI_CONFIDENCE_DPI);
 
@@ -990,10 +991,10 @@ static int stun_search_again(struct ndpi_detection_module_struct *ndpi_struct,
       NDPI_LOG_INFO(ndpi_struct, "Found RTP over STUN\n");
 
       if(flow->metadata.stun.t_start != 0) {
-        flow->metadata.stun.t_end = ndpi_get_current_time(flow);
+        flow->metadata.stun.t_end = ndpi_get_current_time(&flow->core);
       } else if(flow->metadata.stun.rtp_counters[0] != 0 && flow->metadata.stun.rtp_counters[1] != 0) {
-        flow->metadata.stun.t_start = ndpi_get_current_time(flow);
-        flow->metadata.stun.t_end = ndpi_get_current_time(flow);
+        flow->metadata.stun.t_start = ndpi_get_current_time(&flow->core);
+        flow->metadata.stun.t_end = ndpi_get_current_time(&flow->core);
       }
 
       rtp_get_stream_type(packet->payload[1] & 0x7F, &flow->metadata.flow_multimedia_types, flow->core.detected_protocol_stack[0]);
@@ -1023,7 +1024,7 @@ static int stun_search_again(struct ndpi_detection_module_struct *ndpi_struct,
         /* From RTP dissector; if we have RTP and RTCP multiplexed together (but not STUN, yet) we always
 	   use RTP, as we do in RTP dissector */
         if(flow->core.state != NDPI_STATE_MONITORING)
-          ndpi_set_detected_protocol(ndpi_struct, flow, NDPI_PROTOCOL_UNKNOWN, NDPI_PROTOCOL_RTP, NDPI_CONFIDENCE_DPI);
+          ndpi_set_detected_protocol(ndpi_struct, &flow->core, NDPI_PROTOCOL_UNKNOWN, NDPI_PROTOCOL_RTP, NDPI_CONFIDENCE_DPI);
         else
           NDPI_LOG_DBG(ndpi_struct, "Skip RTP packet because in monitoring\n");
       }
@@ -1234,7 +1235,7 @@ static void ndpi_int_stun_add_connection(struct ndpi_detection_module_struct *nd
   if(flow->core.detected_protocol_stack[0] == NDPI_PROTOCOL_UNKNOWN ||
      app_proto != NDPI_PROTOCOL_UNKNOWN) {
     NDPI_LOG_DBG(ndpi_struct, "Setting %d/%d\n", master_proto, app_proto);
-    ndpi_set_detected_protocol(ndpi_struct, flow, app_proto, master_proto, confidence);
+    ndpi_set_detected_protocol(ndpi_struct, &flow->core, app_proto, master_proto, confidence);
 
     /* In "normal" data-path the generic code in `ndpi_internal_detection_process_packet()`
        takes care of setting the category */
@@ -1249,6 +1250,7 @@ static void ndpi_int_stun_add_connection(struct ndpi_detection_module_struct *nd
   }
   
   switch_extra_dissection_to_stun(ndpi_struct, flow, 1);
+  ndpi_reconcile_msteams_call_udp(flow);
 }
 
 /* ************************************************************ */
@@ -1325,7 +1327,7 @@ int signal_search_into_cache(struct ndpi_detection_module_struct *ndpi_struct,
 
     if(ndpi_lru_find_cache(ndpi_struct->signal_cache, key,
                            &dummy, 0 /* Don't remove it as it can be used for other connections */,
-			   ndpi_get_current_time(flow))) {
+			   ndpi_get_current_time(&flow->core))) {
 #ifdef DEBUG_SIGNAL_LRU
       printf("[LRU SIGNAL] Found %lu [%u <-> %u]\n", key, ntohs(flow->core.c_port), ntohs(flow->core.s_port));
 #endif
@@ -1353,7 +1355,7 @@ void signal_add_to_cache(struct ndpi_detection_module_struct *ndpi_struct,
     printf("[LRU SIGNAL] ADDING %lu [%u <-> %u]\n", key, ntohs(flow->core.c_port), ntohs(flow->core.s_port));
 #endif
     ndpi_lru_add_to_cache(ndpi_struct->signal_cache, key, 1 /* dummy */,
-                          ndpi_get_current_time(flow));
+                          ndpi_get_current_time(&flow->core));
   }
 }
 

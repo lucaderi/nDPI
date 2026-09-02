@@ -51,7 +51,7 @@ static void set_websocket_detected(struct ndpi_detection_module_struct *ndpi_str
   /* If no custom protocol has been detected */
   if (flow->core.detected_protocol_stack[0] == NDPI_PROTOCOL_UNKNOWN)
     {
-      ndpi_set_detected_protocol(ndpi_struct, flow, NDPI_PROTOCOL_WEBSOCKET, NDPI_PROTOCOL_UNKNOWN, NDPI_CONFIDENCE_DPI);
+      ndpi_set_detected_protocol(ndpi_struct, &flow->core, NDPI_PROTOCOL_WEBSOCKET, NDPI_PROTOCOL_UNKNOWN, NDPI_CONFIDENCE_DPI);
     }
 }
 
@@ -120,12 +120,12 @@ static void ndpi_search_websocket(struct ndpi_detection_module_struct *ndpi_stru
           LINE_ENDS(packet->line[i], "websocket") != 0)
       {
         if(found == 0)
-          ndpi_set_detected_protocol(ndpi_struct, flow, NDPI_PROTOCOL_WEBSOCKET,
+          ndpi_set_detected_protocol(ndpi_struct, &flow->core, NDPI_PROTOCOL_WEBSOCKET,
                                      NDPI_PROTOCOL_HTTP, NDPI_CONFIDENCE_DPI);
         found = 1;
       } else if (LINE_STARTS(packet->line[i], "sec-websocket") != 0) {
         if(found == 0)
-          ndpi_set_detected_protocol(ndpi_struct, flow, NDPI_PROTOCOL_WEBSOCKET,
+          ndpi_set_detected_protocol(ndpi_struct, &flow->core, NDPI_PROTOCOL_WEBSOCKET,
                                      NDPI_PROTOCOL_HTTP, NDPI_CONFIDENCE_DPI);
         if (ndpi_strncasestr((const char *)packet->line[i].ptr, "chisel",
                              packet->line[i].len) != NULL)

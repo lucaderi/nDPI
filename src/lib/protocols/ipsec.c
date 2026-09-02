@@ -296,7 +296,7 @@ static void ndpi_int_ipsec_add_connection(struct ndpi_detection_module_struct * 
     flow->core.extra_packets_func = search_ipsec_again;
   }
 
-  ndpi_set_detected_protocol(ndpi_struct, flow,
+  ndpi_set_detected_protocol(ndpi_struct, &flow->core,
                              NDPI_PROTOCOL_IPSEC,
                              NDPI_PROTOCOL_UNKNOWN,
                              NDPI_CONFIDENCE_DPI);

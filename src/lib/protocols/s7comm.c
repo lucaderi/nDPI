@@ -203,7 +203,7 @@ static void ndpi_search_s7comm(struct ndpi_detection_module_struct *ndpi_struct,
       const u_int16_t trail_byte_offset = packet->payload_packet_len - 4;
       if (packet->payload[trail_byte_offset] == S7COMM_PLUS_MAGIC_BYTE) {
         NDPI_LOG_INFO(ndpi_struct, "found S7CommPlus\n");
-        ndpi_set_detected_protocol(ndpi_struct, flow, NDPI_PROTOCOL_S7COMM_PLUS,
+        ndpi_set_detected_protocol(ndpi_struct, &flow->core, NDPI_PROTOCOL_S7COMM_PLUS,
                                    NDPI_PROTOCOL_UNKNOWN, NDPI_CONFIDENCE_DPI);
         /* TODO: monitoring? */
         return;
@@ -213,7 +213,7 @@ static void ndpi_search_s7comm(struct ndpi_detection_module_struct *ndpi_struct,
           (get_u_int16_t(packet->payload, s7comm_offset + 2) == 0))
       {
         NDPI_LOG_INFO(ndpi_struct, "found S7Comm\n");
-        ndpi_set_detected_protocol(ndpi_struct, flow, NDPI_PROTOCOL_S7COMM,
+        ndpi_set_detected_protocol(ndpi_struct, &flow->core, NDPI_PROTOCOL_S7COMM,
                                    NDPI_PROTOCOL_UNKNOWN, NDPI_CONFIDENCE_DPI);
 
         if(is_monitoring_enabled(ndpi_struct, NDPI_PROTOCOL_S7COMM)) {

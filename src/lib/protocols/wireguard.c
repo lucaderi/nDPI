@@ -46,11 +46,11 @@ static void ndpi_int_wireguard_add_connection(struct ndpi_detection_module_struc
 {
   if(ndpi_struct->cfg.wireguard_subclassification_by_ip &&
      ndpi_struct->proto_defaults[flow->core.guessed_protocol_id_by_ip].protoCategory == NDPI_PROTOCOL_CATEGORY_VPN) {
-    ndpi_set_detected_protocol(ndpi_struct, flow, flow->core.guessed_protocol_id_by_ip, NDPI_PROTOCOL_WIREGUARD, NDPI_CONFIDENCE_DPI);
+    ndpi_set_detected_protocol(ndpi_struct, &flow->core, flow->core.guessed_protocol_id_by_ip, NDPI_PROTOCOL_WIREGUARD, NDPI_CONFIDENCE_DPI);
   } else if(app_protocol != NDPI_PROTOCOL_UNKNOWN) {
-    ndpi_set_detected_protocol(ndpi_struct, flow, app_protocol, NDPI_PROTOCOL_WIREGUARD, NDPI_CONFIDENCE_DPI);
+    ndpi_set_detected_protocol(ndpi_struct, &flow->core, app_protocol, NDPI_PROTOCOL_WIREGUARD, NDPI_CONFIDENCE_DPI);
   } else {
-    ndpi_set_detected_protocol(ndpi_struct, flow, NDPI_PROTOCOL_WIREGUARD, NDPI_PROTOCOL_UNKNOWN, NDPI_CONFIDENCE_DPI);
+    ndpi_set_detected_protocol(ndpi_struct, &flow->core, NDPI_PROTOCOL_WIREGUARD, NDPI_PROTOCOL_UNKNOWN, NDPI_CONFIDENCE_DPI);
   }
 }
 

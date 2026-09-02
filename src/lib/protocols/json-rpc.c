@@ -43,7 +43,7 @@ static void ndpi_search_json_rpc(struct ndpi_detection_module_struct *ndpi_struc
         (LINE_ENDS(packet->content_line, "application/json-rpc") != 0))
     {
       NDPI_LOG_INFO(ndpi_struct, "found JSON-RPC over HTTP\n");
-      ndpi_set_detected_protocol(ndpi_struct, flow, NDPI_PROTOCOL_JSON_RPC, 
+      ndpi_set_detected_protocol(ndpi_struct, &flow->core, NDPI_PROTOCOL_JSON_RPC, 
                                  NDPI_PROTOCOL_HTTP, NDPI_CONFIDENCE_DPI);
     }
     return;
@@ -53,7 +53,7 @@ static void ndpi_search_json_rpc(struct ndpi_detection_module_struct *ndpi_struc
       (ndpi_strnstr((const char *)packet->payload, "\"jsonrpc\":", packet->payload_packet_len)))
   {
     NDPI_LOG_INFO(ndpi_struct, "found JSON-RPC over TCP\n");
-    ndpi_set_detected_protocol(ndpi_struct, flow, NDPI_PROTOCOL_JSON_RPC,
+    ndpi_set_detected_protocol(ndpi_struct, &flow->core, NDPI_PROTOCOL_JSON_RPC,
                                NDPI_PROTOCOL_UNKNOWN, NDPI_CONFIDENCE_DPI);
     return;
   }

@@ -44,7 +44,7 @@ static void search_blizzard_tcp(struct ndpi_detection_module_struct* ndpi_struct
        packet->payload_packet_len == 2 &&
        packet->payload[0] == 0x52 && packet->payload[1] == 0x08) {
       NDPI_LOG_INFO(ndpi_struct, "Found Blizzard (battle.net)\n");
-      ndpi_set_detected_protocol(ndpi_struct, flow, NDPI_PROTOCOL_BLIZZARD, NDPI_PROTOCOL_UNKNOWN, NDPI_CONFIDENCE_DPI);
+      ndpi_set_detected_protocol(ndpi_struct, &flow->core, NDPI_PROTOCOL_BLIZZARD, NDPI_PROTOCOL_UNKNOWN, NDPI_CONFIDENCE_DPI);
       return;
     } else if(flow->core.packet_direction_counter[packet->packet_direction] == 1) {
       return;
@@ -55,7 +55,7 @@ static void search_blizzard_tcp(struct ndpi_detection_module_struct* ndpi_struct
   if(packet->payload_packet_len >= 8 &&
      le32toh(*(uint32_t *)&packet->payload[4]) == (u_int32_t)(packet->payload_packet_len - 8)) {
     NDPI_LOG_INFO(ndpi_struct, "Found Blizzard (Hearthstone)\n");
-    ndpi_set_detected_protocol(ndpi_struct, flow, NDPI_PROTOCOL_BLIZZARD, NDPI_PROTOCOL_UNKNOWN, NDPI_CONFIDENCE_DPI);
+    ndpi_set_detected_protocol(ndpi_struct, &flow->core, NDPI_PROTOCOL_BLIZZARD, NDPI_PROTOCOL_UNKNOWN, NDPI_CONFIDENCE_DPI);
     return;
   }
 
@@ -65,7 +65,7 @@ static void search_blizzard_tcp(struct ndpi_detection_module_struct* ndpi_struct
     NDPI_LOG_INFO(ndpi_struct, "Found Blizzard (wow)\n");
     /* Which id? It should be NDPI_PROTOCOL_BLIZZARD, but we already have NDPI_PROTOCOL_WORLDOFWARCRAFT.
        Keep using the latter for the time being.... */
-    ndpi_set_detected_protocol(ndpi_struct, flow, NDPI_PROTOCOL_WORLDOFWARCRAFT, NDPI_PROTOCOL_UNKNOWN, NDPI_CONFIDENCE_DPI);
+    ndpi_set_detected_protocol(ndpi_struct, &flow->core, NDPI_PROTOCOL_WORLDOFWARCRAFT, NDPI_PROTOCOL_UNKNOWN, NDPI_CONFIDENCE_DPI);
     return;
   }
 
@@ -75,7 +75,7 @@ static void search_blizzard_tcp(struct ndpi_detection_module_struct* ndpi_struct
      (packet->payload_packet_len == NDPI_STATICSTRING_LEN(overwatch2_string_s) &&
       memcmp(packet->payload, overwatch2_string_s, NDPI_STATICSTRING_LEN(overwatch2_string_s)) == 0)) {
     NDPI_LOG_INFO(ndpi_struct, "Found Blizzard (overwatch2)\n");
-    ndpi_set_detected_protocol(ndpi_struct, flow, NDPI_PROTOCOL_BLIZZARD, NDPI_PROTOCOL_UNKNOWN, NDPI_CONFIDENCE_DPI);
+    ndpi_set_detected_protocol(ndpi_struct, &flow->core, NDPI_PROTOCOL_BLIZZARD, NDPI_PROTOCOL_UNKNOWN, NDPI_CONFIDENCE_DPI);
     return;
   }
 
@@ -100,14 +100,14 @@ static void search_blizzard_udp(struct ndpi_detection_module_struct* ndpi_struct
      (packet->payload_packet_len == 15 &&
       packet->payload[14] == 1)) {
     NDPI_LOG_INFO(ndpi_struct, "Found Blizzard (Warcraft Ramble; pattern 1)\n");
-    ndpi_set_detected_protocol(ndpi_struct, flow, NDPI_PROTOCOL_BLIZZARD, NDPI_PROTOCOL_UNKNOWN, NDPI_CONFIDENCE_DPI);
+    ndpi_set_detected_protocol(ndpi_struct, &flow->core, NDPI_PROTOCOL_BLIZZARD, NDPI_PROTOCOL_UNKNOWN, NDPI_CONFIDENCE_DPI);
     return;
   }
   /* First pkt send by the client */
   if(packet->payload_packet_len == 23 &&
      ndpi_match_strprefix(packet->payload, packet->payload_packet_len, "\xff\xff\xff\xff\xa3\x1f\xb6\x1e\x00\x00\x40\x01\x00\x00\x00\x00\x00\x00\x00\x04\x03\x02\x01")) {
     NDPI_LOG_INFO(ndpi_struct, "Found Blizzard (Warcraft Ramble; pattern 2)\n");
-    ndpi_set_detected_protocol(ndpi_struct, flow, NDPI_PROTOCOL_BLIZZARD, NDPI_PROTOCOL_UNKNOWN, NDPI_CONFIDENCE_DPI);
+    ndpi_set_detected_protocol(ndpi_struct, &flow->core, NDPI_PROTOCOL_BLIZZARD, NDPI_PROTOCOL_UNKNOWN, NDPI_CONFIDENCE_DPI);
     return;
   }
 
@@ -117,7 +117,7 @@ static void search_blizzard_udp(struct ndpi_detection_module_struct* ndpi_struct
      packet->payload_packet_len == 40 &&
      *(uint32_t *)&packet->payload[17] == 0 /* Seq number starting from 0 */) {
     NDPI_LOG_INFO(ndpi_struct, "Found Blizzard (overwatch2; pattern 1)\n");
-    ndpi_set_detected_protocol(ndpi_struct, flow, NDPI_PROTOCOL_BLIZZARD, NDPI_PROTOCOL_UNKNOWN, NDPI_CONFIDENCE_DPI);
+    ndpi_set_detected_protocol(ndpi_struct, &flow->core, NDPI_PROTOCOL_BLIZZARD, NDPI_PROTOCOL_UNKNOWN, NDPI_CONFIDENCE_DPI);
     return;
   }
   if(flow->core.guessed_protocol_id_by_ip == NDPI_PROTOCOL_BLIZZARD &&
@@ -125,7 +125,7 @@ static void search_blizzard_udp(struct ndpi_detection_module_struct* ndpi_struct
      ((*(uint64_t *)&packet->payload[32] == 0 && *(uint64_t *)&packet->payload[40] == 0) /* First pkt from client */ ||
       (*(uint64_t *)&packet->payload[0] == 0 && *(uint64_t *)&packet->payload[8] == 0)) /* First pkt from server */) {
     NDPI_LOG_INFO(ndpi_struct, "Found Blizzard (overwatch2; pattern 2)\n");
-    ndpi_set_detected_protocol(ndpi_struct, flow, NDPI_PROTOCOL_BLIZZARD, NDPI_PROTOCOL_UNKNOWN, NDPI_CONFIDENCE_DPI);
+    ndpi_set_detected_protocol(ndpi_struct, &flow->core, NDPI_PROTOCOL_BLIZZARD, NDPI_PROTOCOL_UNKNOWN, NDPI_CONFIDENCE_DPI);
     return;
   }
 

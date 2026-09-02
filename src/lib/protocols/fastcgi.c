@@ -75,7 +75,7 @@ static void ndpi_int_fastcgi_add_connection(struct ndpi_detection_module_struct 
                                             ndpi_protocol_match_result * const match)
 {
   NDPI_LOG_INFO(ndpi_struct, "found fastcgi\n");
-  ndpi_set_detected_protocol(ndpi_struct, flow,
+  ndpi_set_detected_protocol(ndpi_struct, &flow->core,
                              NDPI_PROTOCOL_FASTCGI,
                              (match != NULL ? match->protocol_id : NDPI_PROTOCOL_UNKNOWN),
                              NDPI_CONFIDENCE_DPI);
@@ -138,7 +138,8 @@ static int fcgi_parse_params(struct ndpi_flow_struct * const flow,
 
   flow->metadata.protos.fast_cgi.method = ndpi_http_str2method((const char*)packet->http_method.ptr,
                                                       (u_int16_t)packet->http_method.len);
-  ndpi_hostname_sni_set(flow, packet->host_line.ptr, packet->host_line.len, NDPI_HOSTNAME_NORM_ALL);
+  ndpi_hostname_sni_set(&flow->core, packet->host_line.ptr, packet->host_line.len, NDPI_HOSTNAME_NORM_ALL);
+  
   strncpy(flow->metadata.protos.fast_cgi.user_agent, (char *)packet->user_agent_line.ptr,
           ndpi_min(sizeof(flow->metadata.protos.fast_cgi.user_agent) - 1, packet->user_agent_line.len));
   strncpy(flow->metadata.protos.fast_cgi.url, (char *)packet->http_url_name.ptr,
@@ -200,17 +201,17 @@ static void ndpi_search_fastcgi(struct ndpi_detection_module_struct *ndpi_struct
       ndpi_set_risk(ndpi_struct, &flow->core, NDPI_MALFORMED_PACKET, "Invalid FastCGI PARAMS header");
       ndpi_int_fastcgi_add_connection(ndpi_struct, flow, NULL);
     } else {
-      ndpi_match_host_subprotocol(ndpi_struct, flow,
-                                  flow->metadata.host_server_name,
-                                  strlen(flow->metadata.host_server_name),
+      ndpi_match_host_subprotocol(ndpi_struct, &flow->core,
+                                  flow->core.host_server_name,
+                                  strlen(flow->core.host_server_name),
                                   &ret_match, NDPI_PROTOCOL_FASTCGI, 1);
-      ndpi_check_dga_name(ndpi_struct, flow,
-                          flow->metadata.host_server_name, 1, 0, 0);
+      ndpi_check_dga_name(ndpi_struct, &flow->core,
+                          flow->core.host_server_name, 1, 0, 0);
       if(ndpi_is_valid_hostname((char *)packet->host_line.ptr,
                                 packet->host_line.len) == 0) {
         char str[128];
 
-        snprintf(str, sizeof(str), "Invalid host %s", flow->metadata.host_server_name);
+        snprintf(str, sizeof(str), "Invalid host %s", flow->core.host_server_name);
         ndpi_set_risk(ndpi_struct, &flow->core, NDPI_INVALID_CHARACTERS, str);
 
         /* This looks like an attack */

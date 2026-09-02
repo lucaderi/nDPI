@@ -1072,7 +1072,7 @@ void process_tls(struct ndpi_detection_module_struct *ndpi_struct,
   if(flow->metadata.protos.tls_quic.advertised_alpns &&
      strncmp(flow->metadata.protos.tls_quic.advertised_alpns, "doq", 3) == 0) {
     NDPI_LOG_DBG(ndpi_struct, "Found DOQ (ALPN: [%s])\n", flow->metadata.protos.tls_quic.advertised_alpns);
-    ndpi_set_detected_protocol(ndpi_struct, flow, NDPI_PROTOCOL_DOH_DOT, NDPI_PROTOCOL_QUIC, NDPI_CONFIDENCE_DPI);
+    ndpi_set_detected_protocol(ndpi_struct, &flow->core, NDPI_PROTOCOL_DOH_DOT, NDPI_PROTOCOL_QUIC, NDPI_CONFIDENCE_DPI);
   }
 }
 void process_chlo(struct ndpi_detection_module_struct *ndpi_struct,
@@ -1114,26 +1114,26 @@ void process_chlo(struct ndpi_detection_module_struct *ndpi_struct,
 #endif
     if(memcmp(tag, "SNI\0", 4) == 0) {
 
-      ndpi_hostname_sni_set(flow, &crypto_data[tag_offset_start + prev_offset], len, NDPI_HOSTNAME_NORM_ALL);
+      ndpi_hostname_sni_set(&flow->core, &crypto_data[tag_offset_start + prev_offset], len, NDPI_HOSTNAME_NORM_ALL);
 
       NDPI_LOG_DBG2(ndpi_struct, "SNI: [%s]\n",
-                    flow->metadata.host_server_name);
+                    flow->core.host_server_name);
 
-      ndpi_match_host_subprotocol(ndpi_struct, flow,
-                                  flow->metadata.host_server_name,
-                                  strlen(flow->metadata.host_server_name),
+      ndpi_match_host_subprotocol(ndpi_struct, &flow->core,
+                                  flow->core.host_server_name,
+                                  strlen(flow->core.host_server_name),
                                   &ret_match, NDPI_PROTOCOL_QUIC, 1);
       flow->metadata.protos.tls_quic.client_hello_processed = 1; /* Allow matching of custom categories */
 
-      ndpi_check_dga_name(ndpi_struct, flow,
-                          flow->metadata.host_server_name, 1, 0, 0);
+      ndpi_check_dga_name(ndpi_struct, &flow->core,
+                          flow->core.host_server_name, 1, 0, 0);
 
       if(ndpi_is_valid_hostname((char *)&crypto_data[tag_offset_start + prev_offset],
 				len) == 0) {
         if(is_flowrisk_info_enabled(ndpi_struct, NDPI_INVALID_CHARACTERS)) {
           char str[128];
 
-	  snprintf(str, sizeof(str), "Invalid host %s", flow->metadata.host_server_name);
+	  snprintf(str, sizeof(str), "Invalid host %s", flow->core.host_server_name);
 	  ndpi_set_risk(ndpi_struct, &flow->core, NDPI_INVALID_CHARACTERS, str);
         } else {
           ndpi_set_risk(ndpi_struct, &flow->core, NDPI_INVALID_CHARACTERS, NULL);
@@ -1165,7 +1165,7 @@ void process_chlo(struct ndpi_detection_module_struct *ndpi_struct,
     NDPI_LOG_DBG(ndpi_struct, "Something went wrong in tags iteration\n");
 
   /* Add check for missing SNI */
-  if(flow->metadata.host_server_name[0] == '\0') {
+  if(flow->core.host_server_name[0] == '\0') {
     /* This is a bit suspicious */
     ndpi_set_risk(ndpi_struct, &flow->core, NDPI_TLS_MISSING_SNI, "SNI should be present all time: attack ?");
   }
@@ -1409,16 +1409,16 @@ static int eval_extra_processing(struct ndpi_detection_module_struct *ndpi_struc
      These two cases are mutually exclusive
   */
 
-  if(version == V_Q046 && flow->metadata.host_server_name[0] == '\0') {
+  if(version == V_Q046 && flow->core.host_server_name[0] == '\0') {
     NDPI_LOG_DBG2(ndpi_struct, "We have further work to do (old snapchat call?)\n");
     return 1;
   }
 
   if(version == V_1 &&
      flow->core.detected_protocol_stack[0] == NDPI_PROTOCOL_SNAPCHAT) {
-    size_t sni_len = strlen(flow->metadata.host_server_name);
+    size_t sni_len = strlen(flow->core.host_server_name);
     if(sni_len > 11 &&
-       strcmp(flow->metadata.host_server_name + sni_len - 11, ".addlive.io") == 0) {
+       strcmp(flow->core.host_server_name + sni_len - 11, ".addlive.io") == 0) {
       NDPI_LOG_DBG2(ndpi_struct, "We have further work to do (new snapchat call?)\n");
       return 1;
     }
@@ -1482,7 +1482,7 @@ static int ndpi_search_quic_extra(struct ndpi_detection_module_struct *ndpi_stru
     ndpi_master_app_protocol proto;
 
     NDPI_LOG_DBG(ndpi_struct, "Found RTP/RTCP over QUIC\n");
-    ndpi_set_detected_protocol(ndpi_struct, flow, NDPI_PROTOCOL_SNAPCHAT_CALL, NDPI_PROTOCOL_QUIC, NDPI_CONFIDENCE_DPI);
+    ndpi_set_detected_protocol(ndpi_struct, &flow->core, NDPI_PROTOCOL_SNAPCHAT_CALL, NDPI_PROTOCOL_QUIC, NDPI_CONFIDENCE_DPI);
     /* In "extra_eval" data path, if we change the classification, we need to update the category, too */
     proto.master_protocol = NDPI_PROTOCOL_QUIC;
     proto.app_protocol = NDPI_PROTOCOL_SNAPCHAT_CALL;
@@ -1618,21 +1618,21 @@ static void ndpi_search_quic(struct ndpi_detection_module_struct *ndpi_struct,
         if(flow->core.packet_counter >= 3) {
           /* We haven't still found an Initial.. give up */
           NDPI_LOG_INFO(ndpi_struct, "QUIC 0RTT\n");
-          ndpi_set_detected_protocol(ndpi_struct, flow, NDPI_PROTOCOL_QUIC, NDPI_PROTOCOL_UNKNOWN, NDPI_CONFIDENCE_DPI);
+          ndpi_set_detected_protocol(ndpi_struct, &flow->core, NDPI_PROTOCOL_QUIC, NDPI_PROTOCOL_UNKNOWN, NDPI_CONFIDENCE_DPI);
           flow->metadata.protos.tls_quic.quic_version = version;
         }
         return;
       } else if(flow->metadata.l4.udp.quic_0rtt_found == 1) {
         /* Unknown packet (probably an Handshake one) after a 0-RTT */
         NDPI_LOG_INFO(ndpi_struct, "QUIC 0RTT (without Initial)\n");
-        ndpi_set_detected_protocol(ndpi_struct, flow, NDPI_PROTOCOL_QUIC, NDPI_PROTOCOL_UNKNOWN, NDPI_CONFIDENCE_DPI);
+        ndpi_set_detected_protocol(ndpi_struct, &flow->core, NDPI_PROTOCOL_QUIC, NDPI_PROTOCOL_UNKNOWN, NDPI_CONFIDENCE_DPI);
         flow->metadata.protos.tls_quic.quic_version = 0; /* unknown */
         return;
       }
       ret = may_be_sh(ndpi_struct, flow);
       if(ret == 1) {
         NDPI_LOG_INFO(ndpi_struct, "SH Quic\n");
-        ndpi_set_detected_protocol(ndpi_struct, flow, NDPI_PROTOCOL_QUIC, NDPI_PROTOCOL_UNKNOWN, NDPI_CONFIDENCE_DPI);
+        ndpi_set_detected_protocol(ndpi_struct, &flow->core, NDPI_PROTOCOL_QUIC, NDPI_PROTOCOL_UNKNOWN, NDPI_CONFIDENCE_DPI);
         flow->metadata.protos.tls_quic.quic_version = 0; /* unknown */
 	return;
       }
@@ -1645,7 +1645,7 @@ static void ndpi_search_quic(struct ndpi_detection_module_struct *ndpi_struct,
       ret = may_be_gquic_rej(ndpi_struct);
       if(ret == 1) {
         NDPI_LOG_INFO(ndpi_struct, "GQUIC REJ\n");
-        ndpi_set_detected_protocol(ndpi_struct, flow, NDPI_PROTOCOL_QUIC, NDPI_PROTOCOL_UNKNOWN, NDPI_CONFIDENCE_DPI);
+        ndpi_set_detected_protocol(ndpi_struct, &flow->core, NDPI_PROTOCOL_QUIC, NDPI_PROTOCOL_UNKNOWN, NDPI_CONFIDENCE_DPI);
         flow->metadata.protos.tls_quic.quic_version = 0; /* unknown */
 	return;
       }
@@ -1659,7 +1659,7 @@ static void ndpi_search_quic(struct ndpi_detection_module_struct *ndpi_struct,
    */
 
   NDPI_LOG_INFO(ndpi_struct, "found QUIC\n");
-  ndpi_set_detected_protocol(ndpi_struct, flow, NDPI_PROTOCOL_QUIC, NDPI_PROTOCOL_UNKNOWN, NDPI_CONFIDENCE_DPI);
+  ndpi_set_detected_protocol(ndpi_struct, &flow->core, NDPI_PROTOCOL_QUIC, NDPI_PROTOCOL_UNKNOWN, NDPI_CONFIDENCE_DPI);
   flow->metadata.protos.tls_quic.quic_version = version;
 
   /*

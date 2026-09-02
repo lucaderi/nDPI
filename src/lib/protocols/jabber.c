@@ -45,7 +45,7 @@ static void ndpi_int_jabber_add_connection(struct ndpi_detection_module_struct *
 					   u_int32_t master,
 					   u_int32_t protocol, ndpi_confidence_t confidence)
 {
-  ndpi_set_detected_protocol(ndpi_struct, flow, protocol, master, confidence);
+  ndpi_set_detected_protocol(ndpi_struct, &flow->core, protocol, master, confidence);
 }
 
 static void check_content_type_and_change_protocol(struct ndpi_detection_module_struct *ndpi_struct,

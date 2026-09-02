@@ -29,7 +29,7 @@ static void ndpi_int_gearup_booster_add_connection(struct ndpi_detection_module_
                                                    struct ndpi_flow_struct * const flow)
 {
   NDPI_LOG_INFO(ndpi_struct, "found GearUP Booster\n");
-  ndpi_set_detected_protocol(ndpi_struct, flow,
+  ndpi_set_detected_protocol(ndpi_struct, &flow->core,
                              NDPI_PROTOCOL_GEARUP_BOOSTER,
                              NDPI_PROTOCOL_UNKNOWN,
                              NDPI_CONFIDENCE_DPI);

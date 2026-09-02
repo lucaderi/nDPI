@@ -365,7 +365,7 @@ static void ndpi_int_rtp_add_connection(struct ndpi_detection_module_struct *ndp
                                         struct ndpi_flow_struct *flow,
                                         u_int16_t proto)
 {
-  ndpi_set_detected_protocol(ndpi_struct, flow,
+  ndpi_set_detected_protocol(ndpi_struct, &flow->core,
                              NDPI_PROTOCOL_UNKNOWN, proto,
                              NDPI_CONFIDENCE_DPI);
   if(ndpi_struct->cfg.rtp_search_for_stun) {
@@ -407,7 +407,8 @@ static void ndpi_rtp_search(struct ndpi_detection_module_struct *ndpi_struct,
     payload += 2; /* Skip the length field */
     payload_len -= 2;
   }
-  NDPI_LOG_DBG(ndpi_struct, "search RTP (stage %d/%d)\n", flow->metadata.rtp.rtp_stage, flow->rtcp_stage);
+  NDPI_LOG_DBG(ndpi_struct, "search RTP (stage %d/%d)\n",
+	       flow->metadata.rtp.rtp_stage, flow->metadata.rtcp_stage);
 
   /* * Let some "unknown" packets at the beginning:
    * search for 3/4 consecutive RTP/RTCP packets.

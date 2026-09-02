@@ -33,7 +33,7 @@
 static void ndpi_int_irc_add_connection(struct ndpi_detection_module_struct *ndpi_struct, struct ndpi_flow_struct *flow, ndpi_confidence_t confidence)
 {
   NDPI_LOG_INFO(ndpi_struct, "Found IRC\n");
-  ndpi_set_detected_protocol(ndpi_struct, flow, NDPI_PROTOCOL_IRC, NDPI_PROTOCOL_UNKNOWN, confidence);
+  ndpi_set_detected_protocol(ndpi_struct, &flow->core, NDPI_PROTOCOL_IRC, NDPI_PROTOCOL_UNKNOWN, confidence);
 }
 
 static u_int8_t ndpi_check_for_NOTICE_or_PRIVMSG(struct ndpi_detection_module_struct *ndpi_struct)

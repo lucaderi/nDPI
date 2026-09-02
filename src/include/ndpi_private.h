@@ -667,8 +667,10 @@ void ndpi_register_dissector(char *dissector_name, struct ndpi_detection_module_
                         const NDPI_SELECTION_BITMASK_PROTOCOL_SIZE ndpi_selection_bitmask,
                         enum ndpi_dissector_license_type dissector_license_type,
                         int num_protocol_ids, ...);
-void exclude_dissector(struct ndpi_detection_module_struct *ndpi_str, struct ndpi_flow_struct *flow,
-                       u_int16_t dissector_idx, const char *_file, const char *_func, int _line) ;
+void exclude_dissector(struct ndpi_detection_module_struct *ndpi_str,
+		       struct ndpi_flow_core_struct *core,
+                       u_int16_t dissector_idx, const char *_file,
+		       const char *_func, int _line) ;
 
 char *strptime(const char *s, const char *format, struct tm *tm);
 
@@ -681,7 +683,7 @@ int current_pkt_from_server_to_client(const struct ndpi_detection_module_struct 
 int ndpi_seen_flow_beginning(const struct ndpi_flow_struct *flow);
 
 void ndpi_set_detected_protocol(struct ndpi_detection_module_struct *ndpi_struct,
-				struct ndpi_flow_struct *flow,
+				struct ndpi_flow_core_struct *core,
 				u_int16_t upper_detected_protocol,
 				u_int16_t lower_detected_protocol,
 				ndpi_confidence_t confidence);
@@ -697,8 +699,10 @@ void change_category(struct ndpi_flow_struct *flow,
 		     ndpi_protocol_category_t protocol_category);
 
 
-char *ndpi_hostname_sni_set(struct ndpi_flow_struct *flow, const u_int8_t *value, size_t value_len, int normalize);
-char *ndpi_user_agent_set(struct ndpi_flow_struct *flow, const u_int8_t *value, size_t value_len);
+  char *ndpi_hostname_sni_set(struct ndpi_flow_core_struct *core,
+			      const u_int8_t *value, size_t value_len, int normalize);
+char *ndpi_user_agent_set(struct ndpi_flow_struct *flow, const u_int8_t *value,
+			  size_t value_len);
 
 void ndpi_parse_packet_line_info(struct ndpi_detection_module_struct *ndpi_struct,
 					  struct ndpi_flow_struct *flow);
@@ -707,7 +711,8 @@ void load_common_alpns(struct ndpi_detection_module_struct *ndpi_str);
 u_int8_t is_a_common_alpn(struct ndpi_detection_module_struct *ndpi_str,
 			    const char *alpn_to_check, u_int alpn_to_check_len);
 
-int64_t asn1_ber_decode_length(const unsigned char *payload, int payload_len, u_int16_t *value_len);
+int64_t asn1_ber_decode_length(const unsigned char *payload, int payload_len,
+			       u_int16_t *value_len);
 
 u_int8_t ndpi_ips_match(u_int32_t src, u_int32_t dst,
 		   u_int32_t net, u_int32_t num_bits);
@@ -781,7 +786,7 @@ void switch_extra_dissection_to_tls_obfuscated_heur(struct ndpi_detection_module
 int ookla_search_into_cache(struct ndpi_detection_module_struct* ndpi_struct,
                             struct ndpi_flow_struct* flow);
 void ookla_add_to_cache(struct ndpi_detection_module_struct *ndpi_struct,
-                        struct ndpi_flow_struct *flow);
+                        struct ndpi_flow_core_struct *core);
 
 /* SIGNAL */
 int signal_search_into_cache(struct ndpi_detection_module_struct* ndpi_struct,
@@ -1150,6 +1155,8 @@ struct cfg_param {
   cfg_calback fn_callback;
 };
 
+  void ndpi_reconcile_msteams_call_udp(struct ndpi_flow_struct *flow);
+    
 #ifdef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
 extern const struct cfg_param cfg_params[];
 #endif

@@ -205,20 +205,20 @@ static void ndpi_add_connection_as_bittorrent(struct ndpi_detection_module_struc
     key = make_bittorrent_peers_key(flow);
     key1 = make_bittorrent_host_key(flow, 1, 0), key2 = make_bittorrent_host_key(flow, 0, 0);
 
-    ndpi_lru_add_to_cache(ndpi_struct->bittorrent_cache, key1, NDPI_PROTOCOL_BITTORRENT, ndpi_get_current_time(flow));
-    ndpi_lru_add_to_cache(ndpi_struct->bittorrent_cache, key2, NDPI_PROTOCOL_BITTORRENT, ndpi_get_current_time(flow));
+    ndpi_lru_add_to_cache(ndpi_struct->bittorrent_cache, key1, NDPI_PROTOCOL_BITTORRENT, ndpi_get_current_time(&flow->core));
+    ndpi_lru_add_to_cache(ndpi_struct->bittorrent_cache, key2, NDPI_PROTOCOL_BITTORRENT, ndpi_get_current_time(&flow->core));
 
     /* Now add hosts as twins */
     ndpi_lru_add_to_cache(ndpi_struct->bittorrent_cache,
 			  key,
 			  NDPI_PROTOCOL_BITTORRENT,
-			  ndpi_get_current_time(flow));
+			  ndpi_get_current_time(&flow->core));
 
     /* Also add +2 ports of the sender in order to catch additional sockets open by the same client */
     for(i=0; i<2; i++) {
       key1 = make_bittorrent_host_key(flow, 1, 1 + i);
 
-      ndpi_lru_add_to_cache(ndpi_struct->bittorrent_cache, key1, NDPI_PROTOCOL_BITTORRENT, ndpi_get_current_time(flow));
+      ndpi_lru_add_to_cache(ndpi_struct->bittorrent_cache, key1, NDPI_PROTOCOL_BITTORRENT, ndpi_get_current_time(&flow->core));
     }
     
 #ifdef BITTORRENT_CACHE_DEBUG

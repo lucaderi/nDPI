@@ -189,7 +189,7 @@ static void ndpi_check_rx(struct ndpi_detection_module_struct *ndpi_struct,
 	flow->metadata.l4.udp.rx_conn_id == header->conn_id)
     {
       NDPI_LOG_INFO(ndpi_struct, "found RX\n");
-      ndpi_set_detected_protocol(ndpi_struct, flow, NDPI_PROTOCOL_RX, NDPI_PROTOCOL_UNKNOWN, NDPI_CONFIDENCE_DPI);
+      ndpi_set_detected_protocol(ndpi_struct, &flow->core, NDPI_PROTOCOL_RX, NDPI_PROTOCOL_UNKNOWN, NDPI_CONFIDENCE_DPI);
     }
     /* https://www.central.org/frameless/numbers/rxservice.html. */
     else

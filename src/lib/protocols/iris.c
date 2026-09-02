@@ -233,7 +233,7 @@ static void ndpi_search_iris(struct ndpi_detection_module_struct *ndpi_struct, s
         if((flow->core.s_port == ntohs(1972) && iris_check_msg_type_or_error_code(packet)) ||
            (flow->core.c_port == ntohs(1972))) {
           NDPI_LOG_INFO(ndpi_struct, "Found iris\n");
-          ndpi_set_detected_protocol(ndpi_struct, flow, NDPI_PROTOCOL_IRIS, NDPI_PROTOCOL_UNKNOWN, NDPI_CONFIDENCE_DPI);
+          ndpi_set_detected_protocol(ndpi_struct, &flow->core, NDPI_PROTOCOL_IRIS, NDPI_PROTOCOL_UNKNOWN, NDPI_CONFIDENCE_DPI);
 	  return;
 	}
       }

@@ -1716,6 +1716,14 @@ struct ndpi_flow_core_struct {
 
   struct ndpi_dns_tcp_reasm_state *dns_tcp_reasm; /* TCP DNS reassembly */
   
+  /* General purpose field used to save mainly hostname/SNI information.
+   * In details it used for: MGCP, COLLECTD, DNS, SSDP and NETBIOS name, HTTP, MUNIN and DHCP hostname,
+   * WHOIS request, TLS/QUIC server name, XIAOMI domain and STUN realm.
+   *
+   * Please, think *very* hard before increasing its size!
+   */
+  char host_server_name[80];
+
   /* Flow payload */
   u_int16_t flow_payload_len;
   char *flow_payload;
@@ -1772,14 +1780,6 @@ struct ndpi_flow_metadata_struct {
 
   /* Some protocols calculate the entropy. */
   float entropy;
-
-  /* General purpose field used to save mainly hostname/SNI information.
-   * In details it used for: MGCP, COLLECTD, DNS, SSDP and NETBIOS name, HTTP, MUNIN and DHCP hostname,
-   * WHOIS request, TLS/QUIC server name, XIAOMI domain and STUN realm.
-   *
-   * Please, think *very* hard before increasing its size!
-   */
-  char host_server_name[80];
 
   struct {
     char *client_fingerprint, *server_fingerprint;

@@ -42,7 +42,7 @@ static void ndpi_check_hcl_notes(struct ndpi_detection_module_struct *ndpi_struc
       
       if(memcmp(&packet->payload[6], hcl_notes_header, sizeof(hcl_notes_header)) == 0) {
         NDPI_LOG_INFO(ndpi_struct, "found HCL Notes\n");
-        ndpi_set_detected_protocol(ndpi_struct, flow, NDPI_PROTOCOL_HCL_NOTES, NDPI_PROTOCOL_UNKNOWN, NDPI_CONFIDENCE_DPI);
+        ndpi_set_detected_protocol(ndpi_struct, &flow->core, NDPI_PROTOCOL_HCL_NOTES, NDPI_PROTOCOL_UNKNOWN, NDPI_CONFIDENCE_DPI);
       }
       return;
     }

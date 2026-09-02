@@ -44,7 +44,7 @@ static void ndpi_search_sflow(struct ndpi_detection_module_struct *ndpi_struct, 
     if (flow->core.packet_counter >= 2)
     {
       NDPI_LOG_INFO(ndpi_struct, "found sflow\n");
-      ndpi_set_detected_protocol(ndpi_struct, flow,
+      ndpi_set_detected_protocol(ndpi_struct, &flow->core,
                                  NDPI_PROTOCOL_SFLOW,
                                  NDPI_PROTOCOL_UNKNOWN,
                                  NDPI_CONFIDENCE_DPI);

@@ -54,7 +54,7 @@ static void smtp_set_detected(struct ndpi_detection_module_struct *ndpi_struct,
 #ifdef SMTP_DEBUG
   printf("**** %s()\n", __FUNCTION__);
 #endif
-  ndpi_set_detected_protocol(ndpi_struct, flow,
+  ndpi_set_detected_protocol(ndpi_struct, &flow->core,
                              NDPI_PROTOCOL_MAIL_SMTP, NDPI_PROTOCOL_UNKNOWN,
                              NDPI_CONFIDENCE_DPI);
 }
@@ -143,17 +143,18 @@ static void ndpi_search_mail_smtp_tcp(struct ndpi_detection_module_struct *ndpi_
         flow->metadata.l4.tcp.smtp_command_bitmask |= SMTP_BIT_220;
 
         /* Extract server hostname from the banner "220 hostname ..." */
-        if(flow->metadata.host_server_name[0] == '\0' && len > 4 && ptr[4] != '(') {
+        if(flow->core.host_server_name[0] == '\0' && len > 4 && ptr[4] != '(') {
           int i;
           for(i = 5; i < len - 1 && ptr[i] != ' '; i++)
             ;
           if(ptr[i + 1] != '\r' && ptr[i + 1] != '\n') {
             unsigned int hlen = i - 4;
-            ndpi_hostname_sni_set(flow, &ptr[4], hlen, NDPI_HOSTNAME_NORM_ALL);
-            NDPI_LOG_DBG(ndpi_struct, "SMTP: hostname [%s]\n", flow->metadata.host_server_name);
+	    
+            ndpi_hostname_sni_set(&flow->core, &ptr[4], hlen, NDPI_HOSTNAME_NORM_ALL);
+            NDPI_LOG_DBG(ndpi_struct, "SMTP: hostname [%s]\n", flow->core.host_server_name);
             ndpi_match_hostname_protocol(ndpi_struct, flow, NDPI_PROTOCOL_MAIL_SMTP,
-                                         flow->metadata.host_server_name,
-                                         strlen(flow->metadata.host_server_name));
+                                         flow->core.host_server_name,
+                                         strlen(flow->core.host_server_name));
             if(flow->core.detected_protocol_stack[0] != NDPI_PROTOCOL_UNKNOWN) {
               NDPI_LOG_DBG(ndpi_struct, "SMTP: hostname matched\n");
               smtpInitExtraPacketProcessing(flow);
@@ -249,7 +250,7 @@ static void ndpi_search_mail_smtp_tcp(struct ndpi_detection_module_struct *ndpi_
             ndpi_set_risk(ndpi_struct, &flow->core, NDPI_CLEAR_TEXT_CREDENTIALS, "Found password");
             flow->metadata.l4.tcp.ftp_imap_pop_smtp.auth_done = 1;
           } else {
-            flow->metadata.host_server_name[0] = '\0';
+            flow->core.host_server_name[0] = '\0';
             NDPI_EXCLUDE_DISSECTOR(ndpi_struct, flow);
             return;
           }
@@ -343,12 +344,12 @@ int ndpi_extra_search_mail_smtp_tcp(struct ndpi_detection_module_struct *ndpi_st
       rc = 1;
       if(flow->core.detected_protocol_stack[0] != NDPI_PROTOCOL_UNKNOWN &&
          flow->core.detected_protocol_stack[0] != NDPI_PROTOCOL_MAIL_SMTP) {
-        ndpi_set_detected_protocol(ndpi_struct, flow,
+        ndpi_set_detected_protocol(ndpi_struct, &flow->core,
                                    flow->core.detected_protocol_stack[0],
                                    NDPI_PROTOCOL_MAIL_SMTPS, NDPI_CONFIDENCE_DPI);
         flow->metadata.protos.tls_quic.subprotocol_detected = 1;
       } else {
-        ndpi_set_detected_protocol(ndpi_struct, flow,
+        ndpi_set_detected_protocol(ndpi_struct, &flow->core,
                                    NDPI_PROTOCOL_MAIL_SMTPS, NDPI_PROTOCOL_UNKNOWN,
                                    NDPI_CONFIDENCE_DPI);
       }

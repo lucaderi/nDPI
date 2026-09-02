@@ -66,9 +66,9 @@ static void ndpi_int_openvpn_add_connection(struct ndpi_detection_module_struct 
 {
   if(ndpi_struct->cfg.openvpn_subclassification_by_ip &&
      ndpi_struct->proto_defaults[flow->core.guessed_protocol_id_by_ip].protoCategory == NDPI_PROTOCOL_CATEGORY_VPN) {
-    ndpi_set_detected_protocol(ndpi_struct, flow, flow->core.guessed_protocol_id_by_ip, NDPI_PROTOCOL_OPENVPN, confidence);
+    ndpi_set_detected_protocol(ndpi_struct, &flow->core, flow->core.guessed_protocol_id_by_ip, NDPI_PROTOCOL_OPENVPN, confidence);
   } else {
-    ndpi_set_detected_protocol(ndpi_struct, flow, NDPI_PROTOCOL_OPENVPN, NDPI_PROTOCOL_UNKNOWN, confidence);
+    ndpi_set_detected_protocol(ndpi_struct, &flow->core, NDPI_PROTOCOL_OPENVPN, NDPI_PROTOCOL_UNKNOWN, confidence);
   }
 }
 
@@ -219,7 +219,7 @@ static int search_standard(struct ndpi_detection_module_struct* ndpi_struct,
   } else {
     memcpy(flow->metadata.openvpn.ovpn_session_id[dir], ovpn_payload + 1, 8);
     NDPI_LOG_DBG2(ndpi_struct, "Session key [%d]: 0x%lx\n", dir,
-                  ndpi_ntohll(*(u_int64_t *)flow->ovpn_session_id[dir]));
+                  ndpi_ntohll(*(u_int64_t *)flow->metadata.openvpn.ovpn_session_id[dir]));
   }
 
   /* (1) */
@@ -291,7 +291,7 @@ static int search_heur_opcode_common(struct ndpi_detection_module_struct* ndpi_s
   NDPI_LOG_DBG2(ndpi_struct, "Heur-opcode: [packets %d/%d msgs %d, dir %d][first byte 0x%x][opcode: 0x%x]\n",
                 flow->core.packet_direction_counter[0],
                 flow->core.packet_direction_counter[1],
-                flow->ovpn_heur_opcode__num_msgs,
+                flow->metadata.openvpn.ovpn_heur_opcode__num_msgs,
                 dir, first_byte, opcode);
 
   flow->metadata.openvpn.ovpn_heur_opcode__num_msgs++;

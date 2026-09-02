@@ -125,7 +125,7 @@ static void telnet_set_detected(struct ndpi_detection_module_struct *ndpi_struct
                                 struct ndpi_flow_struct *flow) {
   flow->core.max_extra_packets_to_check = 64;
   flow->core.extra_packets_func = search_telnet_again;
-  ndpi_set_detected_protocol(ndpi_struct, flow,
+  ndpi_set_detected_protocol(ndpi_struct, &flow->core,
                              NDPI_PROTOCOL_TELNET, NDPI_PROTOCOL_UNKNOWN,
                              NDPI_CONFIDENCE_DPI);
 }

@@ -59,7 +59,7 @@ static void ndpi_int_zoom_add_connection(struct ndpi_detection_module_struct *nd
     master = NDPI_PROTOCOL_UNKNOWN;
 
   NDPI_LOG_INFO(ndpi_struct, "found Zoom\n");
-  ndpi_set_detected_protocol(ndpi_struct, flow, NDPI_PROTOCOL_ZOOM, master, NDPI_CONFIDENCE_DPI);
+  ndpi_set_detected_protocol(ndpi_struct, &flow->core, NDPI_PROTOCOL_ZOOM, master, NDPI_CONFIDENCE_DPI);
 
   if(!flow->core.extra_packets_func) {
     if(keep_extra_dissection(flow) &&

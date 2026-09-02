@@ -33,7 +33,7 @@ static void ndpi_int_source_engine_add_connection(struct ndpi_detection_module_s
 {
   NDPI_LOG_INFO(ndpi_struct, "found Source Engine\n");
 
-  ndpi_set_detected_protocol(ndpi_struct, flow,
+  ndpi_set_detected_protocol(ndpi_struct, &flow->core,
                              NDPI_PROTOCOL_SOURCE_ENGINE,
                              NDPI_PROTOCOL_UNKNOWN,
                              NDPI_CONFIDENCE_DPI);

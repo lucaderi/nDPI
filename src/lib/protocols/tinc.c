@@ -61,7 +61,7 @@ static void ndpi_check_tinc(struct ndpi_detection_module_struct *ndpi_struct, st
 	/* cache_free(ndpi_struct->tinc_cache); */
 
         NDPI_LOG_INFO(ndpi_struct, "found tinc udp connection\n");
-        ndpi_set_detected_protocol(ndpi_struct, flow, NDPI_PROTOCOL_TINC, NDPI_PROTOCOL_UNKNOWN, NDPI_CONFIDENCE_DPI_CACHE);
+        ndpi_set_detected_protocol(ndpi_struct, &flow->core, NDPI_PROTOCOL_TINC, NDPI_PROTOCOL_UNKNOWN, NDPI_CONFIDENCE_DPI_CACHE);
       }
     }
     
@@ -119,7 +119,7 @@ static void ndpi_check_tinc(struct ndpi_detection_module_struct *ndpi_struct, st
 
 	    cache_add(ndpi_struct->tinc_cache, &tinc_cache_entry, sizeof(tinc_cache_entry));
 	    NDPI_LOG_INFO(ndpi_struct, "found tinc tcp connection\n");
-	    ndpi_set_detected_protocol(ndpi_struct, flow, NDPI_PROTOCOL_TINC, NDPI_PROTOCOL_UNKNOWN, NDPI_CONFIDENCE_DPI);
+	    ndpi_set_detected_protocol(ndpi_struct, &flow->core, NDPI_PROTOCOL_TINC, NDPI_PROTOCOL_UNKNOWN, NDPI_CONFIDENCE_DPI);
 	  }
 	  return;
 	}

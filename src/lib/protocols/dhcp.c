@@ -56,7 +56,7 @@ struct dhcp_packet {
 
 static void ndpi_int_dhcp_add_connection(struct ndpi_detection_module_struct *ndpi_struct,
                                          struct ndpi_flow_struct *flow) {
-  ndpi_set_detected_protocol(ndpi_struct, flow, NDPI_PROTOCOL_DHCP,
+  ndpi_set_detected_protocol(ndpi_struct, &flow->core, NDPI_PROTOCOL_DHCP,
                              NDPI_PROTOCOL_UNKNOWN, NDPI_CONFIDENCE_DPI);
 }
 
@@ -199,7 +199,7 @@ static void ndpi_search_dhcp_udp(struct ndpi_detection_module_struct *ndpi_struc
 #ifdef DHCP_DEBUG
           NDPI_LOG_DBG2(ndpi_struct, "[DHCP] '%.*s'\n", name, opt_len);
 #endif
-          ndpi_hostname_sni_set(flow, name, opt_len, NDPI_HOSTNAME_NORM_ALL);
+          ndpi_hostname_sni_set(&flow->core, name, opt_len, NDPI_HOSTNAME_NORM_ALL);
         }
 
         cursor += opt_len + 2;

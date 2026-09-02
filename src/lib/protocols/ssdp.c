@@ -54,7 +54,8 @@ static void ssdp_parse_lines(struct ndpi_detection_module_struct
 
   /* Save host which provides a service if available */
   if (packet->host_line.ptr != NULL && packet->host_line.len > 0) {
-    ndpi_hostname_sni_set(flow, packet->host_line.ptr, packet->host_line.len, NDPI_HOSTNAME_NORM_ALL | NDPI_HOSTNAME_NORM_STRIP_PORT);
+    ndpi_hostname_sni_set(&flow->core, packet->host_line.ptr, packet->host_line.len,
+			  NDPI_HOSTNAME_NORM_ALL | NDPI_HOSTNAME_NORM_STRIP_PORT);
   }
 
   if (packet->bootid.ptr != NULL && packet->bootid.len > 0) {
@@ -159,7 +160,7 @@ static void ndpi_int_ssdp_add_connection(struct ndpi_detection_module_struct
 {
   if(ndpi_struct->cfg.ssdp_metadata_enabled)
     ssdp_parse_lines(ndpi_struct, flow);
-  ndpi_set_detected_protocol(ndpi_struct, flow, NDPI_PROTOCOL_SSDP, NDPI_PROTOCOL_UNKNOWN, NDPI_CONFIDENCE_DPI);
+  ndpi_set_detected_protocol(ndpi_struct, &flow->core, NDPI_PROTOCOL_SSDP, NDPI_PROTOCOL_UNKNOWN, NDPI_CONFIDENCE_DPI);
 }
 
 /* this detection also works asymmetrically */

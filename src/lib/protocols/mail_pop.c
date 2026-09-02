@@ -45,7 +45,7 @@ static void popInitExtraPacketProcessing(struct ndpi_flow_struct *flow);
 static void pop_set_detected(struct ndpi_detection_module_struct *ndpi_struct,
                               struct ndpi_flow_struct *flow, u_int16_t protocol) {
   NDPI_LOG_INFO(ndpi_struct, "mail_pop identified\n");
-  ndpi_set_detected_protocol(ndpi_struct, flow, protocol,
+  ndpi_set_detected_protocol(ndpi_struct, &flow->core, protocol,
                              NDPI_PROTOCOL_UNKNOWN, NDPI_CONFIDENCE_DPI);
 }
 

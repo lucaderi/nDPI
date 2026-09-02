@@ -35,7 +35,7 @@ static void ndpi_int_lolwildrift_add_connection(struct ndpi_detection_module_str
                                                 struct ndpi_flow_struct *flow)
 {
   NDPI_LOG_INFO(ndpi_struct, "found League of Legends: Wild Rift\n");
-  ndpi_set_detected_protocol(ndpi_struct, flow, NDPI_PROTOCOL_LOLWILDRIFT,
+  ndpi_set_detected_protocol(ndpi_struct, &flow->core, NDPI_PROTOCOL_LOLWILDRIFT,
                              NDPI_PROTOCOL_UNKNOWN, NDPI_CONFIDENCE_DPI);
 }
 

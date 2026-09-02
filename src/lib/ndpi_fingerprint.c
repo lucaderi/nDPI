@@ -341,7 +341,7 @@ char* ndpi_compute_ndpi_flow_fingerprint(struct ndpi_detection_module_struct *nd
 	  proto_id = ndpi_compare_flow_tls_blocks(ndpi_str, flow, extra_data, proto_id);
 	  
 	  if(proto_id != NDPI_PROTOCOL_UNKNOWN) {
-	    ndpi_set_detected_protocol(ndpi_str, flow, proto_id,
+	    ndpi_set_detected_protocol(ndpi_str, &flow->core, proto_id,
 				       ndpi_get_master_proto(ndpi_str, flow),
 				       NDPI_CONFIDENCE_CUSTOM_RULE);
 	    

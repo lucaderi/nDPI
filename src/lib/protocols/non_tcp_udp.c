@@ -32,7 +32,7 @@
   {									\
     if (is_proto_enabled(ndpi_struct, nprot))                           \
       {									\
-	ndpi_set_detected_protocol(ndpi_struct, flow,			\
+	ndpi_set_detected_protocol(ndpi_struct, &flow->core,			\
 				   nprot, NDPI_PROTOCOL_UNKNOWN, NDPI_CONFIDENCE_DPI);		\
       }									\
   }
