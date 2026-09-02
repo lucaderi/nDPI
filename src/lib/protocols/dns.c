@@ -1223,8 +1223,10 @@ static void search_dns_tcp_udp(struct ndpi_detection_module_struct *ndpi_struct,
 
 /* *********************************************** */
 
-void ndpi_search_dns_tcp_udp(struct ndpi_detection_module_struct *ndpi_struct,
-			     struct ndpi_flow_struct *flow) {
+bool ndpi_search_dns_tcp_udp_internal(struct ndpi_detection_module_struct *ndpi_struct,
+				      struct ndpi_flow_core_struct *core,
+				      struct ndpi_flow_metadata_struct *metadata,
+				      struct ndpi_flow_struct_dns_metadata *dns) {
   struct ndpi_packet_struct *packet = &ndpi_struct->packet;
   u_int16_t s_port = 0, d_port = 0;
 
@@ -1237,13 +1239,13 @@ void ndpi_search_dns_tcp_udp(struct ndpi_detection_module_struct *ndpi_struct,
     /* For MDNS/LLMNR: If the packet is not a response, dest addr needs to be multicast. */
     if ((d_port == MDNS_PORT && isMDNSMulticastAddress(packet) == 0) ||
         (d_port == LLMNR_PORT && isLLMNRMulticastAddress(packet) == 0)) {
-	if (packet->payload_packet_len > 5 &&
-	    ntohs(get_u_int16_t(packet->payload, 2)) != 0 &&
-	    ntohs(get_u_int16_t(packet->payload, 4)) != 0) {
-	    NDPI_EXCLUDE_DISSECTOR(ndpi_struct, flow);
-	    return;
-	  }
+      if (packet->payload_packet_len > 5 &&
+	  ntohs(get_u_int16_t(packet->payload, 2)) != 0 &&
+	  ntohs(get_u_int16_t(packet->payload, 4)) != 0) {
+	NDPI_EXCLUDE_CORE_DISSECTOR(ndpi_struct, core);
+	return(false);
       }
+    }
   } else if(packet->tcp != NULL) {
     s_port = ntohs(packet->tcp->source);
     d_port = ntohs(packet->tcp->dest);
@@ -1258,34 +1260,47 @@ void ndpi_search_dns_tcp_udp(struct ndpi_detection_module_struct *ndpi_struct,
        d_port == (u_int16_t)ndpi_struct->cfg.dns_custom_port))) {
     /* Standard case, keep going */
   } else if(ndpi_struct->cfg.dns_custom_port == 0 &&
-            !ndpi_is_multi_or_broadcast(&flow->core) &&
-            (flow->core.l4_proto == IPPROTO_UDP) /* No TCP to avoid too many false positives */
+            !ndpi_is_multi_or_broadcast(core) &&
+            (core->l4_proto == IPPROTO_UDP) /* No TCP to avoid too many false positives */
             /* Avoid collision with other protocols requiring multiple pkts. */
-            && (flow->metadata.rtp.rtp_stage == 0)
-	    && (flow->metadata.rtcp_stage == 0)
-	    && (flow->metadata.teamviewer_stage == 0)
-	    && (flow->metadata.l4.udp.eaq_pkt_id == 0)
-	    && (flow->metadata.l4.udp.eaq_sequence == 0)
-	    ) {
+	    && (
+		(metadata == NULL)
+		|| ((metadata->rtp.rtp_stage == 0)
+		    && (metadata->rtcp_stage == 0)
+		    && (metadata->teamviewer_stage == 0)
+		    && (metadata->l4.udp.eaq_pkt_id == 0)
+		    && (metadata->l4.udp.eaq_sequence == 0))
+		)) {
     /* Ok, check DNS on any ports: keep going */
   } else {
-    NDPI_EXCLUDE_DISSECTOR(ndpi_struct, flow);
-    return;
+    NDPI_EXCLUDE_CORE_DISSECTOR(ndpi_struct, core);
+    return(false);
   }
 
   if(packet->tcp != NULL) {
-    if(dns_tcp_process(ndpi_struct, &flow->core, &flow->metadata.protos.dns) < 0)
-      NDPI_EXCLUDE_DISSECTOR(ndpi_struct, flow);
+    if(dns_tcp_process(ndpi_struct, core, dns) < 0)
+      NDPI_EXCLUDE_CORE_DISSECTOR(ndpi_struct, core);
   } else {
-    /* Since every UDP packet must contain a complete/valid DNS message,
-       we must be able to detect these protocols on the first packet */
+    /*
+      Since every UDP packet must contain a complete/valid DNS message,
+      we must be able to detect these protocols on the first packet
+    */
     if(packet->payload_packet_len < sizeof(struct ndpi_dns_packet_header)) {
-      NDPI_EXCLUDE_DISSECTOR(ndpi_struct, flow);
-      return;
+      NDPI_EXCLUDE_CORE_DISSECTOR(ndpi_struct, core);
+      return(false);
     }
 
-    search_dns_tcp_udp(ndpi_struct, &flow->core, &flow->metadata.protos.dns);
+    search_dns_tcp_udp(ndpi_struct, core, dns);
   }
+
+  return(true);
+}
+
+/* *********************************************** */
+
+void ndpi_search_dns_tcp_udp(struct ndpi_detection_module_struct *ndpi_struct,
+			     struct ndpi_flow_struct *flow) {
+  ndpi_search_dns_tcp_udp_internal(ndpi_struct, &flow->core, &flow->metadata, &flow->metadata.protos.dns);
 }
 
 /* *********************************************** */
