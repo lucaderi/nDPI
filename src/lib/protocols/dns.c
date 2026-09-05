@@ -158,7 +158,7 @@ static u_int16_t checkDNSSubprotocol(struct ndpi_detection_module_struct *ndpi_s
 /* *********************************************** */
 
 static u_int16_t get16(u_int *i, const u_int8_t *payload) {
-  u_int16_t v = *(u_int16_t*)&payload[*i];
+  u_int16_t v = get_u_int16_t(payload, *i);
 
   (*i) += 2;
 
@@ -240,7 +240,7 @@ static u_int64_t fpc_dns_cache_key_from_packet(const unsigned char *ip, int ip_l
   if(ip_len == 16)
     key = ndpi_quick_hash64((const char *)ip, 16);
   else
-    key = (u_int64_t)(*(u_int32_t *)ip);
+    key = (u_int64_t)get_u_int32_t(ip, 0);
 
   return key;
 }
@@ -604,21 +604,21 @@ static int process_additionals(struct ndpi_detection_module_struct *ndpi_struct,
 
       if(rsp_type == 41 /* OPT */) {
         /* https://en.wikipedia.org/wiki/Extension_Mechanisms_for_DNS */
-        dns->edns0_udp_payload_size = ntohs(*((u_int16_t*)&packet->payload[x])); /* EDNS(0) */
+        dns->edns0_udp_payload_size = ntohs(get_u_int16_t(packet->payload, x)); /* EDNS(0) */
 
 #ifdef DNS_DEBUG
         printf("[DNS] [response] edns0_udp_payload_size: %u\n", dns->edns0_udp_payload_size);
 #endif
         x += 6;
 
-        rdata_len = ntohs(*((u_int16_t *)&packet->payload[x]));
+        rdata_len = ntohs(get_u_int16_t(packet->payload, x));
 #ifdef DNS_DEBUG
         printf("[DNS] [response] rdata len: %u\n", rdata_len);
 #endif
         if(rdata_len > 0 &&
            x + 6 <= packet->payload_packet_len) {
-          opt_code = ntohs(*((u_int16_t *)&packet->payload[x + 2]));
-          opt_len = ntohs(*((u_int16_t *)&packet->payload[x + 4]));
+          opt_code = ntohs(get_u_int16_t(packet->payload, x + 2));
+          opt_len = ntohs(get_u_int16_t(packet->payload, x + 4));
           opt = &packet->payload[x + 6];
           /* TODO: parse the TLV list */
           if(opt_code == 0x03 &&
